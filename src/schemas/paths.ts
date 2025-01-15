@@ -36,8 +36,8 @@ export const ParameterObject = z.discriminatedUnion('in', [
   // Header parameters
   z.object({
     ...parameterBaseFields,
-    name: z.string().regex(/^[^A-Za-z0-9-]+$/, {
-      message: 'Header parameter names should contain only ASCII characters',
+    name: z.string().regex(/^[A-Za-z0-9-]+$/, {
+      message: 'Header parameter names should contain only alphanumeric characters and hyphens',
     }),
     in: z.literal('header'),
     schema: z.union([SchemaObject, ReferenceObject]),

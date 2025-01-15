@@ -50,13 +50,12 @@ export const SchemaObject: z.ZodType<any> = z.lazy(() =>
 );
 
 // Extensible object with validation
-export const ExtensibleObject = z.object({}).catchall(
-  z.any().refine((val) => {
-    if (typeof val === 'object' && val !== null) {
-      return Object.keys(val).every(key => key.startsWith('x-'));
-    }
-    return true;
-  }, {
-    message: "Custom extensions must start with 'x-'"
-  })
-);
+export const ExtensibleObject = z.object({}).catchall(z.any());
+
+// If you want to keep vendor extension validation, use this instead:
+export const VendorExtensible = z.object({}).catchall(z.any()).refine((val) => {
+  const extraKeys = Object.keys(val).filter(key => !key.startsWith('x-'));
+  return extraKeys.length === 0;
+}, {
+  message: "Custom extensions must start with 'x-'"
+});

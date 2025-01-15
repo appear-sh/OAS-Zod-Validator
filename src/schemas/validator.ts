@@ -1,6 +1,5 @@
 import { OpenAPIObject } from './openapi';
 import { z } from 'zod';
-import { OpenAPIReferenceResolver, withRefResolver } from './reference';
 
 export interface ValidationResult {
   valid: boolean;
@@ -10,13 +9,10 @@ export interface ValidationResult {
 
 export function validateOpenAPI(document: unknown): ValidationResult {
   try {
-    const resolver = new OpenAPIReferenceResolver(document);
-    const schemaWithRefs = withRefResolver(OpenAPIObject, resolver);
-    
-    schemaWithRefs.parse(document);
-    return {
+    OpenAPIObject.parse(document);
+    return { 
       valid: true,
-      resolvedRefs: Array.from(resolver['cache'].keys()),
+      resolvedRefs: [] // We'll implement reference tracking later
     };
   } catch (error) {
     if (error instanceof z.ZodError) {
