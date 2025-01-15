@@ -16,14 +16,17 @@ export function validateOpenAPI(document: unknown): ValidationResult {
       if (obj.$ref && typeof obj.$ref === 'string') {
         resolvedRefs.push(obj.$ref);
       }
-      Object.values(obj).forEach(value => trackRef(value));
+      for (const value of Object.values(obj)) {
+        if (typeof value === 'object' && value !== null) {
+          trackRef(value);
+        }
+      }
     }
   };
 
   try {
-    OpenAPIObject.parse(document);
-    // Track all refs after successful validation
-    trackRef(document);
+    const parsed = OpenAPIObject.parse(document);
+    trackRef(parsed);
     
     return { 
       valid: true,

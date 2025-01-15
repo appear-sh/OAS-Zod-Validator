@@ -90,9 +90,15 @@ describe('OpenAPI Validator', () => {
                     properties: {
                       name: { type: 'string' },
                       email: { type: 'string' }
-                    }
+                    },
+                    required: ['name', 'email']
                   }
                 }
+              }
+            },
+            responses: {
+              '201': {
+                description: 'Created successfully'
               }
             }
           }
