@@ -13,7 +13,7 @@ export const ServerObject = z.object({
 });
 
 export const OpenAPIObject = z.object({
-  openapi: z.string().regex(/^3\.\d+\.\d+$/),
+  openapi: z.string().regex(/^3\.(0|1)\.\d+$/),
   info: z.object({
     title: z.string(),
     description: z.string().optional(),
