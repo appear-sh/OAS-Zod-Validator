@@ -22,4 +22,7 @@ export const ResponseObject = z.object({
   headers: z.record(z.string(), z.union([ReferenceObject, z.any()])).optional(),
   content: z.record(z.string(), MediaTypeObject).optional(),
   links: z.record(z.string(), z.union([ReferenceObject, z.any()])).optional(),
-}).strict();
+});
+
+export type RequestBody = z.infer<typeof RequestBodyObject>;
+export type Response = z.infer<typeof ResponseObject>;
