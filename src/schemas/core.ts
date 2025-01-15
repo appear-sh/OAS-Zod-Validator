@@ -1,21 +1,62 @@
 import { z } from 'zod';
 
-// Basic type definitions that are used throughout OpenAPI
+// Enhanced error messages and stricter validation
 export const ReferenceObject = z.object({
-  $ref: z.string(),
+  $ref: z.string()
+    .startsWith('#/', { message: 'References must start with "#/"' })
+    .regex(/^#\/(components|paths)\/[\w/]+$/, {
+      message: 'Invalid reference format. Must be "#/components/... or #/paths/..."'
+    }),
 });
 
-// Extensible object for additional properties
-export const ExtensibleObject = z.object({}).catchall(z.any());
-
-// Schema Object (fixed version)
-export const SchemaObject: z.ZodType = z.lazy(() => 
+// Improved schema object with more specific types
+export const SchemaObject: z.ZodType<any> = z.lazy(() => 
   z.object({
-    type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']).optional(),
-    format: z.string().optional(),
+    type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
+    format: z.enum([
+      'date-time', 'date', 'time', 'email', 'hostname', 'ipv4', 'ipv6',
+      'uri', 'uuid', 'password', 'byte', 'binary'
+    ]).optional(),
+    title: z.string().optional(),
     description: z.string().optional(),
+    default: z.any().optional(),
+    nullable: z.boolean().optional(),
+    deprecated: z.boolean().optional(),
+    minLength: z.number().int().positive().optional(),
+    maxLength: z.number().int().positive().optional(),
+    pattern: z.string().optional(),
+    minimum: z.number().optional(),
+    maximum: z.number().optional(),
+    exclusiveMinimum: z.boolean().optional(),
+    exclusiveMaximum: z.boolean().optional(),
+    enum: z.array(z.any()).optional(),
     required: z.array(z.string()).optional(),
-    properties: z.record(z.string(), z.union([z.lazy(() => SchemaObject), ReferenceObject])).optional(),
-    items: z.union([z.lazy(() => SchemaObject), ReferenceObject]).optional(),
-  }).and(ExtensibleObject)
+    properties: z.record(z.string(), z.union([SchemaObject, ReferenceObject])).optional(),
+    items: z.union([SchemaObject, ReferenceObject]).optional(),
+    additionalProperties: z.union([z.boolean(), SchemaObject, ReferenceObject]).optional(),
+  }).refine((schema) => {
+    // Validate that array types have items
+    if (schema.type === 'array' && !schema.items) {
+      return false;
+    }
+    // Validate that object types have properties
+    if (schema.type === 'object' && !schema.properties && !schema.additionalProperties) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "Array types must define 'items' and object types must define 'properties' or 'additionalProperties'"
+  })
+);
+
+// Extensible object with validation
+export const ExtensibleObject = z.object({}).catchall(
+  z.any().refine((val) => {
+    if (typeof val === 'object' && val !== null) {
+      return Object.keys(val).every(key => key.startsWith('x-'));
+    }
+    return true;
+  }, {
+    message: "Custom extensions must start with 'x-'"
+  })
 );
