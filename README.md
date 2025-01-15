@@ -1,18 +1,19 @@
 # OAS-Zod-Validator
 
-A robust OpenAPI 3.0 specification validator built with Zod, providing type-safe validation and detailed error messages.
+A robust OpenAPI 3.0+ specification validator built with Zod, providing type-safe validation and detailed error messages. It can validate typical OAS 3.0.x documents out of the box, with optional support for broader (3.1) usage.
 
 ## Features
 
-- ✨ Complete OpenAPI 3.0.x specification validation
+- ✨ Complete OpenAPI 3.0.x (and partial 3.1) specification validation
 - 🔒 Type-safe schemas using Zod
 - 🔍 Strict validation for:
   - Parameters (path, query, header, cookie)
-  - Paths and path items
+  - Paths and path items (leading slash, no duplicate parameters, etc.)
   - Request/response bodies
   - Components and schemas
   - Security schemes
-- 🔗 Reference (`$ref`) tracking and validation
+- 🔗 Reference ($ref) tracking and validation
+- ⚙️ Optional configuration for relaxed validation
 - 📝 Human-readable error messages
 
 ## Installation
@@ -66,44 +67,73 @@ if (result.valid) {
 - Validates HTTP methods and operations
 
 ### Component Validation
-- Schema components
+- Schema components (with detailed checks for array/object structure)
 - Response components
 - Parameter components
 - Example components
 - Request/response bodies
 - Headers
-- Security schemes
+- Security schemes (e.g., HTTP bearer, API keys)
 - Links and callbacks
 
 ### Reference Validation
 - Internal reference resolution
-- Reference tracking
+- Reference tracking and error reporting
 - Circular reference detection
 
 ## Error Messages
 
-The validator provides detailed error messages when validation fails:
+The validator provides detailed error messages when validation fails. For example:
 
 ```typescript
 const invalidSpec = {
-  // Missing required fields
+  // Missing the required 'openapi' field
   paths: {}
 };
 
 const result = validateOpenAPI(invalidSpec);
-console.error(result.errors);
-/* Output:
-{
-  "issues": [{
-    "code": "invalid_type",
-    "expected": "string",
-    "received": "undefined",
-    "path": ["openapi"],
-    "message": "Required"
-  }]
+
+if (!result.valid) {
+  console.error(result.errors);
+  /* 
+    Example output:
+    {
+      "issues": [{
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": ["openapi"],
+        "message": "Required"
+      }]
+    }
+  */
 }
-*/
 ```
+
+## Advanced Usage
+
+If you need to allow partial or relaxed validations, you can pass additional options to the validator. For example:
+
+```typescript
+import { validateOpenAPI } from 'oas-zod-validator';
+
+const spec = {
+  /* Your OAS here */
+};
+
+const result = validateOpenAPI(spec, {
+  strict: false,           // Skips or relaxes certain validations
+  allowFutureOASVersions: true // Allows a broader range of OAS version strings
+});
+
+if (result.valid) {
+  console.log('Valid specification (with relaxed rules)!');
+} else {
+  console.error('Invalid specification:', result.errors);
+}
+```
+
+Use these flags if you anticipate user-submitted specifications that might have minor deviations from strict 3.0 or if you need to test early OAS 3.1 features.
 
 ## Development
 
@@ -122,14 +152,11 @@ npm run test:watch
 
 Contributions are welcome! Please:
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to your branch
-5. Open a pull request
-
-Please ensure you run tests before submitting PRs.
+1. Fork the repository.  
+2. Create a new branch for your feature or bugfix.  
+3. Commit and push your changes.  
+4. Submit a pull request.
 
 ## License
 
-[MIT](./LICENSE)
+Licensed under the MIT license. See the [LICENSE](../LICENSE) file for details.
