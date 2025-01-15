@@ -180,4 +180,149 @@ describe('OpenAPI Validator', () => {
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
   });
+
+  test('validates complete path object with parameters', () => {
+    const specWithPaths = {
+      openapi: '3.0.0',
+      info: {
+        title: 'Test API',
+        version: '1.0.0',
+      },
+      paths: {
+        '/users/{id}': {
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: {
+                type: 'string'
+              }
+            }
+          ],
+          get: {
+            summary: 'Get user by ID',
+            parameters: [
+              {
+                name: 'fields',
+                in: 'query',
+                schema: {
+                  type: 'string'
+                }
+              }
+            ],
+            responses: {
+              '200': {
+                description: 'Success'
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(specWithPaths);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('validates server objects', () => {
+    const specWithServers = {
+      openapi: '3.0.0',
+      info: {
+        title: 'Test API',
+        version: '1.0.0',
+      },
+      servers: [
+        {
+          url: 'https://api.example.com/v1',
+          description: 'Production server',
+          variables: {
+            port: {
+              default: '443',
+              enum: ['443', '8443']
+            }
+          }
+        },
+        {
+          url: 'https://staging.example.com/v1',
+          description: 'Staging server'
+        }
+      ],
+      paths: {}
+    };
+
+    const result = validateOpenAPI(specWithServers);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('validates complete info object', () => {
+    const specWithFullInfo = {
+      openapi: '3.0.0',
+      info: {
+        title: 'Test API',
+        version: '1.0.0',
+        description: 'A test API with full info object',
+        termsOfService: 'https://example.com/terms',
+        contact: {
+          name: 'API Support',
+          url: 'https://example.com/support',
+          email: 'support@example.com'
+        },
+        license: {
+          name: 'Apache 2.0',
+          url: 'https://www.apache.org/licenses/LICENSE-2.0'
+        }
+      },
+      paths: {}
+    };
+
+    const result = validateOpenAPI(specWithFullInfo);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('validates external documentation', () => {
+    const specWithExternalDocs = {
+      openapi: '3.0.0',
+      info: {
+        title: 'Test API',
+        version: '1.0.0',
+      },
+      paths: {},
+      externalDocs: {
+        description: 'Find more info here',
+        url: 'https://example.com/docs'
+      },
+      tags: [
+        {
+          name: 'users',
+          description: 'User operations',
+          externalDocs: {
+            url: 'https://example.com/docs/users'
+          }
+        }
+      ]
+    };
+
+    const result = validateOpenAPI(specWithExternalDocs);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('catches invalid openapi version format', () => {
+    const invalidVersionSpec = {
+      openapi: '4.0.0', // Invalid version, must start with 3
+      info: {
+        title: 'Test API',
+        version: '1.0.0',
+      },
+      paths: {}
+    };
+
+    const result = validateOpenAPI(invalidVersionSpec);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
 });
