@@ -325,4 +325,64 @@ describe('OpenAPI Validator', () => {
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
   });
+
+  test('validates references correctly', () => {
+    const specWithRefs = {
+      openapi: '3.0.0',
+      info: {
+        title: 'Test API',
+        version: '1.0.0',
+      },
+      paths: {
+        '/users': {
+          post: {
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    $ref: '#/components/schemas/User'
+                  }
+                }
+              }
+            },
+            responses: {
+              '200': {
+                $ref: '#/components/responses/SuccessResponse'
+              }
+            }
+          }
+        }
+      },
+      components: {
+        schemas: {
+          User: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              email: { type: 'string' }
+            }
+          }
+        },
+        responses: {
+          SuccessResponse: {
+            description: 'Successful operation',
+            content: {
+              'application/json': {
+                schema: {
+                  $ref: '#/components/schemas/User'
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(specWithRefs);
+    expect(result.valid).toBe(true);
+    expect(result.resolvedRefs).toBeDefined();
+    expect(result.resolvedRefs).toContain('#/components/schemas/User');
+    expect(result.resolvedRefs).toContain('#/components/responses/SuccessResponse');
+  });
 });
