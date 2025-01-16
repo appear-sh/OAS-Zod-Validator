@@ -1,4 +1,4 @@
-import { ExtensibleObject, ReferenceObject } from '../core';
+import { ExtensibleObject, ReferenceObject, VendorExtensible } from '../core';
 import { describe, test, expect } from '@jest/globals';
 import { z } from 'zod';
 
@@ -49,7 +49,7 @@ describe('Core Schema Types', () => {
         'x-another-field': 123,
         'x-object-field': { nested: true }
       };
-      expect(() => ExtensibleObject.parse(obj)).not.toThrow();
+      expect(() => VendorExtensible.parse(obj)).not.toThrow();
     });
 
     test('handles non x- prefixed fields', () => {
@@ -58,10 +58,10 @@ describe('Core Schema Types', () => {
         'another_invalid': 123,
         'normalField': true
       };
-      const result = ExtensibleObject.safeParse(obj);
+      const result = VendorExtensible.safeParse(obj);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain('Unknown field');
+        expect(result.error.errors[0].message).toContain('Custom extensions must start with x-');
       }
     });
 

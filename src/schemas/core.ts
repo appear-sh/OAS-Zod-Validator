@@ -7,7 +7,7 @@ export const ReferenceObject = z.object({
     .regex(/^#\/(components|paths)\/[\w/]+$/, {
       message: 'Invalid reference format. Must be "#/components/... or #/paths/..."'
     }),
-});
+}).strict();
 
 // Improved schema object with more specific types
 export const SchemaObject: z.ZodType = z.lazy(() => 
@@ -49,13 +49,13 @@ export const SchemaObject: z.ZodType = z.lazy(() =>
   })
 );
 
-// Extensible object with validation
-export const ExtensibleObject = z.object({}).catchall(z.unknown());
+// Basic extensible object that allows any additional properties
+export const ExtensibleObject = z.object({}).passthrough();
 
-// If you want to keep vendor extension validation, use this instead:
+// Strict vendor extension validation
 export const VendorExtensible = z.object({}).catchall(z.unknown()).refine((val) => {
   const extraKeys = Object.keys(val).filter(key => !key.startsWith('x-'));
   return extraKeys.length === 0;
 }, {
-  message: 'Custom extensions must start with x-'
+  message: 'Unknown field. Custom extensions must start with x-'
 });

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1737007938688" clover="3.2.0">
-  <project timestamp="1737007938688" name="All files">
-    <metrics statements="138" coveredstatements="111" conditionals="49" coveredconditionals="39" methods="21" coveredmethods="18" elements="208" coveredelements="168" complexity="0" loc="138" ncloc="138" packages="2" files="11" classes="11"/>
+<coverage generated="1737008050908" clover="3.2.0">
+  <project timestamp="1737008050908" name="All files">
+    <metrics statements="138" coveredstatements="113" conditionals="49" coveredconditionals="39" methods="21" coveredmethods="20" elements="208" coveredelements="172" complexity="0" loc="138" ncloc="138" packages="2" files="11" classes="11"/>
     <package name="schemas">
-      <metrics statements="104" coveredstatements="97" conditionals="38" coveredconditionals="32" methods="17" coveredmethods="15"/>
+      <metrics statements="104" coveredstatements="99" conditionals="38" coveredconditionals="32" methods="17" coveredmethods="17"/>
       <file name="components.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/components.ts">
         <metrics statements="12" coveredstatements="12" conditionals="4" coveredconditionals="3" methods="3" coveredmethods="3"/>
         <line num="1" count="5" type="stmt"/>
@@ -20,7 +20,7 @@
         <line num="102" count="14" type="stmt"/>
       </file>
       <file name="core.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/core.ts">
-        <metrics statements="13" coveredstatements="9" conditionals="7" coveredconditionals="4" methods="4" coveredmethods="2"/>
+        <metrics statements="13" coveredstatements="11" conditionals="7" coveredconditionals="4" methods="4" coveredmethods="4"/>
         <line num="1" count="9" type="stmt"/>
         <line num="4" count="9" type="stmt"/>
         <line num="13" count="9" type="stmt"/>
@@ -32,8 +32,8 @@
         <line num="46" count="78" type="stmt"/>
         <line num="53" count="9" type="stmt"/>
         <line num="56" count="9" type="stmt"/>
-        <line num="57" count="0" type="stmt"/>
-        <line num="58" count="0" type="stmt"/>
+        <line num="57" count="6" type="stmt"/>
+        <line num="58" count="2" type="stmt"/>
       </file>
       <file name="openapi.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/openapi.ts">
         <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
