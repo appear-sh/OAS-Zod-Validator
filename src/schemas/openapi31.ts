@@ -1,58 +1,42 @@
 import { z } from 'zod';
 import { PathsObject } from './paths';
 import { ComponentsObject } from './components';
-// Reuse or import a suitable "ServerObject", "InfoObject", etc. from your 3.0 schema files.
-// You may also define new fields or differences specifically for 3.1 here.
+import { RequestBodyObject, ResponseObject } from './requestResponse';
+import { ReferenceObject } from './core';
+
+const ParameterObject = z.object({
+  name: z.string(),
+  in: z.enum(['query', 'header', 'path', 'cookie']),
+  description: z.string().optional(),
+  required: z.boolean().optional(),
+  deprecated: z.boolean().optional(),
+  allowEmptyValue: z.boolean().optional(),
+  schema: z.any().optional(),
+});
+
+const WebhookOperationObject = z.object({
+  requestBody: RequestBodyObject.optional(),
+  responses: ResponseObject,
+  parameters: z.array(z.union([ParameterObject, ReferenceObject])).optional(),
+  description: z.string().optional(),
+}).passthrough();
 
 const WebhooksObject = z.record(
   z.string(),
-  // The value for each webhook path is effectively a Path Item Object, similar to how 3.1 defines it
   z.object({
-    get: z.object({
-      responses: z.record(z.string(), z.object({
-        description: z.string()
-      }))
-    }).optional(),
-    put: z.object({
-      responses: z.record(z.string(), z.object({
-        description: z.string()
-      }))
-    }).optional(),
-    post: z.object({
-      responses: z.record(z.string(), z.object({
-        description: z.string()
-      }))
-    }).optional(),
-    delete: z.object({
-      responses: z.record(z.string(), z.object({
-        description: z.string()
-      }))
-    }).optional(),
-    options: z.object({
-      responses: z.record(z.string(), z.object({
-        description: z.string()
-      }))
-    }).optional(),
-    head: z.object({
-      responses: z.record(z.string(), z.object({
-        description: z.string()
-      }))
-    }).optional(),
-    patch: z.object({
-      responses: z.record(z.string(), z.object({
-        description: z.string()
-      }))
-    }).optional(),
-    trace: z.object({
-      responses: z.record(z.string(), z.object({
-        description: z.string()
-      }))
-    }).optional()
+    post: WebhookOperationObject.optional(),
+    get: WebhookOperationObject.optional(),
+    put: WebhookOperationObject.optional(),
+    delete: WebhookOperationObject.optional(),
+    options: WebhookOperationObject.optional(),
+    head: WebhookOperationObject.optional(),
+    patch: WebhookOperationObject.optional(),
+    trace: WebhookOperationObject.optional(),
   })
 );
 
 export const OpenAPIObject31 = z.object({
-  openapi: z.string().regex(/^3\.1\.\d+$/), // e.g., 3.1.0, 3.1.1, etc.
+  openapi: z.string().regex(/^3\.[1-9]\.\d+$/), // Allow 3.1.0 through 3.9.x
 
   // For OAS 3.1, "info" largely remains the same as 3.0
   info: z.object({

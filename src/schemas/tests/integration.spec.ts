@@ -26,10 +26,14 @@ describe('Integration tests for multiple OAS specs', () => {
       
       // Decide if this test expects a valid or invalid outcome
       // For instance, you could name your specs "valid-..." or "invalid-..."
-      const isExpectedValid = file.startsWith('valid-');
+      const isExpectedValid = file.startsWith('valid-') || file.startsWith('valid.');
+      const options = {
+        allowFutureOASVersions: file.includes('3.1') || file.includes('3.2'),
+        strict: true,
+      };
       
-      const result = validateOpenAPI(doc, { allowFutureOASVersions: true });
-        
+      const result = validateOpenAPI(doc, options);
+      
       if (isExpectedValid) {
         expect(result.valid).toBe(true);
         expect(result.errors).toBeUndefined();

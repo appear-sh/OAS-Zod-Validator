@@ -16,7 +16,6 @@ export interface ValidationResult {
 
 function detectOpenAPIVersion(doc: any): '3.0' | '3.1' {
   if (!doc || typeof doc.openapi !== 'string') {
-    // Not even a valid doc
     return '3.0'; // fallback or throw; your call
   }
   if (doc.openapi.startsWith('3.1.')) {
@@ -48,10 +47,9 @@ export function validateOpenAPI(
     let parsed: any;
     const docAsObject = document as Record<string, unknown>;
 
-    // if allowFutureOASVersions is set, you might skip version detection or parse with your 3.1 schema.
-    // otherwise, detect the version from docAsObject.openapi
     if (options.allowFutureOASVersions) {
-      parsed = OpenAPIObject31.parse(docAsObject); // treat everything as 3.1
+      // Use 3.1 schema for any future version
+      parsed = OpenAPIObject31.parse(docAsObject);
     } else {
       const version = detectOpenAPIVersion(docAsObject);
       if (version === '3.1') {
