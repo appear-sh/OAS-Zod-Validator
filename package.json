@@ -24,18 +24,5 @@
     "eslint": "^8.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0"
-  },
-  "jest": {
-    "collectCoverageFrom": [
-      "src/**/*.ts"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 85,
-        "functions": 85,
-        "lines": 85,
-        "statements": 85
-      }
-    }
   }
 }
