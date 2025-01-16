@@ -1,5 +1,6 @@
-import { OpenAPIObject } from './openapi';
 import { z } from 'zod';
+import { OpenAPIObject } from './openapi';
+import { OpenAPIObject31 } from './openapi31';
 import { verifyRefTargets } from '../utils/verifyRefTargets';
 
 export interface ValidationOptions {
@@ -11,6 +12,17 @@ export interface ValidationResult {
   valid: boolean;
   errors?: z.ZodError;
   resolvedRefs: string[];
+}
+
+function detectOpenAPIVersion(doc: any): '3.0' | '3.1' {
+  if (!doc || typeof doc.openapi !== 'string') {
+    // Not even a valid doc
+    return '3.0'; // fallback or throw; your call
+  }
+  if (doc.openapi.startsWith('3.1.')) {
+    return '3.1';
+  }
+  return '3.0';
 }
 
 export function validateOpenAPI(
@@ -33,11 +45,22 @@ export function validateOpenAPI(
   };
 
   try {
+    let parsed: any;
+    const docAsObject = document as Record<string, unknown>;
+
+    // if allowFutureOASVersions is set, you might skip version detection or parse with your 3.1 schema.
+    // otherwise, detect the version from docAsObject.openapi
     if (options.allowFutureOASVersions) {
-      // In a real implementation, you might override the OpenAPIObject schema's 'openapi' regex
+      parsed = OpenAPIObject31.parse(docAsObject); // treat everything as 3.1
+    } else {
+      const version = detectOpenAPIVersion(docAsObject);
+      if (version === '3.1') {
+        parsed = OpenAPIObject31.parse(docAsObject);
+      } else {
+        parsed = OpenAPIObject.parse(docAsObject);
+      }
     }
 
-    const parsed = OpenAPIObject.parse(document);
     trackRef(parsed);
 
     if (options.strict) {
