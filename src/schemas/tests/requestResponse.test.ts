@@ -1,0 +1,133 @@
+import { MediaTypeObject, RequestBodyObject, ResponseObject, ResponsesObject } from '../requestResponse';
+import { describe, test, expect } from '@jest/globals';
+
+describe('Request/Response Schema Types', () => {
+  describe('MediaTypeObject', () => {
+    test('validates basic media type object', () => {
+      const mediaType = {
+        schema: { type: 'object' },
+        example: { id: 1, name: 'test' }
+      };
+      expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
+    });
+
+    test('validates media type with examples', () => {
+      const mediaType = {
+        schema: { type: 'object' },
+        examples: {
+          test: {
+            summary: 'Test example',
+            value: { id: 1 }
+          }
+        }
+      };
+      expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
+    });
+
+    test('rejects invalid example combinations', () => {
+      const mediaType = {
+        examples: {
+          test: {
+            value: { id: 1 },
+            externalValue: 'http://example.com/example.json'
+          }
+        }
+      };
+      expect(() => MediaTypeObject.parse(mediaType)).toThrow();
+    });
+  });
+
+  describe('RequestBodyObject', () => {
+    test('validates complete request body', () => {
+      const requestBody = {
+        description: 'Test request body',
+        required: true,
+        content: {
+          'application/json': {
+            schema: { type: 'object' }
+          }
+        }
+      };
+      expect(() => RequestBodyObject.parse(requestBody)).not.toThrow();
+    });
+
+    test('validates minimal request body', () => {
+      const requestBody = {
+        content: {
+          'application/json': {}
+        }
+      };
+      expect(() => RequestBodyObject.parse(requestBody)).not.toThrow();
+    });
+  });
+
+  describe('ResponseObject', () => {
+    test('validates complete response', () => {
+      const response = {
+        description: 'Test response',
+        headers: {
+          'X-Test': {
+            description: 'Test header',
+            schema: { type: 'string' }
+          }
+        },
+        content: {
+          'application/json': {
+            schema: { type: 'object' }
+          }
+        }
+      };
+      expect(() => ResponseObject.parse(response)).not.toThrow();
+    });
+
+    test('validates response with links', () => {
+      const response = {
+        description: 'Test response',
+        links: {
+          testLink: {
+            operationId: 'getUser',
+            parameters: {
+              userId: '$response.body#/id'
+            }
+          }
+        }
+      };
+      expect(() => ResponseObject.parse(response)).not.toThrow();
+    });
+
+    test('rejects invalid link objects', () => {
+      const response = {
+        description: 'Test response',
+        links: {
+          testLink: {
+            operationRef: '#/paths/user',
+            operationId: 'getUser' // Can't have both
+          }
+        }
+      };
+      expect(() => ResponseObject.parse(response)).toThrow();
+    });
+  });
+
+  describe('ResponsesObject', () => {
+    test('validates response map', () => {
+      const responses = {
+        '200': {
+          description: 'OK response'
+        },
+        'default': {
+          description: 'Default response'
+        }
+      };
+      expect(() => ResponsesObject.parse(responses)).not.toThrow();
+    });
+
+    test('validates responses with references', () => {
+      const responses = {
+        '200': { $ref: '#/components/responses/Success' },
+        '404': { $ref: '#/components/responses/NotFound' }
+      };
+      expect(() => ResponsesObject.parse(responses)).not.toThrow();
+    });
+  });
+});

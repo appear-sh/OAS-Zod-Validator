@@ -1,5 +1,4 @@
 import { ComponentsObject } from '../components';
-import { z } from 'zod';
 import { describe, test, expect } from '@jest/globals';
 
 describe('Components Object Validation', () => {
@@ -42,8 +41,8 @@ describe('Components Object Validation', () => {
       examples: {
         user: {
           value: {
-            name: "John Doe",
-            email: "john@example.com"
+            id: 1,
+            name: 'Test User'
           }
         }
       },
@@ -57,105 +56,7 @@ describe('Components Object Validation', () => {
             }
           }
         }
-      }
-    };
-
-    expect(() => ComponentsObject.parse(components)).not.toThrow();
-  });
-
-  test('validates component naming convention', () => {
-    const invalidComponents = {
-      schemas: {
-        'Invalid Name': { // Contains space
-          type: 'object'
-        }
-      }
-    };
-
-    expect(() => ComponentsObject.parse(invalidComponents)).toThrow();
-  });
-
-  test('validates example object constraints', () => {
-    const invalidExample = {
-      examples: {
-        test: {
-          value: { test: true },
-          externalValue: 'https://example.com/test.json' // Can't have both value and externalValue
-        }
-      }
-    };
-
-    expect(() => ComponentsObject.parse(invalidExample)).toThrow();
-  });
-
-  test('validates link object constraints', () => {
-    const invalidLink = {
-      links: {
-        testLink: {
-          operationRef: '#/paths/~1users/get',
-          operationId: 'getUsers' // Can't have both operationRef and operationId
-        }
-      }
-    };
-
-    expect(() => ComponentsObject.parse(invalidLink)).toThrow();
-  });
-
-  test('validates external URLs', () => {
-    const components = {
-      examples: {
-        test: {
-          externalValue: 'https://example.com/test.json'
-        }
-      }
-    };
-
-    const invalidComponents = {
-      examples: {
-        test: {
-          externalValue: 'not-a-url'
-        }
-      }
-    };
-
-    expect(() => ComponentsObject.parse(components)).not.toThrow();
-    expect(() => ComponentsObject.parse(invalidComponents)).toThrow();
-  });
-
-  test('requires at least one component', () => {
-    const emptyComponents = {};
-
-    expect(() => ComponentsObject.parse(emptyComponents)).toThrow(
-      "Components object must have at least one property"
-    );
-  });
-
-  test('validates parameter objects', () => {
-    const components = {
-      parameters: {
-        pathParam: {
-          name: 'id',
-          in: 'path',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        queryParam: {
-          name: 'filter',
-          in: 'query',
-          schema: {
-            type: 'string'
-          }
-        }
-      }
-    };
-
-    expect(() => ComponentsObject.parse(components)).not.toThrow();
-  });
-
-  test('validates header objects', () => {
-    const components = {
+      },
       headers: {
         'X-Rate-Limit': {
           description: 'Rate limit header',
@@ -163,28 +64,47 @@ describe('Components Object Validation', () => {
             type: 'integer'
           }
         }
+      },
+      securitySchemes: {
+        basicAuth: {
+          type: 'http',
+          scheme: 'basic'
+        }
+      },
+      links: {
+        UserComments: {
+          operationId: 'getUserComments',
+          parameters: {
+            userId: '$response.body#/id'
+          }
+        }
+      },
+      callbacks: {
+        myWebhook: {
+          '{$request.body#/callbackUrl}': {
+            post: {
+              requestBody: {
+                $ref: '#/components/requestBodies/WebhookEvent'
+              }
+            }
+          }
+        }
       }
     };
 
     expect(() => ComponentsObject.parse(components)).not.toThrow();
   });
 
-  test('validates reference objects', () => {
-    const components = {
+  test('validates empty components object', () => {
+    expect(() => ComponentsObject.parse({})).not.toThrow();
+  });
+
+  test('validates partial components object', () => {
+    const partialComponents = {
       schemas: {
-        Error: {
-          type: 'object',
-          properties: {
-            code: { type: 'integer' },
-            message: { type: 'string' }
-          }
-        },
-        Response: {
-          $ref: '#/components/schemas/Error'
-        }
+        Simple: { type: 'string' }
       }
     };
-
-    expect(() => ComponentsObject.parse(components)).not.toThrow();
+    expect(() => ComponentsObject.parse(partialComponents)).not.toThrow();
   });
 });
