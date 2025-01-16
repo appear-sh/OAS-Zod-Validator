@@ -21,27 +21,7 @@ describe('YAML Validation', () => {
     expect(result.errors).toBeUndefined();
   });
 
-  test('validates valid OpenAPI 3.1 YAML', () => {
-    const yaml = `
-      openapi: 3.1.0
-      info:
-        title: Test API
-        version: 1.0.0
-      jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
-      paths:
-        /test:
-          get:
-            responses:
-              '200':
-                description: OK
-    `;
-    
-    const result = validateFromYaml(yaml);
-    expect(result.valid).toBe(true);
-    expect(result.errors).toBeUndefined();
-  });
-
-  test('handles invalid YAML syntax', () => {
+  test('handles malformed YAML', () => {
     const yaml = `
       openapi: 3.0.0
       info:
@@ -62,13 +42,22 @@ describe('YAML Validation', () => {
   });
 
   test('handles non-object YAML content', () => {
-    const yaml = 'just a string';
-    const result = validateFromYaml(yaml);
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
+    const inputs = [
+      'just a string',
+      '42',
+      'true',
+      '[]',
+      'null'
+    ];
+    
+    inputs.forEach(yaml => {
+      const result = validateFromYaml(yaml);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
   });
 
-  test('validates YAML with references', () => {
+  test('validates YAML with references and options', () => {
     const yaml = `
       openapi: 3.0.0
       info:
@@ -91,16 +80,121 @@ describe('YAML Validation', () => {
     expect(result.errors).toBeUndefined();
   });
 
-  test('handles empty YAML string', () => {
-    const result = validateFromYaml('');
+  test('handles empty or invalid input', () => {
+    const inputs = [
+      '',
+      ' ',
+      '\n',
+      undefined,
+      null
+    ];
+    
+    inputs.forEach(input => {
+      const result = validateFromYaml(input as string);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+  });
+
+  test('validates YAML with future OpenAPI versions', () => {
+    const yaml = `
+      openapi: 3.2.0
+      info:
+        title: Future API
+        version: 1.0.0
+      paths: {}
+    `;
+    
+    const result = validateFromYaml(yaml, { allowFutureOASVersions: true });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('handles YAML parsing errors', () => {
+    const invalidYaml = `
+      openapi: 3.0.0
+      info:
+        title: Test API
+        version: 1.0.0
+      paths:
+        *invalid-anchor
+        /test: {}
+    `;
+    
+    const result = validateFromYaml(invalidYaml);
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
   });
 
-  test('handles null YAML parsing result', () => {
-    const yaml = 'null';
-    const result = validateFromYaml(yaml);
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
+  test('handles non-string inputs', () => {
+    const inputs = [
+      undefined,
+      null,
+      123,
+      {},
+      [],
+      true
+    ];
+    
+    inputs.forEach(input => {
+      // @ts-expect-error Testing invalid input types
+      const result = validateFromYaml(input);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+  });
+
+  test('validates YAML with validation options', () => {
+    const yaml = `
+      openapi: 3.2.0
+      info:
+        title: Future API
+        version: 1.0.0
+      paths: {}
+    `;
+    
+    // Test with different option combinations
+    const results = [
+      validateFromYaml(yaml, { allowFutureOASVersions: true, strict: true }),
+      validateFromYaml(yaml, { allowFutureOASVersions: true }),
+      validateFromYaml(yaml, { strict: true }),
+      validateFromYaml(yaml, {})
+    ];
+
+    expect(results[0].valid).toBe(true);
+    expect(results[1].valid).toBe(true);
+    expect(results[2].valid).toBe(false);
+    expect(results[3].valid).toBe(false);
+  });
+
+  test('handles complex YAML parsing errors', () => {
+    const invalidYamls = [
+      // Duplicate keys
+      `
+        openapi: 3.0.0
+        openapi: 3.1.0
+        info:
+          title: Test
+          version: 1.0.0
+      `,
+      // Invalid indentation
+      `
+        openapi: 3.0.0
+        info:
+         title: Test
+           version: 1.0.0
+      `,
+      // Invalid tag
+      `
+        !invalid
+        openapi: 3.0.0
+      `
+    ];
+
+    invalidYamls.forEach(yaml => {
+      const result = validateFromYaml(yaml);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
   });
 });

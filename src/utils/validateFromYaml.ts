@@ -1,40 +1,41 @@
 import { load } from 'js-yaml';
 import { validateOpenAPI, ValidationOptions, ValidationResult } from '../schemas/validator';
-import { z } from 'zod';
 
-/**
- * Validates an OpenAPI specification from a YAML string
- * @param yamlString The YAML string containing the OpenAPI specification
- * @param options Validation options
- * @returns ValidationResult object
- */
 export function validateFromYaml(
   yamlString: string, 
   options: ValidationOptions = {}
 ): ValidationResult {
+  if (typeof yamlString !== 'string') {
+    return {
+      valid: false,
+      errors: new Error('Input must be a string'),
+    };
+  }
+
+  if (!yamlString.trim()) {
+    return {
+      valid: false,
+      errors: new Error('Input cannot be empty'),
+    };
+  }
+
   try {
     const parsed = load(yamlString);
-    if (typeof parsed !== 'object' || parsed === null) {
+    
+    if (parsed === null || typeof parsed !== 'object') {
       return {
         valid: false,
-        errors: new z.ZodError([{
-          code: z.ZodIssueCode.custom,
-          path: [],
-          message: 'YAML must contain an object'
-        }]),
-        resolvedRefs: []
+        errors: new Error('YAML must contain an object'),
       };
     }
+
     return validateOpenAPI(parsed, options);
   } catch (error) {
     return {
       valid: false,
-      errors: new z.ZodError([{
-        code: z.ZodIssueCode.custom,
-        path: [],
-        message: error instanceof Error ? error.message : 'Invalid YAML'
-      }]),
-      resolvedRefs: []
+      errors: error instanceof Error 
+        ? error 
+        : new Error('Failed to parse YAML content'),
     };
   }
 }
