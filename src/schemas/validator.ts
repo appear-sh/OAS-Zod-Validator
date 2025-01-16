@@ -16,12 +16,16 @@ export interface ValidationResult {
 
 function detectOpenAPIVersion(doc: Record<string, unknown>): '3.0' | '3.1' {
   if (!doc || typeof doc.openapi !== 'string') {
-    return '3.0'; // fallback or throw; your call
+    throw new Error('Invalid OpenAPI document: missing or invalid openapi version');
   }
+  
   if (doc.openapi.startsWith('3.1.')) {
     return '3.1';
   }
-  return '3.0';
+  if (doc.openapi.startsWith('3.0.')) {
+    return '3.0';
+  }
+  throw new Error(`Unsupported OpenAPI version: ${doc.openapi}`);
 }
 
 export function validateOpenAPI(
@@ -29,26 +33,13 @@ export function validateOpenAPI(
   options: ValidationOptions = {}
 ): ValidationResult {
   const resolvedRefs: string[] = [];
-
-  const trackRef = (obj: Record<string, unknown>): void => {
-    if (obj && typeof obj === 'object') {
-      if (obj.$ref && typeof obj.$ref === 'string') {
-        resolvedRefs.push(obj.$ref);
-      }
-      for (const value of Object.values(obj)) {
-        if (typeof value === 'object' && value !== null) {
-          trackRef(value as Record<string, unknown>);
-        }
-      }
-    }
-  };
-
+  
   try {
-    let parsed: Record<string, unknown>;
     const docAsObject = document as Record<string, unknown>;
+    let parsed: z.infer<typeof OpenAPIObject | typeof OpenAPIObject31>;
 
-    if (options.allowFutureOASVersions) {
-      // Use 3.1 schema for any future version
+    // Handle future versions first
+    if (options.allowFutureOASVersions && typeof docAsObject.openapi === 'string' && docAsObject.openapi.startsWith('3.')) {
       parsed = OpenAPIObject31.parse(docAsObject);
     } else {
       const version = detectOpenAPIVersion(docAsObject);
@@ -59,8 +50,6 @@ export function validateOpenAPI(
       }
     }
 
-    trackRef(parsed);
-
     if (options.strict) {
       verifyRefTargets(parsed, resolvedRefs);
     }
@@ -70,6 +59,10 @@ export function validateOpenAPI(
     if (error instanceof z.ZodError) {
       return { valid: false, errors: error, resolvedRefs };
     }
-    throw error;
+    return { valid: false, errors: new z.ZodError([{ 
+      code: z.ZodIssueCode.custom,
+      path: [],
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }]), resolvedRefs };
   }
 }

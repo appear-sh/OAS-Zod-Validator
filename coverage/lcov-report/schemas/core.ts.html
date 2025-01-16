@@ -124,23 +124,20 @@
 <a name='L59'></a><a href='#L59'>59</a>
 <a name='L60'></a><a href='#L60'>60</a>
 <a name='L61'></a><a href='#L61'>61</a>
-<a name='L62'></a><a href='#L62'>62</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">6x</span>
+<a name='L62'></a><a href='#L62'>62</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">40x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">41x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -162,12 +159,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">36x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">35x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">36x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">34x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -176,10 +176,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -197,7 +197,7 @@ export const ReferenceObject = z.object({
 });
 &nbsp;
 // Improved schema object with more specific types
-export const SchemaObject: z.ZodType&lt;any&gt; = z.lazy(() =&gt; 
+export const SchemaObject: z.ZodType = z.lazy(() =&gt; 
   z.object({
     type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
     format: z.enum([
@@ -206,7 +206,7 @@ export const SchemaObject: z.ZodType&lt;any&gt; = z.lazy(() =&gt;
     ]).optional(),
     title: z.string().optional(),
     description: z.string().optional(),
-    default: z.any().optional(),
+    default: z.unknown().optional(),
     nullable: z.boolean().optional(),
     deprecated: z.boolean().optional(),
     minLength: z.number().int().positive().optional(),
@@ -216,7 +216,7 @@ export const SchemaObject: z.ZodType&lt;any&gt; = z.lazy(() =&gt;
     maximum: z.number().optional(),
     exclusiveMinimum: z.boolean().optional(),
     exclusiveMaximum: z.boolean().optional(),
-    enum: z.array(z.any()).optional(),
+    enum: z.array(z.unknown()).optional(),
     required: z.array(z.string()).optional(),
     properties: z.record(z.string(), z.union([SchemaObject, ReferenceObject])).optional(),
     items: z.union([SchemaObject, ReferenceObject]).optional(),
@@ -232,19 +232,19 @@ export const SchemaObject: z.ZodType&lt;any&gt; = z.lazy(() =&gt;
     }
     return true;
   }, {
-    message: "Array types must define 'items' and object types must define 'properties' or 'additionalProperties'"
+    message: 'Array types must define items and object types must define properties or additionalProperties'
   })
 );
 &nbsp;
 // Extensible object with validation
-export const ExtensibleObject = z.object({}).catchall(z.any());
+export const ExtensibleObject = z.object({}).catchall(z.unknown());
 &nbsp;
 // If you want to keep vendor extension validation, use this instead:
-export const VendorExtensible = z.object({}).catchall(z.any()).refine(<span class="fstat-no" title="function not covered" >(v</span>al) =&gt; {
+export const VendorExtensible = z.object({}).catchall(z.unknown()).refine(<span class="fstat-no" title="function not covered" >(v</span>al) =&gt; {
   const extraKeys = <span class="cstat-no" title="statement not covered" >Object.keys(val).filter(<span class="fstat-no" title="function not covered" >key </span>=&gt; <span class="cstat-no" title="statement not covered" >!key.startsWith('x-'))</span>;</span>
 <span class="cstat-no" title="statement not covered" >  return extraKeys.length === 0;</span>
 }, {
-  message: "Custom extensions must start with 'x-'"
+  message: 'Custom extensions must start with x-'
 });
 &nbsp;</pre></td></tr></table></pre>
 
@@ -253,7 +253,7 @@ export const VendorExtensible = z.object({}).catchall(z.any()).refine(<span clas
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-01-16T05:24:09.353Z
+                at 2025-01-16T05:35:51.722Z
             </div>
         <script src="../prettify.js"></script>
         <script>

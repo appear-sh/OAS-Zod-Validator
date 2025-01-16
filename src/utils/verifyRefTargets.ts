@@ -1,16 +1,28 @@
-export function verifyRefTargets(openapiDoc: Record<string, unknown>, refs: string[]) {
-  if (!openapiDoc.components) return;
+import { get } from 'lodash';
 
-  // Example: If a reference is "#/components/schemas/User"
-  // we check that openapiDoc.components.schemas.User is defined.
-  for (const ref of refs) {
-    const pathParts = ref.substring(2).split('/'); // remove "#/" and split
-    let current: unknown = openapiDoc;
-    for (const part of pathParts) {
-      if (typeof current !== 'object' || current === null || !(part in current)) {
-        throw new Error(`Reference not found: ${ref}`);
+export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): void {
+  const collectRefs = (obj: unknown): void => {
+    if (!obj || typeof obj !== 'object') return;
+    
+    if (obj && typeof obj === 'object') {
+      if ('$ref' in obj && typeof obj.$ref === 'string') {
+        refs.push(obj.$ref);
       }
-      current = (current as Record<string, unknown>)[part];
+      
+      Object.values(obj).forEach(collectRefs);
     }
-  }
+  };
+
+  // First collect all refs
+  collectRefs(doc);
+
+  // Then verify each ref exists
+  refs.forEach(ref => {
+    const path = ref.substring(2).split('/');
+    const target = get(doc, path);
+    
+    if (!target) {
+      throw new Error(`Reference not found: ${ref}`);
+    }
+  });
 }

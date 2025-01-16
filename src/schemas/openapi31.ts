@@ -6,6 +6,7 @@ import { RequestBodyObject, ResponsesObject } from './requestResponse';
 const WebhookOperationObject = z.object({
   requestBody: RequestBodyObject.optional(),
   responses: ResponsesObject,
+  parameters: z.array(z.any()).optional(),
 }).passthrough();
 
 const WebhookObject = z.object({
@@ -19,17 +20,15 @@ const WebhookObject = z.object({
   trace: WebhookOperationObject.optional(),
 }).passthrough();
 
-const WebhooksObject = z.record(z.string(), WebhookObject);
-
 // Add explicit type annotation to fix compiler serialization error
 export const OpenAPIObject31: z.ZodType = z.object({
-  openapi: z.string().regex(/^3\.1\.\d+$/),
+  openapi: z.string().regex(/^3\.[1-9]\.\d+$/),
   info: z.object({
     title: z.string(),
     version: z.string(),
   }).passthrough(),
   jsonSchemaDialect: z.string().url().optional(),
-  webhooks: WebhooksObject.optional(),
+  webhooks: z.record(z.string(), WebhookObject).optional(),
   paths: PathsObject.optional(),
   components: ComponentsObject.optional(),
 }).passthrough();
