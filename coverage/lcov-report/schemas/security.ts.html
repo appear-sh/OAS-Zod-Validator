@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
@@ -110,7 +110,35 @@
 <a name='L45'></a><a href='#L45'>45</a>
 <a name='L46'></a><a href='#L46'>46</a>
 <a name='L47'></a><a href='#L47'>47</a>
-<a name='L48'></a><a href='#L48'>48</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -140,70 +168,75 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js"><span class="cstat-no" title="statement not covered" >import { z } from 'zod';</span>
+<span class="cstat-no" title="statement not covered" >import { ExtensibleObject } from './core';</span>
+&nbsp;
+export const <span class="cstat-no" title="statement not covered" >SecurityRequirementObject = z.record(z.array(z.string()));</span>
+&nbsp;
+const apiKeySchema = <span class="cstat-no" title="statement not covered" >z.object({</span>
+  type: z.literal('apiKey'),
+  name: z.string(),
+  in: z.enum(['header', 'query', 'cookie']),
+  description: z.string().optional(),
+}).merge(ExtensibleObject);
+&nbsp;
+const httpSchema = <span class="cstat-no" title="statement not covered" >z.object({</span>
+  type: z.literal('http'),
+  scheme: z.string(),
+  bearerFormat: z.string().optional(),
+  description: z.string().optional(),
+}).merge(ExtensibleObject);
+&nbsp;
+const oauth2Schema = <span class="cstat-no" title="statement not covered" >z.object({</span>
+  type: z.literal('oauth2'),
+  flows: z.object({
+    implicit: z.object({
+      authorizationUrl: z.string().url(),
+      refreshUrl: z.string().url().optional(),
+      scopes: z.record(z.string()),
+    }).merge(ExtensibleObject).optional(),
+    password: z.object({
+      tokenUrl: z.string().url(),
+      refreshUrl: z.string().url().optional(),
+      scopes: z.record(z.string()),
+    }).merge(ExtensibleObject).optional(),
+    clientCredentials: z.object({
+      tokenUrl: z.string().url(),
+      refreshUrl: z.string().url().optional(),
+      scopes: z.record(z.string()),
+    }).merge(ExtensibleObject).optional(),
+    authorizationCode: z.object({
+      authorizationUrl: z.string().url(),
+      tokenUrl: z.string().url(),
+      refreshUrl: z.string().url().optional(),
+      scopes: z.record(z.string()),
+    }).merge(ExtensibleObject).optional(),
+  }).merge(ExtensibleObject),
+  description: z.string().optional(),
+}).merge(ExtensibleObject);
+&nbsp;
+const openIdConnectSchema = <span class="cstat-no" title="statement not covered" >z.object({</span>
+  type: z.literal('openIdConnect'),
+  openIdConnectUrl: z.string().url(),
+  description: z.string().optional(),
+}).merge(ExtensibleObject);
 &nbsp;
 export const <span class="cstat-no" title="statement not covered" >SecuritySchemeObject = z.discriminatedUnion('type', [</span>
-  // API Key
-  z.object({
-    type: z.literal('apiKey'),
-    name: z.string(),
-    in: z.enum(['header', 'query', 'cookie']),
-    description: z.string().optional(),
-  }),
-  // HTTP
-  z.object({
-    type: z.literal('http'),
-    scheme: z.string(),
-    bearerFormat: z.string().optional(),
-    description: z.string().optional(),
-  }),
-  // OAuth2
-  z.object({
-    type: z.literal('oauth2'),
-    flows: z.object({
-      implicit: z.object({
-        authorizationUrl: z.string().url(),
-        scopes: z.record(z.string()),
-      }).optional(),
-      password: z.object({
-        tokenUrl: z.string().url(),
-        scopes: z.record(z.string()),
-      }).optional(),
-      clientCredentials: z.object({
-        tokenUrl: z.string().url(),
-        scopes: z.record(z.string()),
-      }).optional(),
-      authorizationCode: z.object({
-        authorizationUrl: z.string().url(),
-        tokenUrl: z.string().url(),
-        scopes: z.record(z.string()),
-      }).optional(),
-    }),
-    description: z.string().optional(),
-  }),
-  // OpenID Connect
-  z.object({
-    type: z.literal('openIdConnect'),
-    openIdConnectUrl: z.string().url(),
-    description: z.string().optional(),
-  }),
+  apiKeySchema,
+  httpSchema, 
+  oauth2Schema,
+  openIdConnectSchema
 ]);</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -211,7 +244,7 @@ export const <span class="cstat-no" title="statement not covered" >SecuritySchem
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-01-16T08:54:43.213Z
+                at 2025-01-16T08:58:52.588Z
             </div>
         <script src="../prettify.js"></script>
         <script>
