@@ -95,7 +95,16 @@ describe('OpenAPI 3.1 Specific Features', () => {
                 schema: { type: 'string' }
               }
             ],
-            responses: { '200': { description: 'OK' } }
+            responses: { 
+              '200': { 
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: { type: 'object' }
+                  }
+                }
+              } 
+            }
           }
         }
       }
@@ -103,5 +112,37 @@ describe('OpenAPI 3.1 Specific Features', () => {
     
     const result = validateOpenAPI(spec);
     expect(result.valid).toBe(true);
+  });
+
+  test('validates webhook with references', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          Event: { type: 'object' }
+        }
+      },
+      webhooks: {
+        '/onEvent': {
+          post: {
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: { $ref: '#/components/schemas/Event' }
+                }
+              }
+            },
+            responses: {
+              '200': { description: 'OK' }
+            }
+          }
+        }
+      }
+    };
+    
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(true);
+    expect(result.resolvedRefs).toContain('#/components/schemas/Event');
   });
 });

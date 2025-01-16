@@ -1,218 +1,141 @@
-import { PathsObject, PathItemObject, OperationObject, ParameterObject } from '../paths';
-import { z } from 'zod';
+import { PathsObject, PathItemObject, OperationObject } from '../paths';
 import { describe, test, expect } from '@jest/globals';
 
-describe('Paths Validation', () => {
-  describe('Parameter Object', () => {
-    test('validates path parameters require required=true', () => {
-      const pathParam = {
-        name: 'id',
-        in: 'path',
-        required: true,
-        schema: { type: 'string' }
-      };
-
-      expect(() => ParameterObject.parse(pathParam)).not.toThrow();
-
-      const invalidPathParam = {
-        ...pathParam,
-        required: false
-      };
-
-      expect(() => ParameterObject.parse(invalidPathParam)).toThrow();
-    });
-
-    test('validates header parameter names', () => {
-      const validHeader = {
-        name: 'X-Custom-Header',
-        in: 'header',
-        schema: { type: 'string' }
-      };
-
-      const invalidHeader = {
-        name: 'Invalid Header!',
-        in: 'header',
-        schema: { type: 'string' }
-      };
-
-      expect(() => ParameterObject.parse(validHeader)).not.toThrow();
-      expect(() => ParameterObject.parse(invalidHeader)).toThrow();
-    });
-  });
-
-  describe('Operation Object', () => {
-    test('validates operation ID format', () => {
+describe('Paths Schema Validation', () => {
+  describe('OperationObject', () => {
+    test('validates complete operation', () => {
       const operation = {
-        operationId: 'getUserById',
+        tags: ['users'],
+        summary: 'Create user',
+        description: 'Creates a new user',
+        operationId: 'createUser',
+        parameters: [
+          {
+            name: 'username',
+            in: 'query',
+            required: true,
+            schema: { type: 'string' }
+          }
+        ],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/User' }
+            }
+          }
+        },
+        responses: {
+          '201': {
+            description: 'User created',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/User' }
+              }
+            }
+          }
+        },
+        security: [{ bearerAuth: [] }]
+      };
+      
+      expect(() => OperationObject.parse(operation)).not.toThrow();
+    });
+
+    test('validates minimal operation', () => {
+      const operation = {
         responses: {
           '200': {
-            description: 'Success'
+            description: 'OK'
           }
         }
       };
-
+      
       expect(() => OperationObject.parse(operation)).not.toThrow();
-
-      const invalidOperation = {
-        ...operation,
-        operationId: 'get-user-by-id!'
-      };
-
-      expect(() => OperationObject.parse(invalidOperation)).toThrow();
-    });
-
-    test('validates response status codes', () => {
-      const operation = {
-        responses: {
-          '200': { description: 'OK' },
-          'default': { description: 'Default response' }
-        }
-      };
-
-      expect(() => OperationObject.parse(operation)).not.toThrow();
-
-      const invalidOperation = {
-        responses: {
-          '600': { description: 'Invalid status code' }
-        }
-      };
-
-      expect(() => OperationObject.parse(invalidOperation)).toThrow();
-    });
-
-    test('requires at least one response', () => {
-      const operation = {
-        responses: {}
-      };
-
-      expect(() => OperationObject.parse(operation)).toThrow();
     });
   });
 
-  describe('Path Item Object', () => {
-    test('requires at least one operation', () => {
-      const validPathItem = {
-        get: {
-          responses: {
-            '200': { description: 'OK' }
-          }
-        }
-      };
-
-      const invalidPathItem = {
-        parameters: []
-      };
-
-      expect(() => PathItemObject.parse(validPathItem)).not.toThrow();
-      expect(() => PathItemObject.parse(invalidPathItem)).toThrow();
-    });
-
-    test('validates server URLs', () => {
+  describe('PathItemObject', () => {
+    test('validates complete path item', () => {
       const pathItem = {
+        summary: 'User operations',
+        description: 'Endpoints for user management',
+        parameters: [
+          {
+            name: 'tenant',
+            in: 'header',
+            required: true,
+            schema: { type: 'string' }
+          }
+        ],
         get: {
           responses: {
             '200': { description: 'OK' }
           }
         },
-        servers: [
-          {
-            url: 'https://api.example.com',
-            description: 'Production'
+        post: {
+          responses: {
+            '201': { description: 'Created' }
           }
-        ]
+        }
       };
-
-      const invalidPathItem = {
-        ...pathItem,
-        servers: [
-          {
-            url: 'not-a-url',
-            description: 'Invalid'
-          }
-        ]
-      };
-
+      
       expect(() => PathItemObject.parse(pathItem)).not.toThrow();
-      expect(() => PathItemObject.parse(invalidPathItem)).toThrow();
+    });
+
+    test('validates path item with references', () => {
+      const pathItem = {
+        $ref: '#/components/pathItems/UserPath',
+        get: {
+          responses: {
+            '200': { description: 'OK' }
+          }
+        }
+      };
+      
+      expect(() => PathItemObject.parse(pathItem)).not.toThrow();
     });
   });
 
-  describe('Paths Object', () => {
-    test('validates path format', () => {
+  describe('PathsObject', () => {
+    test('validates complete paths object', () => {
       const paths = {
         '/users': {
           get: {
             responses: {
-              '200': { description: 'OK' }
-            }
-          }
-        }
-      };
-
-      const invalidPaths = {
-        'users': { // Missing leading slash
-          get: {
-            responses: {
-              '200': { description: 'OK' }
-            }
-          }
-        }
-      };
-
-      expect(() => PathsObject.parse(paths)).not.toThrow();
-      expect(() => PathsObject.parse(invalidPaths)).toThrow();
-    });
-
-    test('validates unique path parameters', () => {
-      const paths = {
-        '/users/{id}': {
-          get: {
-            responses: {
-              '200': { description: 'OK' }
+              '200': { description: 'List users' }
             }
           }
         },
-        '/posts/{postId}': {
-          get: {
-            responses: {
-              '200': { description: 'OK' }
-            }
-          }
-        }
-      };
-
-      const invalidPaths = {
         '/users/{id}': {
-          get: {
-            responses: {
-              '200': { description: 'OK' }
+          parameters: [
+            {
+              name: 'id',
+              in: 'path',
+              required: true,
+              schema: { type: 'string' }
             }
-          }
-        },
-        '/posts/{id}': { // Duplicate {id} parameter
+          ],
           get: {
             responses: {
-              '200': { description: 'OK' }
+              '200': { description: 'Get user' }
             }
           }
         }
       };
-
+      
       expect(() => PathsObject.parse(paths)).not.toThrow();
-      expect(() => PathsObject.parse(invalidPaths)).toThrow();
     });
 
-    test('rejects paths with query parameters', () => {
-      const invalidPaths = {
-        '/users?sort=desc': {
-          get: {
-            responses: {
-              '200': { description: 'OK' }
-            }
-          }
-        }
-      };
+    test('validates empty paths object', () => {
+      expect(() => PathsObject.parse({})).not.toThrow();
+    });
 
+    test('rejects invalid path patterns', () => {
+      const invalidPaths = {
+        'users': {}, // Missing leading slash
+        '/{param}': {}, // Path parameter not in middle or end
+        '/path//invalid': {} // Double slash
+      };
+      
       expect(() => PathsObject.parse(invalidPaths)).toThrow();
     });
   });

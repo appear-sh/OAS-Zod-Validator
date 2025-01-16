@@ -1,5 +1,6 @@
 import { ReferenceObject } from '../core';
 import { describe, test, expect } from '@jest/globals';
+import { z } from 'zod';
 
 describe('Core Schema Types', () => {
   describe('ReferenceObject', () => {
@@ -32,7 +33,11 @@ describe('Core Schema Types', () => {
       try {
         ReferenceObject.parse({ $ref: 'invalid' });
       } catch (error) {
-        expect(error.errors[0].message).toContain('References must start with "#/"');
+        if (error instanceof z.ZodError) {
+          expect(error.errors[0].message).toContain('References must start with "#/"');
+        } else {
+          throw error;
+        }
       }
     });
   });

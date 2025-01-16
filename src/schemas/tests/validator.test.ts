@@ -406,6 +406,50 @@ describe('OpenAPI Validator', () => {
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
   });
+
+  test('resolves nested references', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          User: {
+            type: 'object',
+            properties: {
+              profile: { $ref: '#/components/schemas/Profile' }
+            }
+          },
+          Profile: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' }
+            }
+          }
+        }
+      },
+      paths: {
+        '/users': {
+          get: {
+            responses: {
+              '200': {
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/User' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(true);
+    expect(result.resolvedRefs).toContain('#/components/schemas/User');
+    expect(result.resolvedRefs).toContain('#/components/schemas/Profile');
+  });
 });
 
 describe('OpenAPI Version Detection', () => {
