@@ -197,4 +197,21 @@ describe('YAML Validation', () => {
       expect(result.errors).toBeDefined();
     });
   });
+
+  test('provides specific error messages for different error types', () => {
+    // Test non-string error message
+    const numberInput = 42;
+    const result1 = validateFromYaml(numberInput as any);
+    expect(result1.errors?.errors[0].message).toBe('Input must be a string');
+
+    // Test YAML parsing error message
+    const invalidYaml = ']invalid[';
+    const result2 = validateFromYaml(invalidYaml);
+    expect(result2.errors?.errors[0].message).toMatch(/end of the stream or a document separator is expected/);
+
+    // Test custom error handling
+    const arrayYaml = '- item1\n- item2';
+    const result3 = validateFromYaml(arrayYaml);
+    expect(result3.errors?.errors[0].message).toBe('YAML must contain an object');
+  });
 });

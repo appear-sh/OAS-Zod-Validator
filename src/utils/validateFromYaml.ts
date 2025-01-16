@@ -1,6 +1,7 @@
 import { load } from 'js-yaml';
 import { validateOpenAPI, ValidationOptions, ValidationResult } from '../schemas/validator';
 import { z } from 'zod';
+import fs from 'fs';
 
 export function validateFromYaml(
   yamlString: string, 
@@ -63,23 +64,33 @@ export function validateFromYaml(
   }
 }
 
-// Example usage:
+// CLI handling
 if (require.main === module) {
-  const fileName = process.argv[2];
+  const args = process.argv.slice(2);
+  const fileName = args[0];
+  const options: ValidationOptions = {
+    allowFutureOASVersions: args.includes('--allow-future'),
+    strict: args.includes('--strict')
+  };
+
   if (!fileName) {
-    console.error('Usage: node validateFromYaml.js <path-to-yaml>');
+    console.error('Usage: ts-node validateFromYaml.ts <path-to-yaml> [--allow-future] [--strict]');
     process.exit(1);
   }
-  
+
   try {
-    const result = validateFromYaml(fileName);
+    const yamlContent = fs.readFileSync(fileName, 'utf-8');
+    const result = validateFromYaml(yamlContent, options);
+    
     if (result.valid) {
-      console.log('YAML spec is valid OAS:', result.resolvedRefs);
+      console.log('YAML spec is valid OAS');
+      process.exit(0);
     } else {
-      console.error('YAML spec is invalid OAS:', result.errors);
+      console.error('YAML spec is invalid:', result.errors);
+      process.exit(1);
     }
   } catch (err) {
-    console.error('Error validating YAML:', err);
+    console.error('Error reading or validating YAML file:', err);
     process.exit(1);
   }
 }
