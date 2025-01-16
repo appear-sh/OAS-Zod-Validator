@@ -391,4 +391,19 @@ describe('OpenAPI Validator', () => {
     expect(result.resolvedRefs).toContain('#/components/schemas/User');
     expect(result.resolvedRefs).toContain('#/components/responses/SuccessResponse');
   });
+
+  test('allows future versions with allowFutureOASVersions flag', () => {
+    const futureSpec = {
+      openapi: '3.2.0',
+      info: {
+        title: 'Future API',
+        version: '1.0.0'
+      },
+      paths: {}
+    };
+
+    const result = validateOpenAPI(futureSpec, { allowFutureOASVersions: true });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
 });
