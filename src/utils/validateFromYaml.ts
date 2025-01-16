@@ -1,7 +1,6 @@
 import { load } from 'js-yaml';
 import { validateOpenAPI, ValidationOptions, ValidationResult } from '../schemas/validator';
 import { z } from 'zod';
-import fs from 'fs';
 
 export function validateFromYaml(
   yamlString: string, 
@@ -21,22 +20,10 @@ export function validateFromYaml(
     };
   }
 
-  if (!yamlString.trim()) {
-    return {
-      valid: false,
-      errors: new z.ZodError([{
-        code: z.ZodIssueCode.custom,
-        path: [],
-        message: 'Input cannot be empty'
-      }]),
-      resolvedRefs: []
-    };
-  }
-
   try {
     const parsed = load(yamlString);
     
-    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return {
         valid: false,
         errors: new z.ZodError([{
@@ -61,36 +48,5 @@ export function validateFromYaml(
       }]),
       resolvedRefs: []
     };
-  }
-}
-
-// CLI handling
-if (require.main === module) {
-  const args = process.argv.slice(2);
-  const fileName = args[0];
-  const options: ValidationOptions = {
-    allowFutureOASVersions: args.includes('--allow-future'),
-    strict: args.includes('--strict')
-  };
-
-  if (!fileName) {
-    console.error('Usage: ts-node validateFromYaml.ts <path-to-yaml> [--allow-future] [--strict]');
-    process.exit(1);
-  }
-
-  try {
-    const yamlContent = fs.readFileSync(fileName, 'utf-8');
-    const result = validateFromYaml(yamlContent, options);
-    
-    if (result.valid) {
-      console.log('YAML spec is valid OAS');
-      process.exit(0);
-    } else {
-      console.error('YAML spec is invalid:', result.errors);
-      process.exit(1);
-    }
-  } catch (err) {
-    console.error('Error reading or validating YAML file:', err);
-    process.exit(1);
   }
 }

@@ -201,7 +201,7 @@ describe('YAML Validation', () => {
   test('provides specific error messages for different error types', () => {
     // Test non-string error message
     const numberInput = 42;
-    const result1 = validateFromYaml(numberInput as any);
+    const result1 = validateFromYaml(numberInput as unknown as string);
     expect(result1.errors?.errors[0].message).toBe('Input must be a string');
 
     // Test YAML parsing error message
