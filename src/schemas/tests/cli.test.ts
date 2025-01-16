@@ -1,13 +1,29 @@
-import { runCLI } from '../cli';
-import { describe, test, expect, jest, beforeEach, beforeAll, afterAll } from '@jest/globals';
+const mockReadFileSync = jest.fn();
+const mockExistsSync = jest.fn();
+const mockMkdirSync = jest.fn();
+const mockRmSync = jest.fn();
+
+jest.mock('fs', () => ({
+  default: {
+    readFileSync: mockReadFileSync,
+    existsSync: mockExistsSync,
+    mkdirSync: mockMkdirSync,
+    rmSync: mockRmSync
+  },
+  readFileSync: mockReadFileSync,
+  existsSync: mockExistsSync,
+  mkdirSync: mockMkdirSync,
+  rmSync: mockRmSync
+}));
+jest.mock('../../utils/validateFromYaml');
+
+import { runCLI } from '../cli'; 
+import { describe, test, expect, jest, beforeEach, beforeAll, afterAll, afterEach } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 import { execSync, ExecSyncOptions } from 'child_process';
 import { validateFromYaml } from '../../utils/validateFromYaml';
 import { z } from 'zod';
-
-jest.mock('fs');
-jest.mock('../../utils/validateFromYaml');
 
 describe('CLI Unit Tests', () => {
   const mockValidateFromYaml = jest.mocked(validateFromYaml);
@@ -19,6 +35,10 @@ describe('CLI Unit Tests', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(() => {
+    jest.resetModules();
+  });
+
   test('shows usage when no filename provided', () => {
     runCLI([]);
     expect(mockConsoleError).toHaveBeenCalledWith(expect.stringContaining('Usage:'));
@@ -26,7 +46,7 @@ describe('CLI Unit Tests', () => {
   });
 
   test('handles file read errors', () => {
-    (fs.readFileSync as jest.Mock).mockImplementation(() => {
+    mockReadFileSync.mockImplementationOnce(() => {
       throw new Error('File not found');
     });
 
@@ -39,7 +59,7 @@ describe('CLI Unit Tests', () => {
   });
 
   test('handles validation success', () => {
-    (fs.readFileSync as jest.Mock).mockReturnValue('valid yaml');
+    mockReadFileSync.mockReturnValue('valid yaml');
     mockValidateFromYaml.mockReturnValue({ valid: true, resolvedRefs: [] });
 
     runCLI(['valid.yaml']);
@@ -48,7 +68,7 @@ describe('CLI Unit Tests', () => {
   });
 
   test('handles validation failure', () => {
-    (fs.readFileSync as jest.Mock).mockReturnValue('invalid yaml');
+    mockReadFileSync.mockReturnValue('invalid yaml');
     mockValidateFromYaml.mockReturnValue({ 
       valid: false, 
       errors: new z.ZodError([{
@@ -69,61 +89,69 @@ describe('CLI Unit Tests', () => {
 });
 
 describe('CLI Integration Tests', () => {
-  const testDir = path.join(__dirname, 'test-specs');
+  const testDir = path.resolve(__dirname, 'test-specs');
   const execOptions: ExecSyncOptions = { 
     stdio: 'pipe',
-    encoding: 'utf-8'
+    encoding: 'utf-8',
+    cwd: path.resolve(__dirname, '../..')
   };
   
+  const cliPath = path.resolve(__dirname, '../cli.ts');
+  
+  // Store real fs module
+  let realFs: typeof fs;
+  
   beforeAll(() => {
-    if (!fs.existsSync(testDir)) {
-      fs.mkdirSync(testDir, { recursive: true });
+    // Ensure no mocks are active
+    jest.unmock('fs');
+    jest.unmock('../../utils/validateFromYaml');
+    
+    // Re-import real fs
+    realFs = jest.requireActual('fs');
+    
+    if (realFs.existsSync(testDir)) {
+      realFs.rmSync(testDir, { recursive: true });
     }
+    realFs.mkdirSync(testDir, { recursive: true });
   });
 
   afterAll(() => {
-    if (fs.existsSync(testDir)) {
-      fs.rmSync(testDir, { recursive: true });
+    if (realFs.existsSync(testDir)) {
+      realFs.rmSync(testDir, { recursive: true });
     }
   });
 
   test('validates valid YAML file with different options', () => {
     const validYaml = `
-      openapi: 3.0.0
-      info:
-        title: Test API
-        version: 1.0.0
-      paths: {}
-    `;
-    const validFile = path.join(testDir, 'valid.yaml');
-    fs.writeFileSync(validFile, validYaml);
-
-    const scriptPath = path.resolve(__dirname, './cli.ts');
+openapi: 3.0.0
+info:
+  title: Test API
+  version: 1.0.0
+paths: {}
+`;
+    const validFile = path.resolve(testDir, 'valid.yaml');
+    realFs.writeFileSync(validFile, validYaml, 'utf8');
     
-    const outputStrict = execSync(
-      `npx ts-node ${scriptPath} ${validFile} --strict`,
-      execOptions
-    ).toString();
-    expect(outputStrict).toContain('YAML spec is valid OAS');
+    const command = `node -r ts-node/register "${cliPath}" "${validFile}" --strict`;
+    const outputStrict = execSync(command, execOptions);
+    expect(outputStrict.toString()).toContain('YAML spec is valid OAS');
   });
 
   test('handles invalid YAML syntax', () => {
     const invalidYaml = `
-      openapi: 3.0.0
-      info:
-        title: Test API
-        version: 1.0.0
-      paths:
-        *invalid-anchor
-    `;
-    const invalidFile = path.join(testDir, 'invalid-syntax.yaml');
-    fs.writeFileSync(invalidFile, invalidYaml);
+openapi: 3.0.0
+info:
+  title: Test API
+  version: 1.0.0
+paths:
+  *invalid-anchor
+`;
+    const invalidFile = path.resolve(testDir, 'invalid-syntax.yaml');
+    realFs.writeFileSync(invalidFile, invalidYaml, 'utf8');
 
-    const scriptPath = path.resolve(__dirname, './cli.ts');
-    const result = execSync(
-      `npx ts-node ${scriptPath} ${invalidFile}`,
-      execOptions
-    ).toString();
-    expect(result).toContain('YAML spec is invalid');
+    const command = `node -r ts-node/register "${cliPath}" "${invalidFile}"`;
+    expect(() => {
+      execSync(command, execOptions);
+    }).toThrow(/YAML spec is invalid/);
   });
 });
