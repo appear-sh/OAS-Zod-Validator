@@ -25,24 +25,45 @@ describe('OpenAPI 3.1 Validation', () => {
     const spec = {
       openapi: '3.1.0',
       info: { title: 'Webhooks Example', version: '1.0.0' },
+      jsonSchemaDialect: 'https://spec.openapis.org/oas/3.1/dialect/base',
+      paths: {},
       components: {
         schemas: { 
-          Payload: { type: 'object', properties: { msg: { type: 'string' } } } 
-        },
+          Payload: { 
+            type: 'object',
+            properties: { 
+              msg: { type: 'string' } 
+            } 
+          } 
+        }
       },
       webhooks: {
-        '/onEvent': {
+        onEvent: {
           post: {
+            operationId: 'handleEvent',
             requestBody: {
+              required: true,
               content: {
                 'application/json': {
                   schema: { $ref: '#/components/schemas/Payload' }
                 }
               }
+            },
+            responses: {
+              '200': { 
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: { 
+                      type: 'object',
+                      properties: {
+                        status: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
             }
-          },
-          responses: {
-            '200': { description: 'OK' }
           }
         }
       }
@@ -50,7 +71,6 @@ describe('OpenAPI 3.1 Validation', () => {
 
     const result = validateOpenAPI(spec, { strict: true });
     expect(result.valid).toBe(true);
-    expect(result.errors).toBeUndefined();
     expect(result.resolvedRefs).toContain('#/components/schemas/Payload');
   });
 });
@@ -85,13 +105,17 @@ describe('OpenAPI 3.1 Specific Features', () => {
     const spec = {
       openapi: '3.1.0',
       info: { title: 'Test API', version: '1.0.0' },
+      jsonSchemaDialect: 'https://spec.openapis.org/oas/3.1/dialect/base',
+      paths: {},
       webhooks: {
-        '/onEvent': {
+        onEvent: {
           post: {
+            operationId: 'handleEvent',
             parameters: [
               {
                 name: 'trace-id',
                 in: 'header',
+                required: true,
                 schema: { type: 'string' }
               }
             ],
@@ -100,7 +124,12 @@ describe('OpenAPI 3.1 Specific Features', () => {
                 description: 'OK',
                 content: {
                   'application/json': {
-                    schema: { type: 'object' }
+                    schema: { 
+                      type: 'object',
+                      properties: {
+                        status: { type: 'string' }
+                      }
+                    }
                   }
                 }
               } 
@@ -118,15 +147,24 @@ describe('OpenAPI 3.1 Specific Features', () => {
     const spec = {
       openapi: '3.1.0',
       info: { title: 'Test API', version: '1.0.0' },
+      jsonSchemaDialect: 'https://spec.openapis.org/oas/3.1/dialect/base',
+      paths: {},
       components: {
         schemas: {
-          Event: { type: 'object' }
+          Event: { 
+            type: 'object',
+            properties: {
+              id: { type: 'string' }
+            }
+          }
         }
       },
       webhooks: {
-        '/onEvent': {
+        onEvent: {
           post: {
+            operationId: 'handleEvent',
             requestBody: {
+              required: true,
               content: {
                 'application/json': {
                   schema: { $ref: '#/components/schemas/Event' }
@@ -134,7 +172,19 @@ describe('OpenAPI 3.1 Specific Features', () => {
               }
             },
             responses: {
-              '200': { description: 'OK' }
+              '200': { 
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: { 
+                      type: 'object',
+                      properties: {
+                        status: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }

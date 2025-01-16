@@ -5,19 +5,30 @@ describe('Request/Response Schema Types', () => {
   describe('MediaTypeObject', () => {
     test('validates basic media type object', () => {
       const mediaType = {
-        schema: { type: 'object' },
-        example: { id: 1, name: 'test' }
+        schema: { 
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            name: { type: 'string' }
+          }
+        },
+        example: { id: '1', name: 'test' }
       };
       expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
     });
 
     test('validates media type with examples', () => {
       const mediaType = {
-        schema: { type: 'object' },
+        schema: { 
+          type: 'object',
+          properties: {
+            id: { type: 'string' }
+          }
+        },
         examples: {
           test: {
             summary: 'Test example',
-            value: { id: 1 }
+            value: { id: '1' }
           }
         }
       };
@@ -35,6 +46,66 @@ describe('Request/Response Schema Types', () => {
       };
       expect(() => MediaTypeObject.parse(mediaType)).toThrow();
     });
+
+    test('validates media type with schema', () => {
+      const mediaType = {
+        schema: { 
+          type: 'object',
+          properties: {
+            id: { type: 'string' }
+          }
+        }
+      };
+      expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
+    });
+
+    test('validates media type with example', () => {
+      const mediaType = {
+        schema: { type: 'string' },
+        example: 'test-value'
+      };
+      expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
+    });
+
+    test('validates media type with encoding', () => {
+      const mediaType = {
+        schema: { 
+          type: 'object',
+          properties: {
+            profileImage: { type: 'string', format: 'binary' }
+          }
+        },
+        encoding: {
+          profileImage: {
+            contentType: 'image/png',
+            headers: {
+              'X-Upload-Token': {
+                schema: { 
+                  type: 'string',
+                  properties: {
+                    token: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      };
+      expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
+    });
+
+    test('rejects invalid examples combination', () => {
+      const mediaType = {
+        schema: { type: 'string' },
+        examples: {
+          test: {
+            value: 'test',
+            externalValue: 'http://example.com/test' // Can't have both
+          }
+        }
+      };
+      expect(() => MediaTypeObject.parse(mediaType)).toThrow();
+    });
   });
 
   describe('RequestBodyObject', () => {
@@ -44,7 +115,12 @@ describe('Request/Response Schema Types', () => {
         required: true,
         content: {
           'application/json': {
-            schema: { type: 'object' }
+            schema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' }
+              }
+            }
           }
         }
       };
@@ -73,7 +149,12 @@ describe('Request/Response Schema Types', () => {
         },
         content: {
           'application/json': {
-            schema: { type: 'object' }
+            schema: {
+              type: 'object',
+              properties: {
+                result: { type: 'string' }
+              }
+            }
           }
         }
       };

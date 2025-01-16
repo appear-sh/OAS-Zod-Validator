@@ -1,4 +1,4 @@
-import { ReferenceObject } from '../core';
+import { ExtensibleObject, ReferenceObject } from '../core';
 import { describe, test, expect } from '@jest/globals';
 import { z } from 'zod';
 
@@ -39,6 +39,39 @@ describe('Core Schema Types', () => {
           throw error;
         }
       }
+    });
+  });
+
+  describe('ExtensibleObject', () => {
+    test('allows x- prefixed extension fields', () => {
+      const obj = {
+        'x-custom-field': 'value',
+        'x-another-field': 123,
+        'x-object-field': { nested: true }
+      };
+      expect(() => ExtensibleObject.parse(obj)).not.toThrow();
+    });
+
+    test('handles non x- prefixed fields', () => {
+      const obj = {
+        'invalid-field': 'value',
+        'another_invalid': 123,
+        'normalField': true
+      };
+      const result = ExtensibleObject.safeParse(obj);
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.errors[0].message).toContain('Unknown field');
+      }
+    });
+
+    test('allows mixed valid fields and extensions', () => {
+      const obj = {
+        type: 'string',
+        format: 'email',
+        'x-custom-validation': true
+      };
+      expect(() => ExtensibleObject.parse(obj)).not.toThrow();
     });
   });
 });

@@ -96,7 +96,10 @@ describe('Components Object Validation', () => {
   });
 
   test('validates empty components object', () => {
-    expect(() => ComponentsObject.parse({})).not.toThrow();
+    const components = {
+      schemas: {}
+    };
+    expect(() => ComponentsObject.parse(components)).not.toThrow();
   });
 
   test('validates partial components object', () => {

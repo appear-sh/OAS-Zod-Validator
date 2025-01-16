@@ -341,17 +341,7 @@ describe('OpenAPI Validator', () => {
       },
       paths: {
         '/users': {
-          post: {
-            requestBody: {
-              required: true,
-              content: {
-                'application/json': {
-                  schema: {
-                    $ref: '#/components/schemas/User'
-                  }
-                }
-              }
-            },
+          get: {
             responses: {
               '200': {
                 $ref: '#/components/responses/SuccessResponse'
@@ -385,7 +375,7 @@ describe('OpenAPI Validator', () => {
       }
     };
 
-    const result = validateOpenAPI(specWithRefs);
+    const result = validateOpenAPI(specWithRefs, { strict: true });
     expect(result.valid).toBe(true);
     expect(result.resolvedRefs).toBeDefined();
     expect(result.resolvedRefs).toContain('#/components/schemas/User');
@@ -530,5 +520,78 @@ describe('Validator Error Handling', () => {
     const result = validateOpenAPI(specWithBadRef, { strict: true });
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
+  });
+});
+
+describe('Version Detection', () => {
+  test('handles version 3.0.x correctly', () => {
+    ['3.0.0', '3.0.1', '3.0.3'].forEach(version => {
+      const doc = {
+        openapi: version,
+        info: { 
+          title: 'Test API', 
+          version: '1.0.0' 
+        },
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  description: 'OK',
+                  content: {
+                    'application/json': {
+                      schema: { 
+                        type: 'object',
+                        properties: {
+                          message: { type: 'string' }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        components: {
+          schemas: {
+            Test: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' }
+              }
+            }
+          }
+        }
+      };
+      const result = validateOpenAPI(doc);
+      expect(result.valid).toBe(true);
+    });
+  });
+
+  test('handles version 3.1.x correctly', () => {
+    ['3.1.0', '3.1.1'].forEach(version => {
+      const doc = {
+        openapi: version,
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {},
+        jsonSchemaDialect: 'https://spec.openapis.org/oas/3.1/dialect/base'
+      };
+      const result = validateOpenAPI(doc);
+      expect(result.valid).toBe(true);
+    });
+  });
+
+  test('rejects invalid versions', () => {
+    ['2.0', '4.0.0', '3.2.0', 'invalid'].forEach(version => {
+      const doc = {
+        openapi: version,
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {}
+      };
+      const result = validateOpenAPI(doc, { allowFutureOASVersions: false });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
   });
 });

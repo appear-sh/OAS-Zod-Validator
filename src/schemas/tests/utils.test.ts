@@ -92,20 +92,28 @@ describe('Reference Target Verification Error Handling', () => {
     const doc = {
       openapi: '3.0.0',
       info: { title: 'Test API', version: '1.0.0' },
+      paths: {},
       components: {
         schemas: {
           Deep: {
             type: 'object',
+            required: ['nested'],
             properties: {
               nested: {
                 type: 'object',
+                required: ['ref'],
                 properties: {
-                  ref: { $ref: '#/components/schemas/Target' }
+                  ref: { 
+                    $ref: '#/components/schemas/Target'
+                  }
                 }
               }
             }
           },
-          Target: { type: 'string' }
+          Target: { 
+            type: 'string',
+            description: 'A target string'
+          }
         }
       }
     };
