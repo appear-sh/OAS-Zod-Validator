@@ -1,5 +1,6 @@
 import { load } from 'js-yaml';
 import { validateOpenAPI, ValidationOptions, ValidationResult } from '../schemas/validator';
+import { z } from 'zod';
 
 export function validateFromYaml(
   yamlString: string, 
@@ -8,24 +9,43 @@ export function validateFromYaml(
   if (typeof yamlString !== 'string') {
     return {
       valid: false,
-      errors: new Error('Input must be a string'),
+      errors: new z.ZodError([{
+        code: z.ZodIssueCode.invalid_type,
+        expected: 'string',
+        received: typeof yamlString,
+        path: [],
+        message: 'Input must be a string'
+      }]),
+      resolvedRefs: []
     };
   }
 
   if (!yamlString.trim()) {
     return {
       valid: false,
-      errors: new Error('Input cannot be empty'),
+      errors: new z.ZodError([{
+        code: z.ZodIssueCode.custom,
+        path: [],
+        message: 'Input cannot be empty'
+      }]),
+      resolvedRefs: []
     };
   }
 
   try {
     const parsed = load(yamlString);
     
-    if (parsed === null || typeof parsed !== 'object') {
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return {
         valid: false,
-        errors: new Error('YAML must contain an object'),
+        errors: new z.ZodError([{
+          code: z.ZodIssueCode.invalid_type,
+          expected: 'object',
+          received: Array.isArray(parsed) ? 'array' : typeof parsed,
+          path: [],
+          message: 'YAML must contain an object'
+        }]),
+        resolvedRefs: []
       };
     }
 
@@ -33,9 +53,12 @@ export function validateFromYaml(
   } catch (error) {
     return {
       valid: false,
-      errors: error instanceof Error 
-        ? error 
-        : new Error('Failed to parse YAML content'),
+      errors: new z.ZodError([{
+        code: z.ZodIssueCode.custom,
+        path: [],
+        message: error instanceof Error ? error.message : 'Failed to parse YAML content'
+      }]),
+      resolvedRefs: []
     };
   }
 }

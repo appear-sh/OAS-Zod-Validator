@@ -25,9 +25,9 @@ describe('validateFromYaml CLI', () => {
   });
 
   test('handles missing filename argument', () => {
-    const scriptPath = path.join(__dirname, '../validateFromYaml.ts');
+    const scriptPath = path.join(__dirname, '../../utils/validateFromYaml.ts');
     expect(() => {
-      execSync(`ts-node ${scriptPath}`, execOptions);
+      execSync(`npx ts-node ${scriptPath}`, execOptions);
     }).toThrow();
   });
 
@@ -42,8 +42,8 @@ describe('validateFromYaml CLI', () => {
     const validFile = path.join(testDir, 'valid.yaml');
     fs.writeFileSync(validFile, validYaml);
 
-    const scriptPath = path.join(__dirname, '../validateFromYaml.ts');
-    const output = execSync(`ts-node ${scriptPath} ${validFile}`, execOptions);
+    const scriptPath = path.join(__dirname, '../../utils/validateFromYaml.ts');
+    const output = execSync(`npx ts-node ${scriptPath} ${validFile}`, execOptions);
     expect(output).toContain('YAML spec is valid OAS');
   });
 
@@ -58,16 +58,16 @@ describe('validateFromYaml CLI', () => {
     const invalidFile = path.join(testDir, 'invalid.yaml');
     fs.writeFileSync(invalidFile, invalidYaml);
 
-    const scriptPath = path.join(__dirname, '../validateFromYaml.ts');
+    const scriptPath = path.join(__dirname, '../../utils/validateFromYaml.ts');
     expect(() => {
-      execSync(`ts-node ${scriptPath} ${invalidFile}`, execOptions);
+      execSync(`npx ts-node ${scriptPath} ${invalidFile}`, execOptions);
     }).toThrow();
   });
 
   test('handles non-existent file', () => {
-    const scriptPath = path.join(__dirname, '../validateFromYaml.ts');
+    const scriptPath = path.join(__dirname, '../../utils/validateFromYaml.ts');
     expect(() => {
-      execSync(`ts-node ${scriptPath} non-existent.yaml`, execOptions);
+      execSync(`npx ts-node ${scriptPath} non-existent.yaml`, execOptions);
     }).toThrow();
   });
 });
