@@ -4,13 +4,12 @@ export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): 
   const collectRefs = (obj: unknown): void => {
     if (!obj || typeof obj !== 'object') return;
     
-    if (obj && typeof obj === 'object') {
-      if ('$ref' in obj && typeof obj.$ref === 'string') {
-        refs.push(obj.$ref);
-      }
-      
-      Object.values(obj).forEach(collectRefs);
+    if ('$ref' in obj && typeof obj.$ref === 'string') {
+      refs.push(obj.$ref);
+      return; // Stop recursing after finding a ref
     }
+    
+    Object.values(obj).forEach(collectRefs);
   };
 
   // First collect all refs

@@ -20,15 +20,98 @@ describe('YAML Validation', () => {
 describe('Reference Target Verification', () => {
   test('verifies valid references', () => {
     const doc = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                $ref: '#/components/responses/Success'
+              }
+            }
+          }
+        }
+      },
       components: {
-        schemas: {
-          User: { type: 'object' }
+        responses: {
+          Success: {
+            description: 'Successful response'
+          }
         }
       }
     };
-    const refs = ['#/components/schemas/User'];
-    const result = validateOpenAPI(doc);
+    
+    const result = validateOpenAPI(doc, { strict: true });
     expect(result.valid).toBe(true);
-    expect(result.resolvedRefs).toContain(refs[0]);
+    expect(result.resolvedRefs).toContain('#/components/responses/Success');
+  });
+
+  test('catches invalid references', () => {
+    const doc = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                $ref: '#/components/responses/NonExistent'
+              }
+            }
+          }
+        }
+      }
+    };
+    
+    const result = validateOpenAPI(doc, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+});
+
+describe('Reference Target Verification Error Handling', () => {
+  test('handles circular references', () => {
+    const doc = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          A: { $ref: '#/components/schemas/B' },
+          B: { $ref: '#/components/schemas/A' }
+        }
+      }
+    };
+    
+    const result = validateOpenAPI(doc, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('handles deeply nested references', () => {
+    const doc = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          Deep: {
+            type: 'object',
+            properties: {
+              nested: {
+                type: 'object',
+                properties: {
+                  ref: { $ref: '#/components/schemas/Target' }
+                }
+              }
+            }
+          },
+          Target: { type: 'string' }
+        }
+      }
+    };
+    
+    const result = validateOpenAPI(doc, { strict: true });
+    expect(result.valid).toBe(true);
+    expect(result.resolvedRefs).toContain('#/components/schemas/Target');
   });
 });

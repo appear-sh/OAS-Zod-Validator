@@ -26,7 +26,9 @@ describe('OpenAPI 3.1 Validation', () => {
       openapi: '3.1.0',
       info: { title: 'Webhooks Example', version: '1.0.0' },
       components: {
-        schemas: { Payload: { type: 'object', properties: { msg: { type: 'string' } } } },
+        schemas: { 
+          Payload: { type: 'object', properties: { msg: { type: 'string' } } } 
+        },
       },
       webhooks: {
         '/onEvent': {
@@ -39,7 +41,9 @@ describe('OpenAPI 3.1 Validation', () => {
               }
             }
           },
-          responses: { '200': { description: 'OK' } }
+          responses: {
+            '200': { description: 'OK' }
+          }
         }
       }
     };
@@ -48,5 +52,56 @@ describe('OpenAPI 3.1 Validation', () => {
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
     expect(result.resolvedRefs).toContain('#/components/schemas/Payload');
+  });
+});
+
+describe('OpenAPI 3.1 Specific Features', () => {
+  test('validates jsonSchemaDialect field', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      jsonSchemaDialect: 'https://json-schema.org/draft/2020-12/schema',
+      paths: {}
+    };
+    
+    const result = validateOpenAPI(spec);
+    expect(result.valid).toBe(true);
+  });
+
+  test('rejects invalid jsonSchemaDialect URLs', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      jsonSchemaDialect: 'not-a-url',
+      paths: {}
+    };
+    
+    const result = validateOpenAPI(spec);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('validates webhook operation parameters', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      webhooks: {
+        '/onEvent': {
+          post: {
+            parameters: [
+              {
+                name: 'trace-id',
+                in: 'header',
+                schema: { type: 'string' }
+              }
+            ],
+            responses: { '200': { description: 'OK' } }
+          }
+        }
+      }
+    };
+    
+    const result = validateOpenAPI(spec);
+    expect(result.valid).toBe(true);
   });
 });

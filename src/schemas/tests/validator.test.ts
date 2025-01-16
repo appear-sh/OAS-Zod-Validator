@@ -407,3 +407,84 @@ describe('OpenAPI Validator', () => {
     expect(result.errors).toBeUndefined();
   });
 });
+
+describe('OpenAPI Version Detection', () => {
+  test('handles future 3.x versions with allowFutureOASVersions', () => {
+    const futureSpec = {
+      openapi: '3.2.0',
+      info: { title: 'Future API', version: '1.0.0' },
+      paths: {}
+    };
+
+    const result = validateOpenAPI(futureSpec, { allowFutureOASVersions: true });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('rejects future versions without allowFutureOASVersions', () => {
+    const futureSpec = {
+      openapi: '3.2.0',
+      info: { title: 'Future API', version: '1.0.0' },
+      paths: {}
+    };
+
+    const result = validateOpenAPI(futureSpec);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('rejects invalid document formats', () => {
+    expect(validateOpenAPI(null).valid).toBe(false);
+    expect(validateOpenAPI(undefined).valid).toBe(false);
+    expect(validateOpenAPI({}).valid).toBe(false);
+    expect(validateOpenAPI({ openapi: 123 }).valid).toBe(false);
+  });
+});
+
+describe('Validator Error Handling', () => {
+  test('handles non-object inputs gracefully', () => {
+    const inputs = [null, undefined, 42, 'string', true, []];
+    
+    inputs.forEach(input => {
+      const result = validateOpenAPI(input);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+  });
+
+  test('handles malformed OpenAPI objects', () => {
+    const malformed = {
+      openapi: '3.0.0',
+      // Missing required 'info' field
+      paths: {
+        '/test': 'not-an-object' // Invalid path item
+      }
+    };
+    
+    const result = validateOpenAPI(malformed);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('handles errors in strict mode', () => {
+    const specWithBadRef = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                $ref: '#/components/schemas/NonExistent'
+              }
+            }
+          }
+        }
+      }
+    };
+    
+    const result = validateOpenAPI(specWithBadRef, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+});
