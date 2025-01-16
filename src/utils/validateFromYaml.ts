@@ -1,14 +1,42 @@
-import fs from 'fs';
-import yaml from 'js-yaml';
-import path from 'path';
-import { validateOpenAPI } from '../schemas/validator';
+import { load } from 'js-yaml';
+import { validateOpenAPI, ValidationOptions, ValidationResult } from '../schemas/validator';
+import { z } from 'zod';
 
-export function validateFromYAML(filePath: string) {
-  const fileContents = fs.readFileSync(path.resolve(filePath), 'utf-8');
-  const parsedDoc = yaml.load(fileContents);
-  
-  // Pass allowFutureOASVersions if you want to support 3.1 or beyond
-  return validateOpenAPI(parsedDoc, { allowFutureOASVersions: true });
+/**
+ * Validates an OpenAPI specification from a YAML string
+ * @param yamlString The YAML string containing the OpenAPI specification
+ * @param options Validation options
+ * @returns ValidationResult object
+ */
+export function validateFromYaml(
+  yamlString: string, 
+  options: ValidationOptions = {}
+): ValidationResult {
+  try {
+    const parsed = load(yamlString);
+    if (typeof parsed !== 'object' || parsed === null) {
+      return {
+        valid: false,
+        errors: new z.ZodError([{
+          code: z.ZodIssueCode.custom,
+          path: [],
+          message: 'YAML must contain an object'
+        }]),
+        resolvedRefs: []
+      };
+    }
+    return validateOpenAPI(parsed, options);
+  } catch (error) {
+    return {
+      valid: false,
+      errors: new z.ZodError([{
+        code: z.ZodIssueCode.custom,
+        path: [],
+        message: error instanceof Error ? error.message : 'Invalid YAML'
+      }]),
+      resolvedRefs: []
+    };
+  }
 }
 
 // Example usage:
@@ -20,7 +48,7 @@ if (require.main === module) {
   }
   
   try {
-    const result = validateFromYAML(fileName);
+    const result = validateFromYaml(fileName);
     if (result.valid) {
       console.log('YAML spec is valid OAS:', result.resolvedRefs);
     } else {
