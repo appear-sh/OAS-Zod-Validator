@@ -129,8 +129,13 @@ describe('Security Schema Validation', () => {
       const invalidSchemes = [
         {
           type: 'apiKey',
+          name: '',
+          in: 'header'
+        },
+        {
+          type: 'apiKey',
           name: 'api_key',
-          in: 'invalid'
+          in: 'invalid_location'
         },
         {
           type: 'http',
@@ -141,11 +146,20 @@ describe('Security Schema Validation', () => {
           flows: {}
         },
         {
+          type: 'oauth2',
+          flows: {
+            implicit: {
+              authorizationUrl: 'not-a-url',
+              scopes: {}
+            }
+          }
+        },
+        {
           type: 'openIdConnect',
           openIdConnectUrl: 'not-a-url'
         },
         {
-          type: 'invalid'
+          type: 'invalid_type'
         }
       ];
 

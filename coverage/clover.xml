@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1737017932598" clover="3.2.0">
-  <project timestamp="1737017932598" name="All files">
-    <metrics statements="146" coveredstatements="124" conditionals="55" coveredconditionals="44" methods="21" coveredmethods="21" elements="222" coveredelements="189" complexity="0" loc="146" ncloc="146" packages="2" files="11" classes="11"/>
+<coverage generated="1737018615334" clover="3.2.0">
+  <project timestamp="1737018615334" name="All files">
+    <metrics statements="143" coveredstatements="129" conditionals="55" coveredconditionals="44" methods="22" coveredmethods="22" elements="220" coveredelements="195" complexity="0" loc="143" ncloc="143" packages="2" files="11" classes="11"/>
     <package name="schemas">
-      <metrics statements="110" coveredstatements="99" conditionals="38" coveredconditionals="32" methods="17" coveredmethods="17"/>
+      <metrics statements="107" coveredstatements="104" conditionals="38" coveredconditionals="32" methods="18" coveredmethods="18"/>
       <file name="components.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/components.ts">
         <metrics statements="12" coveredstatements="12" conditionals="4" coveredconditionals="3" methods="3" coveredmethods="3"/>
         <line num="1" count="6" type="stmt"/>
@@ -21,17 +21,17 @@
       </file>
       <file name="core.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/core.ts">
         <metrics statements="13" coveredstatements="11" conditionals="7" coveredconditionals="4" methods="4" coveredmethods="4"/>
-        <line num="1" count="10" type="stmt"/>
-        <line num="4" count="10" type="stmt"/>
-        <line num="13" count="10" type="stmt"/>
+        <line num="1" count="11" type="stmt"/>
+        <line num="4" count="11" type="stmt"/>
+        <line num="13" count="11" type="stmt"/>
         <line num="14" count="89" type="stmt"/>
         <line num="39" count="78" type="cond" truecount="2" falsecount="1"/>
         <line num="40" count="0" type="stmt"/>
         <line num="43" count="78" type="cond" truecount="2" falsecount="2"/>
         <line num="44" count="0" type="stmt"/>
         <line num="46" count="78" type="stmt"/>
-        <line num="53" count="10" type="stmt"/>
-        <line num="56" count="10" type="stmt"/>
+        <line num="53" count="11" type="stmt"/>
+        <line num="56" count="11" type="stmt"/>
         <line num="57" count="6" type="stmt"/>
         <line num="58" count="2" type="stmt"/>
       </file>
@@ -101,15 +101,12 @@
         <line num="48" count="9" type="stmt"/>
       </file>
       <file name="security.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/security.ts">
-        <metrics statements="8" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
-        <line num="1" count="0" type="stmt"/>
-        <line num="2" count="0" type="stmt"/>
-        <line num="4" count="0" type="stmt"/>
-        <line num="6" count="0" type="stmt"/>
-        <line num="13" count="0" type="stmt"/>
-        <line num="20" count="0" type="stmt"/>
-        <line num="48" count="0" type="stmt"/>
-        <line num="54" count="0" type="stmt"/>
+        <metrics statements="5" coveredstatements="5" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <line num="1" count="1" type="stmt"/>
+        <line num="2" count="1" type="stmt"/>
+        <line num="4" count="1" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
+        <line num="47" count="3" type="stmt"/>
       </file>
       <file name="validator.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/validator.ts">
         <metrics statements="27" coveredstatements="27" conditionals="17" coveredconditionals="16" methods="2" coveredmethods="2"/>
