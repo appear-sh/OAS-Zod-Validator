@@ -13,8 +13,6 @@ const parameterBaseFields = {
   example: z.any().optional(),
 } as const;
 
-const ParameterBase = z.object(parameterBaseFields).and(ExtensibleObject);
-
 // Specific parameter types with location-specific validation
 export const ParameterObject = z.discriminatedUnion('in', [
   // Path parameters are always required
@@ -113,7 +111,7 @@ export const PathItemObject = z.object({
 });
 
 // Enhanced Paths Object with path validation
-export const PathsObject = z.record(
+export const PathsObject: z.ZodType = z.record(
   z.string()
     .regex(/^\//, { message: 'Path must start with forward slash' })
     .regex(/^\/[^?#]*$/, { 

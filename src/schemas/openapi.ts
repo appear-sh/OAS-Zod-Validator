@@ -12,7 +12,8 @@ export const ServerObject = z.object({
   })).optional(),
 });
 
-export const OpenAPIObject = z.object({
+// Add explicit type annotation to fix compiler serialization error
+export const OpenAPIObject: z.ZodType = z.object({
   openapi: z.string().regex(/^3\.(0|1)\.\d+$/),
   info: z.object({
     title: z.string(),

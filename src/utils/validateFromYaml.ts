@@ -1,5 +1,4 @@
 import fs from 'fs';
-// @ts-ignore
 import yaml from 'js-yaml';
 import path from 'path';
 import { validateOpenAPI } from '../schemas/validator';
@@ -20,10 +19,15 @@ if (require.main === module) {
     process.exit(1);
   }
   
-  const result = validateFromYAML(fileName);
-  if (result.valid) {
-    console.log('YAML spec is valid OAS:', result.resolvedRefs);
-  } else {
-    console.error('YAML spec is invalid OAS:', result.errors);
+  try {
+    const result = validateFromYAML(fileName);
+    if (result.valid) {
+      console.log('YAML spec is valid OAS:', result.resolvedRefs);
+    } else {
+      console.error('YAML spec is invalid OAS:', result.errors);
+    }
+  } catch (err) {
+    console.error('Error validating YAML:', err);
+    process.exit(1);
   }
 }

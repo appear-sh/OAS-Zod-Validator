@@ -14,7 +14,7 @@ export interface ValidationResult {
   resolvedRefs: string[];
 }
 
-function detectOpenAPIVersion(doc: any): '3.0' | '3.1' {
+function detectOpenAPIVersion(doc: Record<string, unknown>): '3.0' | '3.1' {
   if (!doc || typeof doc.openapi !== 'string') {
     return '3.0'; // fallback or throw; your call
   }
@@ -30,21 +30,21 @@ export function validateOpenAPI(
 ): ValidationResult {
   const resolvedRefs: string[] = [];
 
-  const trackRef = (obj: any) => {
+  const trackRef = (obj: Record<string, unknown>): void => {
     if (obj && typeof obj === 'object') {
       if (obj.$ref && typeof obj.$ref === 'string') {
         resolvedRefs.push(obj.$ref);
       }
       for (const value of Object.values(obj)) {
         if (typeof value === 'object' && value !== null) {
-          trackRef(value);
+          trackRef(value as Record<string, unknown>);
         }
       }
     }
   };
 
   try {
-    let parsed: any;
+    let parsed: Record<string, unknown>;
     const docAsObject = document as Record<string, unknown>;
 
     if (options.allowFutureOASVersions) {

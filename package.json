@@ -13,16 +13,17 @@
   "description": "",
   "dependencies": {
     "@types/node": "^22.10.6",
+    "js-yaml": "^4.1.0",
     "typescript": "^5.7.3",
-    "zod": "^3.24.1",
-    "js-yaml": "^4.1.0"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.2",
-    "eslint": "^8.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0"
+    "eslint": "^8.0.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2"
   }
 }

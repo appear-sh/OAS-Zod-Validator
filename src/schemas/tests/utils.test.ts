@@ -1,16 +1,18 @@
-import { validateFromYaml } from '../utils/validateFromYaml';
-import { verifyRefTargets } from '../utils/verifyRefTargets';
+import { validateOpenAPI } from '../validator';
+import { describe, test, expect } from '@jest/globals';
+import yaml from 'js-yaml';
 
 describe('YAML Validation', () => {
   test('validates yaml string', () => {
-    const yaml = `
+    const yamlStr = `
       openapi: 3.0.0
       info:
         title: Test API
         version: 1.0.0
       paths: {}
     `;
-    const result = validateFromYaml(yaml);
+    const doc = yaml.load(yamlStr);
+    const result = validateOpenAPI(doc);
     expect(result.valid).toBe(true);
   });
 });
@@ -25,6 +27,8 @@ describe('Reference Target Verification', () => {
       }
     };
     const refs = ['#/components/schemas/User'];
-    expect(() => verifyRefTargets(doc, refs)).not.toThrow();
+    const result = validateOpenAPI(doc);
+    expect(result.valid).toBe(true);
+    expect(result.resolvedRefs).toContain(refs[0]);
   });
 });

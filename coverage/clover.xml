@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1737004686537" clover="3.2.0">
-  <project timestamp="1737004686537" name="All files">
-    <metrics statements="150" coveredstatements="92" conditionals="52" coveredconditionals="31" methods="21" coveredmethods="12" elements="223" coveredelements="135" complexity="0" loc="150" ncloc="150" packages="2" files="11" classes="11"/>
+<coverage generated="1737005049363" clover="3.2.0">
+  <project timestamp="1737005049363" name="All files">
+    <metrics statements="151" coveredstatements="96" conditionals="52" coveredconditionals="33" methods="20" coveredmethods="13" elements="223" coveredelements="142" complexity="0" loc="151" ncloc="151" packages="2" files="11" classes="11"/>
     <package name="schemas">
-      <metrics statements="124" coveredstatements="91" conditionals="43" coveredconditionals="31" methods="19" coveredmethods="12"/>
+      <metrics statements="125" coveredstatements="94" conditionals="43" coveredconditionals="32" methods="18" coveredmethods="12"/>
       <file name="components.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/components.ts">
         <metrics statements="12" coveredstatements="12" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="3"/>
         <line num="1" count="4" type="stmt"/>
@@ -21,17 +21,17 @@
       </file>
       <file name="core.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/core.ts">
         <metrics statements="13" coveredstatements="10" conditionals="7" coveredconditionals="6" methods="4" coveredmethods="2"/>
-        <line num="1" count="5" type="stmt"/>
-        <line num="4" count="5" type="stmt"/>
-        <line num="13" count="5" type="stmt"/>
+        <line num="1" count="6" type="stmt"/>
+        <line num="4" count="6" type="stmt"/>
+        <line num="13" count="6" type="stmt"/>
         <line num="14" count="40" type="stmt"/>
         <line num="39" count="35" type="cond" truecount="2" falsecount="1"/>
         <line num="40" count="0" type="stmt"/>
         <line num="43" count="35" type="cond" truecount="4" falsecount="0"/>
         <line num="44" count="1" type="stmt"/>
         <line num="46" count="34" type="stmt"/>
-        <line num="53" count="5" type="stmt"/>
-        <line num="56" count="5" type="stmt"/>
+        <line num="53" count="6" type="stmt"/>
+        <line num="56" count="6" type="stmt"/>
         <line num="57" count="0" type="stmt"/>
         <line num="58" count="0" type="stmt"/>
       </file>
@@ -44,15 +44,16 @@
         <line num="15" count="3" type="stmt"/>
       </file>
       <file name="openapi31.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/openapi31.ts">
-        <metrics statements="8" coveredstatements="7" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
+        <metrics statements="9" coveredstatements="9" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
         <line num="1" count="3" type="stmt"/>
         <line num="2" count="3" type="stmt"/>
         <line num="3" count="3" type="stmt"/>
         <line num="4" count="3" type="stmt"/>
-        <line num="8" count="3" type="stmt"/>
-        <line num="10" count="0" type="stmt"/>
-        <line num="13" count="3" type="stmt"/>
-        <line num="27" count="3" type="stmt"/>
+        <line num="5" count="3" type="stmt"/>
+        <line num="7" count="3" type="stmt"/>
+        <line num="17" count="3" type="stmt"/>
+        <line num="24" count="3" type="stmt"/>
+        <line num="38" count="3" type="stmt"/>
       </file>
       <file name="paths.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/paths.ts">
         <metrics statements="21" coveredstatements="21" conditionals="2" coveredconditionals="2" methods="4" coveredmethods="4"/>
@@ -120,36 +121,36 @@
         <line num="3" count="0" type="stmt"/>
       </file>
       <file name="validator.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/validator.ts">
-        <metrics statements="33" coveredstatements="31" conditionals="20" coveredconditionals="19" methods="3" coveredmethods="3"/>
+        <metrics statements="33" coveredstatements="32" conditionals="20" coveredconditionals="20" methods="3" coveredmethods="3"/>
         <line num="1" count="3" type="stmt"/>
         <line num="2" count="3" type="stmt"/>
         <line num="3" count="3" type="stmt"/>
         <line num="4" count="3" type="stmt"/>
-        <line num="18" count="14" type="cond" truecount="3" falsecount="0"/>
+        <line num="18" count="16" type="cond" truecount="3" falsecount="0"/>
         <line num="19" count="1" type="stmt"/>
-        <line num="21" count="13" type="cond" truecount="1" falsecount="0"/>
+        <line num="21" count="15" type="cond" truecount="1" falsecount="0"/>
         <line num="22" count="2" type="stmt"/>
-        <line num="24" count="11" type="stmt"/>
+        <line num="24" count="13" type="stmt"/>
         <line num="27" count="3" type="stmt"/>
         <line num="31" count="18" type="stmt"/>
         <line num="33" count="18" type="stmt"/>
-        <line num="34" count="125" type="cond" truecount="3" falsecount="0"/>
-        <line num="35" count="125" type="cond" truecount="3" falsecount="0"/>
+        <line num="34" count="115" type="cond" truecount="3" falsecount="0"/>
+        <line num="35" count="115" type="cond" truecount="3" falsecount="0"/>
         <line num="36" count="3" type="stmt"/>
-        <line num="38" count="125" type="stmt"/>
-        <line num="39" count="210" type="cond" truecount="3" falsecount="0"/>
-        <line num="40" count="114" type="stmt"/>
+        <line num="38" count="115" type="stmt"/>
+        <line num="39" count="196" type="cond" truecount="3" falsecount="0"/>
+        <line num="40" count="104" type="stmt"/>
         <line num="46" count="18" type="stmt"/>
         <line num="48" count="18" type="stmt"/>
         <line num="50" count="18" type="cond" truecount="2" falsecount="0"/>
-        <line num="52" count="4" type="stmt"/>
-        <line num="54" count="14" type="stmt"/>
-        <line num="55" count="14" type="cond" truecount="2" falsecount="0"/>
+        <line num="52" count="2" type="stmt"/>
+        <line num="54" count="16" type="stmt"/>
+        <line num="55" count="16" type="cond" truecount="2" falsecount="0"/>
         <line num="56" count="2" type="stmt"/>
-        <line num="58" count="12" type="stmt"/>
+        <line num="58" count="14" type="stmt"/>
         <line num="62" count="11" type="stmt"/>
-        <line num="64" count="11" type="cond" truecount="0" falsecount="1"/>
-        <line num="65" count="0" type="stmt"/>
+        <line num="64" count="11" type="cond" truecount="1" falsecount="0"/>
+        <line num="65" count="1" type="stmt"/>
         <line num="68" count="11" type="stmt"/>
         <line num="70" count="7" type="cond" truecount="1" falsecount="0"/>
         <line num="71" count="7" type="stmt"/>
@@ -157,7 +158,7 @@
       </file>
     </package>
     <package name="utils">
-      <metrics statements="26" coveredstatements="1" conditionals="9" coveredconditionals="0" methods="2" coveredmethods="0"/>
+      <metrics statements="26" coveredstatements="2" conditionals="9" coveredconditionals="1" methods="2" coveredmethods="1"/>
       <file name="validateFromYaml.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/utils/validateFromYaml.ts">
         <metrics statements="17" coveredstatements="0" conditionals="4" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="1" count="0" type="stmt"/>
@@ -179,9 +180,9 @@
         <line num="27" count="0" type="stmt"/>
       </file>
       <file name="verifyRefTargets.ts" path="/Users/thomaspeterson/Projects/oas-zod-validator/src/utils/verifyRefTargets.ts">
-        <metrics statements="9" coveredstatements="1" conditionals="5" coveredconditionals="0" methods="1" coveredmethods="0"/>
+        <metrics statements="9" coveredstatements="2" conditionals="5" coveredconditionals="1" methods="1" coveredmethods="1"/>
         <line num="1" count="3" type="stmt"/>
-        <line num="2" count="0" type="cond" truecount="0" falsecount="1"/>
+        <line num="2" count="1" type="cond" truecount="1" falsecount="0"/>
         <line num="6" count="0" type="stmt"/>
         <line num="7" count="0" type="stmt"/>
         <line num="8" count="0" type="stmt"/>

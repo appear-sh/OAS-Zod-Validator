@@ -10,7 +10,7 @@ export const ReferenceObject = z.object({
 });
 
 // Improved schema object with more specific types
-export const SchemaObject: z.ZodType<any> = z.lazy(() => 
+export const SchemaObject: z.ZodType = z.lazy(() => 
   z.object({
     type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
     format: z.enum([
@@ -19,7 +19,7 @@ export const SchemaObject: z.ZodType<any> = z.lazy(() =>
     ]).optional(),
     title: z.string().optional(),
     description: z.string().optional(),
-    default: z.any().optional(),
+    default: z.unknown().optional(),
     nullable: z.boolean().optional(),
     deprecated: z.boolean().optional(),
     minLength: z.number().int().positive().optional(),
@@ -29,7 +29,7 @@ export const SchemaObject: z.ZodType<any> = z.lazy(() =>
     maximum: z.number().optional(),
     exclusiveMinimum: z.boolean().optional(),
     exclusiveMaximum: z.boolean().optional(),
-    enum: z.array(z.any()).optional(),
+    enum: z.array(z.unknown()).optional(),
     required: z.array(z.string()).optional(),
     properties: z.record(z.string(), z.union([SchemaObject, ReferenceObject])).optional(),
     items: z.union([SchemaObject, ReferenceObject]).optional(),
@@ -45,17 +45,17 @@ export const SchemaObject: z.ZodType<any> = z.lazy(() =>
     }
     return true;
   }, {
-    message: "Array types must define 'items' and object types must define 'properties' or 'additionalProperties'"
+    message: 'Array types must define items and object types must define properties or additionalProperties'
   })
 );
 
 // Extensible object with validation
-export const ExtensibleObject = z.object({}).catchall(z.any());
+export const ExtensibleObject = z.object({}).catchall(z.unknown());
 
 // If you want to keep vendor extension validation, use this instead:
-export const VendorExtensible = z.object({}).catchall(z.any()).refine((val) => {
+export const VendorExtensible = z.object({}).catchall(z.unknown()).refine((val) => {
   const extraKeys = Object.keys(val).filter(key => !key.startsWith('x-'));
   return extraKeys.length === 0;
 }, {
-  message: "Custom extensions must start with 'x-'"
+  message: 'Custom extensions must start with x-'
 });

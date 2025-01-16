@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-// @ts-ignore
 import yaml from 'js-yaml';
 import { validateOpenAPI } from '../validator';
 import { describe, test, expect } from '@jest/globals';
@@ -17,11 +16,11 @@ describe('Integration tests for multiple OAS specs', () => {
     test(`validates or fails appropriately for ${file}`, () => {
       const fullPath = path.join(specsDir, file);
       const fileData = fs.readFileSync(fullPath, 'utf-8');
-      let doc: any;
+      let doc: Record<string, unknown>;
       if (file.endsWith('.yaml') || file.endsWith('.yml')) {
-        doc = yaml.load(fileData);
+        doc = yaml.load(fileData) as Record<string, unknown>;
       } else {
-        doc = JSON.parse(fileData);
+        doc = JSON.parse(fileData) as Record<string, unknown>;
       }
       
       // Decide if this test expects a valid or invalid outcome
