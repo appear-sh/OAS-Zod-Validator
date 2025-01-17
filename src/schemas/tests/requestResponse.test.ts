@@ -222,6 +222,39 @@ describe('Request/Response Schema Types', () => {
       };
       expect(() => ResponseObject.parse(response)).toThrow('Rate limiting headers are required in strict mode');
     });
+
+    test('rejects response with only some rate limit headers', () => {
+      const partialHeaders = [
+        {
+          description: 'Missing Reset',
+          headers: {
+            'X-RateLimit-Limit': { schema: { type: 'integer' } },
+            'X-RateLimit-Remaining': { schema: { type: 'integer' } }
+          }
+        },
+        {
+          description: 'Missing Remaining',
+          headers: {
+            'X-RateLimit-Limit': { schema: { type: 'integer' } },
+            'X-RateLimit-Reset': { schema: { type: 'integer' } }
+          }
+        },
+        {
+          description: 'Missing Limit',
+          headers: {
+            'X-RateLimit-Remaining': { schema: { type: 'integer' } },
+            'X-RateLimit-Reset': { schema: { type: 'integer' } }
+          }
+        }
+      ];
+
+      partialHeaders.forEach(response => {
+        expect(() => ResponseObject.parse({
+          description: 'Test response',
+          headers: response.headers
+        })).toThrow('Rate limiting headers are required in strict mode');
+      });
+    });
   });
 
   describe('ResponsesObject', () => {
