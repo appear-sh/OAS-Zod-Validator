@@ -2,7 +2,8 @@ import { z } from 'zod';
 import { OpenAPIObject } from './openapi';
 import { OpenAPIObject31 } from './openapi31';
 import { verifyRefTargets } from '../utils/verifyRefTargets';
-import { OpenAPISpec } from './types';
+import { OpenAPISpec, PathItem, Operation } from './types';
+import { BulkRequestSchema, BulkResponseSchema, PaginationHeadersSchema, PaginationParamsSchema } from './api_patterns';
 
 export interface ValidationOptions {
   strict?: boolean;
@@ -84,6 +85,59 @@ const createErrorMap = (options: ValidationOptions): z.ZodErrorMap => {
   };
 };
 
+function validateAPIPatterns(doc: OpenAPISpec): z.ZodError | undefined {
+  const issues: z.ZodIssue[] = [];
+  
+  const paths = doc.paths || {};
+  for (const [pathKey, pathItem] of Object.entries(paths)) {
+    if (!pathItem || typeof pathItem !== 'object') continue;
+
+    // Validate bulk operations pattern
+    if (pathKey.endsWith('/bulk') && 'post' in pathItem) {
+      const operation = (pathItem as PathItem).post as Operation;
+      if (!operation?.requestBody?.content?.['application/json']?.schema) continue;
+      
+      try {
+        BulkRequestSchema.parse(operation.requestBody.content['application/json'].schema);
+        if (operation.responses?.['200']?.content?.['application/json']?.schema) {
+          BulkResponseSchema.parse(operation.responses['200'].content['application/json'].schema);
+        }
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          issues.push(...error.issues);
+        }
+      }
+    }
+
+    // Validate pagination pattern
+    if ('get' in pathItem) {
+      const operation = (pathItem as PathItem).get as Operation;
+      if (!operation?.parameters) continue;
+
+      try {
+        const paginationParams = operation.parameters.filter(p => 
+          ['page', 'per_page', 'sort'].includes(p.name));
+        
+        if (paginationParams.length > 0) {
+          PaginationParamsSchema.parse(Object.fromEntries(
+            paginationParams.map(p => [p.name, p.schema])
+          ));
+
+          if (operation.responses?.['200']?.headers) {
+            PaginationHeadersSchema.parse(operation.responses['200'].headers);
+          }
+        }
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          issues.push(...error.issues);
+        }
+      }
+    }
+  }
+
+  return issues.length ? new z.ZodError(issues) : undefined;
+}
+
 export function validateOpenAPI(
   document: unknown,
   options: ValidationOptions = {}
@@ -117,6 +171,11 @@ export function validateOpenAPI(
     if (options.strict) {
       verifyRefTargets(parsed, resolvedRefs);
       
+      const apiPatternsError = validateAPIPatterns(parsed);
+      if (apiPatternsError) {
+        return { valid: false, errors: apiPatternsError, resolvedRefs };
+      }
+
       if (options.strictRules?.requireRateLimitHeaders) {
         const rateLimitError = validateRateLimitHeaders(parsed, options);
         if (rateLimitError) {

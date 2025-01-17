@@ -13,7 +13,7 @@ const ParameterObject = z.object({
 });
 
 // Header Object
-const HeaderObject = z.object({
+export const HeaderObject = z.object({
   description: z.string().optional(),
   required: z.boolean().optional(),
   deprecated: z.boolean().optional(),

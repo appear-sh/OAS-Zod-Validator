@@ -14,3 +14,42 @@ export interface ValidationResult {
   errors?: z.ZodError;
   resolvedRefs: string[];
 }
+
+export interface Operation {
+  requestBody?: {
+    content?: {
+      'application/json'?: {
+        schema?: Record<string, unknown>;
+      };
+    };
+    required?: boolean;
+  };
+  responses?: {
+    [statusCode: string]: {
+      content?: {
+        'application/json'?: {
+          schema?: Record<string, unknown>;
+        };
+      };
+      headers?: Record<string, unknown>;
+      description?: string;
+    };
+  };
+  parameters?: Array<{
+    name: string;
+    in?: string;
+    schema?: Record<string, unknown>;
+  }>;
+}
+
+export interface PathItem {
+  get?: Operation;
+  post?: Operation;
+  put?: Operation;
+  delete?: Operation;
+  patch?: Operation;
+  options?: Operation;
+  head?: Operation;
+  trace?: Operation;
+  $ref?: string;
+}
