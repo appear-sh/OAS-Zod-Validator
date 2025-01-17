@@ -12,6 +12,25 @@ export const ServerObject = z.object({
   })).optional(),
 });
 
+const HeaderObject = z.object({
+  description: z.string().optional(),
+  schema: z.object({
+    type: z.string()
+  })
+}).passthrough();
+
+export const ResponseObject = z.object({
+  description: z.string(),
+  headers: z.record(z.string(), HeaderObject)
+    .refine((headers) => {
+      const required = ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'];
+      return required.every(header => header in headers);
+    }, {
+      message: 'Rate limiting headers are required in strict mode'
+    })
+    .optional()
+}).passthrough();
+
 // Add explicit type annotation to fix compiler serialization error
 export const OpenAPIObject: z.ZodType = z.object({
   openapi: z.string().regex(/^3\.(0|1)\.\d+$/),

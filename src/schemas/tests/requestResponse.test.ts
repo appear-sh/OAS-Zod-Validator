@@ -188,6 +188,40 @@ describe('Request/Response Schema Types', () => {
       };
       expect(() => ResponseObject.parse(response)).toThrow();
     });
+
+    test('validates response with rate limit headers', () => {
+      const response = {
+        description: 'Test response',
+        headers: {
+          'X-RateLimit-Limit': {
+            description: 'Rate limit per hour',
+            schema: { type: 'integer' }
+          },
+          'X-RateLimit-Remaining': {
+            description: 'Remaining requests',
+            schema: { type: 'integer' }
+          },
+          'X-RateLimit-Reset': {
+            description: 'Time until reset',
+            schema: { type: 'integer' }
+          }
+        }
+      };
+      expect(() => ResponseObject.parse(response)).not.toThrow();
+    });
+
+    test('rejects response missing rate limit headers in strict mode', () => {
+      const response = {
+        description: 'Test response',
+        headers: {
+          'X-Test': {
+            description: 'Test header',
+            schema: { type: 'string' }
+          }
+        }
+      };
+      expect(() => ResponseObject.parse(response)).toThrow('Rate limiting headers are required in strict mode');
+    });
   });
 
   describe('ResponsesObject', () => {
