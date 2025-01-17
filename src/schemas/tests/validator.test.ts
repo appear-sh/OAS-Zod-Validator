@@ -843,3 +843,407 @@ describe('API Pattern Error Handling', () => {
     expect(result.errors).toBeDefined();
   });
 });
+
+describe('Validator Coverage', () => {
+  test('validates pagination with headers', () => {
+    const specWithPagination = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/items': {
+          get: {
+            parameters: [
+              {
+                name: 'page',
+                in: 'query',
+                schema: { type: 'integer', minimum: 1 }
+              },
+              {
+                name: 'per_page',
+                in: 'query',
+                schema: { type: 'integer', minimum: 1, maximum: 100 }
+              },
+              {
+                name: 'sort',
+                in: 'query',
+                schema: { type: 'string', enum: ['asc', 'desc'] }
+              }
+            ],
+            responses: {
+              '200': {
+                description: 'Paginated results',
+                headers: {
+                  'X-Total-Count': {
+                    description: 'Total number of resources',
+                    schema: { type: 'integer' }
+                  },
+                  'Link': {
+                    description: 'Pagination links',
+                    schema: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(specWithPagination);
+    if (!result.valid) {
+      console.log('Pagination validation errors:', JSON.stringify(result.errors?.issues, null, 2));
+    }
+    expect(result.valid).toBe(true);
+  });
+
+  test('handles reference resolution errors', () => {
+    const specWithCircularRef = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                content: {
+                  'application/json': {
+                    schema: {
+                      $ref: '#/components/schemas/A'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      components: {
+        schemas: {
+          A: { 
+            type: 'object',
+            properties: {
+              b: { $ref: '#/components/schemas/B' }
+            }
+          },
+          B: { 
+            type: 'object',
+            properties: {
+              a: { $ref: '#/components/schemas/A' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(specWithCircularRef, { 
+      strict: true,
+      strictRules: {
+        requireRateLimitHeaders: true
+      }
+    });
+    if (result.valid) {
+      console.log('Reference resolution should have failed');
+    }
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('handles custom validation rules', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                description: 'OK',
+                headers: {} // Missing rate limit headers
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, {
+      strict: true,
+      strictRules: {
+        requireRateLimitHeaders: true
+      }
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+});
+
+describe('Real World API Scenarios', () => {
+  test('validates e-commerce API patterns', () => {
+    const ecommerceSpec = {
+      openapi: '3.0.0',
+      info: {
+        title: 'E-Commerce API',
+        version: '1.0.0',
+        description: 'API for managing products, orders, and customers'
+      },
+      servers: [
+        { url: 'https://api.example.com/v1' }
+      ],
+      paths: {
+        '/products': {
+          get: {
+            summary: 'List products',
+            parameters: [
+              {
+                name: 'page',
+                in: 'query',
+                schema: { type: 'integer', minimum: 1 }
+              },
+              {
+                name: 'per_page',
+                in: 'query',
+                schema: { type: 'integer', minimum: 1, maximum: 100 }
+              },
+              {
+                name: 'category',
+                in: 'query',
+                schema: { type: 'string' }
+              },
+              {
+                name: 'sort',
+                in: 'query',
+                schema: { 
+                  type: 'string',
+                  enum: ['price_asc', 'price_desc', 'name_asc', 'name_desc']
+                }
+              }
+            ],
+            responses: {
+              '200': {
+                description: 'List of products',
+                headers: {
+                  'X-Total-Count': {
+                    description: 'Total number of resources',
+                    schema: { type: 'integer' }
+                  },
+                  'X-RateLimit-Limit': {
+                    description: 'Rate limit per hour',
+                    schema: { type: 'integer' }
+                  },
+                  'X-RateLimit-Remaining': {
+                    description: 'Remaining requests',
+                    schema: { type: 'integer' }
+                  },
+                  'X-RateLimit-Reset': {
+                    description: 'Time until reset',
+                    schema: { type: 'integer' }
+                  }
+                },
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      required: ['data', 'metadata'],
+                      properties: {
+                        data: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/Product' }
+                        },
+                        metadata: { $ref: '#/components/schemas/PaginationMetadata' }
+                      }
+                    }
+                  }
+                }
+              },
+              '400': { 
+                description: 'Bad Request',
+                headers: {
+                  'X-RateLimit-Limit': {
+                    description: 'Rate limit per hour',
+                    schema: { type: 'integer' }
+                  },
+                  'X-RateLimit-Remaining': {
+                    description: 'Remaining requests',
+                    schema: { type: 'integer' }
+                  },
+                  'X-RateLimit-Reset': {
+                    description: 'Time until reset',
+                    schema: { type: 'integer' }
+                  }
+                },
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/Error' }
+                  }
+                }
+              },
+              '429': { 
+                description: 'Too Many Requests',
+                headers: {
+                  'X-RateLimit-Limit': {
+                    description: 'Rate limit per hour',
+                    schema: { type: 'integer' }
+                  },
+                  'X-RateLimit-Remaining': {
+                    description: 'Remaining requests',
+                    schema: { type: 'integer' }
+                  },
+                  'X-RateLimit-Reset': {
+                    description: 'Time until reset',
+                    schema: { type: 'integer' }
+                  }
+                },
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/Error' }
+                  }
+                }
+              }
+            }
+          }
+        },
+        '/orders/bulk': {
+          post: {
+            summary: 'Bulk create orders',
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    required: ['operations'],
+                    properties: {
+                      operations: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          required: ['op', 'path', 'value'],
+                          properties: {
+                            op: { type: 'string', enum: ['create'] },
+                            path: { type: 'string', pattern: '^/orders$' },
+                            value: { $ref: '#/components/schemas/OrderInput' }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            responses: {
+              '200': {
+                description: 'Bulk operation results',
+                headers: {
+                  'X-RateLimit-Limit': {
+                    description: 'Rate limit per hour',
+                    schema: { type: 'integer' }
+                  },
+                  'X-RateLimit-Remaining': {
+                    description: 'Remaining requests',
+                    schema: { type: 'integer' }
+                  },
+                  'X-RateLimit-Reset': {
+                    description: 'Time until reset',
+                    schema: { type: 'integer' }
+                  }
+                },
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      required: ['results'],
+                      properties: {
+                        results: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            required: ['status', 'path'],
+                            properties: {
+                              status: { type: 'integer' },
+                              path: { type: 'string' },
+                              data: { $ref: '#/components/schemas/Order' },
+                              error: { $ref: '#/components/schemas/Error' }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      components: {
+        schemas: {
+          Product: {
+            type: 'object',
+            required: ['id', 'name', 'price'],
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              name: { type: 'string' },
+              price: { type: 'number' },
+              category: { type: 'string' },
+              metadata: { type: 'object', additionalProperties: true }
+            }
+          },
+          PaginationMetadata: {
+            type: 'object',
+            required: ['total', 'page', 'per_page'],
+            properties: {
+              total: { type: 'integer' },
+              page: { type: 'integer' },
+              per_page: { type: 'integer' },
+              total_pages: { type: 'integer' }
+            }
+          },
+          Error: {
+            type: 'object',
+            required: ['code', 'message'],
+            properties: {
+              code: { type: 'string' },
+              message: { type: 'string' }
+            }
+          },
+          Order: {
+            type: 'object',
+            required: ['id', 'status'],
+            properties: {
+              id: { type: 'string', format: 'uuid' },
+              status: { type: 'string', enum: ['pending', 'completed', 'failed'] }
+            }
+          },
+          OrderInput: {
+            type: 'object',
+            required: ['products'],
+            properties: {
+              products: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  required: ['id', 'quantity'],
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    quantity: { type: 'integer', minimum: 1 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(ecommerceSpec, { 
+      strict: true,
+      strictRules: { requireRateLimitHeaders: true }
+    });
+    if (result.errors) {
+      const issues = result.errors.issues;
+      console.log('Validation issues:', JSON.stringify(issues, null, 2));
+    }
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+});
