@@ -13,7 +13,9 @@
     "prepublishOnly": "npm run build",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint . --ext .ts",
+    "test:clean": "rimraf coverage && jest --coverage",
+    "clean": "rimraf coverage"
   },
   "keywords": [],
   "author": "",
