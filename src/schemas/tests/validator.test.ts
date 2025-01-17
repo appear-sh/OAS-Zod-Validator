@@ -595,3 +595,49 @@ describe('Version Detection', () => {
     });
   });
 });
+
+describe('Rate Limit Header Validation', () => {
+  test('validates rate limit headers in referenced responses', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': { $ref: '#/components/responses/StandardResponse' }
+            }
+          }
+        }
+      },
+      components: {
+        responses: {
+          StandardResponse: {
+            description: 'Standard response',
+            headers: {
+              'X-RateLimit-Limit': {
+                description: 'Rate limit per hour',
+                schema: { type: 'integer' }
+              },
+              'X-RateLimit-Remaining': {
+                description: 'Remaining requests',
+                schema: { type: 'integer' }
+              },
+              'X-RateLimit-Reset': {
+                description: 'Time until reset',
+                schema: { type: 'integer' }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { 
+      strict: true,
+      strictRules: { requireRateLimitHeaders: true }
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+});
