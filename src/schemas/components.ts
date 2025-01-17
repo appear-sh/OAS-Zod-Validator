@@ -28,11 +28,11 @@ const ExampleObject = z.object({
   externalValue: z.string().url().optional(),
 }).refine(
   data => !(data.value && data.externalValue),
-  { message: "Example cannot have both 'value' and 'externalValue'" }
+  { message: 'Example cannot have both \'value\' and \'externalValue\'' }
 );
 
 // Link Object
-const LinkObject = z.object({
+export const LinkObject = z.object({
   operationRef: z.string().optional(),
   operationId: z.string().optional(),
   parameters: z.record(z.string(), z.any()).optional(),
@@ -41,7 +41,7 @@ const LinkObject = z.object({
   server: z.any().optional(),
 }).refine(
   data => !(data.operationRef && data.operationId),
-  { message: "Link cannot have both 'operationRef' and 'operationId'" }
+  { message: 'Link cannot have both \'operationRef\' and \'operationId\'' }
 );
 
 // Callback Object
@@ -54,7 +54,7 @@ const CallbackObject = z.record(
 export const ComponentsObject = z.object({
   schemas: z.record(
     z.string().regex(/^[a-zA-Z0-9._-]+$/, {
-      message: "Schema names must contain only alphanumeric characters, dots, underscores, and hyphens"
+      message: 'Schema names must contain only alphanumeric characters, dots, underscores, and hyphens'
     }),
     z.union([SchemaObject, ReferenceObject])
   ).optional(),
@@ -100,7 +100,7 @@ export const ComponentsObject = z.object({
   ).optional(),
 }).refine(
   data => Object.keys(data).length > 0,
-  { message: "Components object must have at least one property" }
+  { message: 'Components object must have at least one property' }
 );
 
 export type Components = z.infer<typeof ComponentsObject>;

@@ -1,6 +1,8 @@
 import { z } from 'zod';
-import { ComponentsObject } from './components';
+import { ComponentsObject, LinkObject } from './components';
 import { PathsObject } from './paths';
+import { ReferenceObject } from './reference';
+import { MediaTypeObject } from './requestResponse';
 
 export const ServerObject = z.object({
   url: z.string(),
@@ -21,14 +23,9 @@ const HeaderObject = z.object({
 
 export const ResponseObject = z.object({
   description: z.string(),
-  headers: z.record(z.string(), HeaderObject)
-    .refine((headers) => {
-      const required = ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset'];
-      return required.every(header => header in headers);
-    }, {
-      message: 'Rate limiting headers are required in strict mode'
-    })
-    .optional()
+  headers: z.record(z.string(), HeaderObject).optional(),
+  content: z.record(z.string(), MediaTypeObject).optional(),
+  links: z.record(z.string(), ReferenceObject.or(LinkObject)).optional()
 }).passthrough();
 
 // Add explicit type annotation to fix compiler serialization error

@@ -31,15 +31,7 @@ export const ResponseObject = z.object({
     required: z.boolean().optional(),
     deprecated: z.boolean().optional(),
     schema: z.union([SchemaObject, ReferenceObject]).optional()
-  })])).optional()
-    .refine(
-      (headers) => {
-        if (!headers) return true; // Skip if no headers
-        return ['X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset']
-          .every(header => header in headers);
-      },
-      { message: 'Rate limiting headers are required in strict mode' }
-    ),
+  })])).optional(),
   content: z.record(z.string(), MediaTypeObject).optional(),
   links: z.record(z.string(), z.union([ReferenceObject, z.object({
     operationRef: z.string().optional(),

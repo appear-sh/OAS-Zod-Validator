@@ -1,5 +1,6 @@
 import { MediaTypeObject, RequestBodyObject, ResponseObject, ResponsesObject } from '../requestResponse';
 import { describe, test, expect } from '@jest/globals';
+import { validateOpenAPI } from '../validator';
 
 describe('Request/Response Schema Types', () => {
   describe('MediaTypeObject', () => {
@@ -190,37 +191,70 @@ describe('Request/Response Schema Types', () => {
     });
 
     test('validates response with rate limit headers', () => {
-      const response = {
-        description: 'Test response',
-        headers: {
-          'X-RateLimit-Limit': {
-            description: 'Rate limit per hour',
-            schema: { type: 'integer' }
-          },
-          'X-RateLimit-Remaining': {
-            description: 'Remaining requests',
-            schema: { type: 'integer' }
-          },
-          'X-RateLimit-Reset': {
-            description: 'Time until reset',
-            schema: { type: 'integer' }
+      const doc = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  description: 'Test response',
+                  headers: {
+                    'X-RateLimit-Limit': {
+                      description: 'Rate limit per hour',
+                      schema: { type: 'integer' }
+                    },
+                    'X-RateLimit-Remaining': {
+                      description: 'Remaining requests',
+                      schema: { type: 'integer' }
+                    },
+                    'X-RateLimit-Reset': {
+                      description: 'Time until reset',
+                      schema: { type: 'integer' }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       };
-      expect(() => ResponseObject.parse(response)).not.toThrow();
+      const result = validateOpenAPI(doc, { 
+        strict: true, 
+        strictRules: { requireRateLimitHeaders: true } 
+      });
+      expect(result.valid).toBe(true);
     });
 
     test('rejects response missing rate limit headers in strict mode', () => {
-      const response = {
-        description: 'Test response',
-        headers: {
-          'X-Test': {
-            description: 'Test header',
-            schema: { type: 'string' }
+      const doc = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/test': {
+            get: {
+              responses: {
+                '200': {
+                  description: 'Test response',
+                  headers: {
+                    'X-Test': {
+                      description: 'Test header',
+                      schema: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       };
-      expect(() => ResponseObject.parse(response)).toThrow('Rate limiting headers are required in strict mode');
+      const result = validateOpenAPI(doc, { 
+        strict: true, 
+        strictRules: { requireRateLimitHeaders: true } 
+      });
+      expect(result.valid).toBe(false);
+      expect(result.errors?.issues[0].message).toBe('Rate limiting headers are required in strict mode');
     });
 
     test('rejects response with only some rate limit headers', () => {
@@ -248,11 +282,30 @@ describe('Request/Response Schema Types', () => {
         }
       ];
 
-      partialHeaders.forEach(response => {
-        expect(() => ResponseObject.parse({
-          description: 'Test response',
-          headers: response.headers
-        })).toThrow('Rate limiting headers are required in strict mode');
+      partialHeaders.forEach(headerSet => {
+        const doc = {
+          openapi: '3.0.0',
+          info: { title: 'Test API', version: '1.0.0' },
+          paths: {
+            '/test': {
+              get: {
+                responses: {
+                  '200': {
+                    description: 'Test response',
+                    headers: headerSet.headers
+                  }
+                }
+              }
+            }
+          }
+        };
+
+        const result = validateOpenAPI(doc, { 
+          strict: true, 
+          strictRules: { requireRateLimitHeaders: true } 
+        });
+        expect(result.valid).toBe(false);
+        expect(result.errors?.issues[0].message).toBe('Rate limiting headers are required in strict mode');
       });
     });
   });
