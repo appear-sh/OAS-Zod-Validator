@@ -1,8 +1,16 @@
 {
   "name": "oas-zod-validator",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "OpenAPI Specification validator built with Zod",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
     "lint": "eslint . --ext .ts"
@@ -10,7 +18,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@types/node": "^22.10.6",
     "js-yaml": "^4.1.0",

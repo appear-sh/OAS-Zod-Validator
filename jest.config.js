@@ -8,6 +8,7 @@ module.exports = {
   coverageDirectory: 'coverage',
   collectCoverageFrom: [
     'src/**/*.ts',
+    '!src/index.ts',
     '!**/node_modules/**',
     '!**/dist/**',
     '!**/*.d.ts'
