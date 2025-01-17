@@ -641,3 +641,81 @@ describe('Rate Limit Header Validation', () => {
     expect(result.errors).toBeUndefined();
   });
 });
+
+describe('Validator Edge Cases', () => {
+  test('validates complex nested patterns', () => {
+    // Use the exact schema structure from api_patterns.ts but as raw objects
+    const bulkRequestShape = {
+      type: 'object',
+      required: ['operations'],
+      properties: {
+        operations: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['op', 'path'],
+            properties: {
+              op: { type: 'string', enum: ['create', 'update', 'delete'] },
+              path: { type: 'string' },
+              value: { type: 'object', additionalProperties: true }
+            }
+          }
+        }
+      }
+    };
+
+    const bulkResponseShape = {
+      type: 'object',
+      required: ['results'],
+      properties: {
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['status', 'path'],
+            properties: {
+              status: { type: 'integer' },
+              path: { type: 'string' },
+              error: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/resources/bulk': {
+          post: {
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: bulkRequestShape
+                }
+              }
+            },
+            responses: {
+              '200': {
+                description: 'Bulk operation results',
+                content: {
+                  'application/json': {
+                    schema: bulkResponseShape
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec);
+    if (!result.valid) {
+      console.log('Validation errors:', JSON.stringify(result.errors?.issues, null, 2));
+    }
+    expect(result.valid).toBe(true);
+  });
+});
