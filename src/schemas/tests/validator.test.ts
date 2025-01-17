@@ -719,3 +719,127 @@ describe('Validator Edge Cases', () => {
     expect(result.valid).toBe(true);
   });
 });
+
+describe('API Pattern Error Handling', () => {
+  test('handles invalid bulk operation schema', () => {
+    const invalidSpec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/resources/bulk': {
+          post: {
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    required: ['operations'],
+                    properties: {
+                      operations: {
+                        type: 'array',
+                        items: {
+                          type: 'object',
+                          // Completely invalid operation object
+                          properties: {
+                            op: { 
+                              type: 'string',
+                              enum: ['invalid'] // Invalid enum value
+                            },
+                            // Missing required path property
+                            value: 'not-an-object' // Invalid value type
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            responses: {
+              '200': {
+                description: 'Bulk operation results',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        results: {
+                          type: 'string' // Invalid type, should be array
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(invalidSpec, { 
+      strict: true // Enable strict validation
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    if (result.errors) {
+      const issues = result.errors.issues;
+      console.log('Validation issues:', JSON.stringify(issues, null, 2));
+      expect(issues.length).toBeGreaterThan(0);
+    }
+  });
+
+  test('handles missing content type in bulk operation', () => {
+    const invalidSpec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/resources/bulk': {
+          post: {
+            requestBody: {
+              required: true,
+              // Missing application/json content type
+              content: {
+                'text/plain': {
+                  schema: {
+                    type: 'string'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(invalidSpec);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('handles missing schema in bulk operation', () => {
+    const invalidSpec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/resources/bulk': {
+          post: {
+            requestBody: {
+              required: true,
+              content: {
+                'application/json': {
+                  // Missing schema
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(invalidSpec);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+});
