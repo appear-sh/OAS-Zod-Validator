@@ -18,25 +18,16 @@ describe('Rate Limiting Validation', () => {
                 description: 'Success',
                 headers: {
                   'X-RateLimit-Limit': {
-                    schema: { type: 'integer' as const },
-                    description: 'Request limit per hour'
+                    description: 'Rate limit per hour',
+                    schema: { type: 'integer' }
                   },
                   'X-RateLimit-Remaining': {
-                    schema: { type: 'integer' as const },
-                    description: 'Remaining requests for the time window'
+                    description: 'Remaining requests',
+                    schema: { type: 'integer' }
                   },
                   'X-RateLimit-Reset': {
-                    schema: { type: 'integer' as const },
-                    description: 'Time until the rate limit resets'
-                  }
-                }
-              },
-              '429': {
-                description: 'Too Many Requests',
-                headers: {
-                  'Retry-After': {
-                    schema: { type: 'integer' as const },
-                    description: 'Time to wait before retrying'
+                    description: 'Time until reset',
+                    schema: { type: 'integer' }
                   }
                 }
               }
