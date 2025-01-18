@@ -1,3 +1,7 @@
+# NOTE: This ReadMe is a work in progress, as I am still working on the project. There is no package yet, so the project can only be tested locally as is.
+
+-----
+
 # OAS-Zod-Validator Documentation
 
 ## Overview
