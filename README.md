@@ -10,7 +10,7 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 ## Installation
 
 ```bash
-npm install oas-zod-validator
+npm install oas-zod-validator (not yet published)
 ```
 
 
@@ -146,7 +146,7 @@ if (!result.valid) {
 ```
 
 
-## Development
+## Development (not yet published)
 
 ```bash
 # Install dependencies
@@ -163,7 +163,7 @@ npm run build
 ```
 
 
-## Testing Coverage
+## Testing Coverage (not yet published) 
 
 For test examples and coverage, see:
 
