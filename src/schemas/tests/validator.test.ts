@@ -2810,4 +2810,160 @@ describe('Enhanced Error Reporting', () => {
       );
     }
   });
+
+  test('validates discriminator with anyOf composition', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {},
+      components: {
+        schemas: {
+          Response: {
+            anyOf: [
+              { $ref: '#/components/schemas/Success' },
+              { $ref: '#/components/schemas/Error' }
+            ],
+            discriminator: {
+              propertyName: 'type'
+            }
+          },
+          Success: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['success'] },
+              data: { type: 'object' }
+            }
+          },
+          Error: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['error'] },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    if (result.errors) {
+      expect(result.errors.issues[0]).toMatchObject({
+        code: 'invalid_union',
+        path: ['components', 'schemas', 'Response'],
+        message: 'Invalid input'
+      });
+    }
+  });
+
+  test('validates discriminator with allOf composition', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {},
+      components: {
+        schemas: {
+          ErrorResponse: {
+            allOf: [
+              { $ref: '#/components/schemas/BaseError' },
+              {
+                type: 'object',
+                required: ['type'],
+                properties: {
+                  type: { type: 'string', enum: ['validation', 'system'] },
+                  details: { type: 'string' }
+                }
+              }
+            ],
+            discriminator: {
+              propertyName: 'type'
+            }
+          },
+          BaseError: {
+            type: 'object',
+            required: ['code'],
+            properties: {
+              code: { type: 'integer' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    if (result.errors) {
+      expect(result.errors.issues[0]).toMatchObject({
+        code: 'invalid_union',
+        path: ['components', 'schemas', 'ErrorResponse'],
+        message: 'Invalid input'
+      });
+    }
+  });
+
+  test('validates mixed composition with discriminator', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {},
+      components: {
+        schemas: {
+          ApiResponse: {
+            oneOf: [
+              {
+                anyOf: [
+                  { $ref: '#/components/schemas/SuccessA' },
+                  { $ref: '#/components/schemas/SuccessB' }
+                ]
+              },
+              { $ref: '#/components/schemas/Error' }
+            ],
+            discriminator: {
+              propertyName: 'type'
+            }
+          },
+          SuccessA: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['success-a'] },
+              dataA: { type: 'string' }
+            }
+          },
+          SuccessB: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['success-b'] },
+              dataB: { type: 'string' }
+            }
+          },
+          Error: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['error'] },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    if (result.errors) {
+      expect(result.errors.issues[0]).toMatchObject({
+        code: 'invalid_union',
+        path: ['components', 'schemas', 'ApiResponse'],
+        message: 'Invalid input'
+      });
+    }
+  });
 });
