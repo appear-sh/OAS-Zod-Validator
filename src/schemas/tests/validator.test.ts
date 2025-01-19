@@ -2435,5 +2435,207 @@ describe('Discriminator Validation', () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toBeDefined();
     });
+
+    test('handles asymmetric branch patterns', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Root: {
+              oneOf: [
+                { $ref: '#/components/schemas/DeepBranch' },
+                { $ref: '#/components/schemas/WideBranch' },
+                { $ref: '#/components/schemas/SimpleBranch' }
+              ],
+              discriminator: {
+                propertyName: 'type'
+              }
+            },
+            // Deep nested branch
+            DeepBranch: {
+              type: 'object',
+              required: ['type', 'next'],
+              properties: {
+                type: { type: 'string', enum: ['deep'] },
+                next: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/DeepLevel2' }
+                  ],
+                  discriminator: {
+                    propertyName: 'level'
+                  }
+                }
+              }
+            },
+            DeepLevel2: {
+              type: 'object',
+              required: ['level', 'next'],
+              properties: {
+                level: { type: 'string', enum: ['level2'] },
+                next: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/DeepLevel3' }
+                  ],
+                  discriminator: {
+                    propertyName: 'level'
+                  }
+                }
+              }
+            },
+            DeepLevel3: {
+              type: 'object',
+              required: ['level'],
+              properties: {
+                level: { type: 'string', enum: ['level3'] }
+              }
+            },
+            // Wide branch with multiple options
+            WideBranch: {
+              type: 'object',
+              required: ['type', 'options'],
+              properties: {
+                type: { type: 'string', enum: ['wide'] },
+                options: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/OptionA' },
+                    { $ref: '#/components/schemas/OptionB' },
+                    { $ref: '#/components/schemas/OptionC' },
+                    { $ref: '#/components/schemas/OptionD' }
+                  ],
+                  discriminator: {
+                    propertyName: 'option'
+                  }
+                }
+              }
+            },
+            OptionA: {
+              type: 'object',
+              required: ['option'],
+              properties: {
+                option: { type: 'string', enum: ['a'] }
+              }
+            },
+            OptionB: {
+              type: 'object',
+              required: ['option'],
+              properties: {
+                option: { type: 'string', enum: ['b'] }
+              }
+            },
+            OptionC: {
+              type: 'object',
+              required: ['option'],
+              properties: {
+                option: { type: 'string', enum: ['c'] }
+              }
+            },
+            OptionD: {
+              type: 'object',
+              required: ['option'],
+              properties: {
+                option: { type: 'string', enum: ['d'] }
+              }
+            },
+            // Simple single-level branch
+            SimpleBranch: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['simple'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('handles mixed composition patterns', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Root: {
+              oneOf: [
+                { $ref: '#/components/schemas/MixedBranchA' },
+                { $ref: '#/components/schemas/MixedBranchB' }
+              ],
+              discriminator: {
+                propertyName: 'type'
+              }
+            },
+            MixedBranchA: {
+              type: 'object',
+              required: ['type', 'data'],
+              properties: {
+                type: { type: 'string', enum: ['mixed-a'] },
+                data: {
+                  anyOf: [
+                    { $ref: '#/components/schemas/DataOption1' },
+                    { $ref: '#/components/schemas/DataOption2' }
+                  ],
+                  discriminator: {
+                    propertyName: 'dataType'
+                  }
+                }
+              }
+            },
+            MixedBranchB: {
+              type: 'object',
+              required: ['type', 'data'],
+              properties: {
+                type: { type: 'string', enum: ['mixed-b'] },
+                data: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/DataOption3' },
+                    { $ref: '#/components/schemas/DataOption4' }
+                  ],
+                  discriminator: {
+                    propertyName: 'dataType'
+                  }
+                }
+              }
+            },
+            DataOption1: {
+              type: 'object',
+              required: ['dataType'],
+              properties: {
+                dataType: { type: 'string', enum: ['option1'] }
+              }
+            },
+            DataOption2: {
+              type: 'object',
+              required: ['dataType'],
+              properties: {
+                dataType: { type: 'string', enum: ['option2'] }
+              }
+            },
+            DataOption3: {
+              type: 'object',
+              required: ['dataType'],
+              properties: {
+                dataType: { type: 'string', enum: ['option3'] }
+              }
+            },
+            DataOption4: {
+              type: 'object',
+              required: ['dataType'],
+              properties: {
+                dataType: { type: 'string', enum: ['option4'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
   });
 });
