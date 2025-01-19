@@ -1247,3 +1247,91 @@ describe('Real World API Scenarios', () => {
     expect(result.errors).toBeDefined();
   });
 });
+
+describe('Reference Validation', () => {
+  test('validates reference target existence', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                content: {
+                  'application/json': {
+                    schema: {
+                      $ref: '#/components/schemas/NonExistentModel'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors?.issues[0].message).toContain('Reference not found: #/components/schemas/NonExistentModel');
+  });
+
+  test('validates nested reference target existence', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          User: {
+            type: 'object',
+            properties: {
+              profile: { $ref: '#/components/schemas/Profile' }
+            }
+          }
+        }
+      },
+      paths: {
+        '/users': {
+          get: {
+            responses: {
+              '200': {
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/User' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors?.issues[0].message).toContain('Reference not found: #/components/schemas/Profile');
+  });
+
+  test('validates reference in response object', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                $ref: '#/components/responses/SuccessResponse'
+              }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors?.issues[0].message).toContain('Reference not found: #/components/responses/SuccessResponse');
+  });
+});
