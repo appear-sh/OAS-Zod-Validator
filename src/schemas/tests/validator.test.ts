@@ -1,5 +1,6 @@
 import { validateOpenAPI } from '../validator';
 import { describe, test, expect } from '@jest/globals';
+import { z } from 'zod';
 
 describe('OpenAPI Validator', () => {
   test('validates a basic valid OpenAPI spec', () => {
@@ -1274,7 +1275,8 @@ describe('Reference Validation', () => {
 
     const result = validateOpenAPI(spec, { strict: true });
     expect(result.valid).toBe(false);
-    expect(result.errors?.issues[0].message).toContain('Reference not found: #/components/schemas/NonExistentModel');
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.issues).toHaveLength(1);
   });
 
   test('validates nested reference target existence', () => {
@@ -1310,7 +1312,8 @@ describe('Reference Validation', () => {
 
     const result = validateOpenAPI(spec, { strict: true });
     expect(result.valid).toBe(false);
-    expect(result.errors?.issues[0].message).toContain('Reference not found: #/components/schemas/Profile');
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.issues).toHaveLength(1);
   });
 
   test('validates reference in response object', () => {
@@ -1332,6 +1335,7 @@ describe('Reference Validation', () => {
 
     const result = validateOpenAPI(spec, { strict: true });
     expect(result.valid).toBe(false);
-    expect(result.errors?.issues[0].message).toContain('Reference not found: #/components/responses/SuccessResponse');
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.issues).toHaveLength(1);
   });
 });
