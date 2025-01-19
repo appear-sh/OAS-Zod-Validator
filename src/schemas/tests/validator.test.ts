@@ -2211,4 +2211,229 @@ describe('Discriminator Validation', () => {
       expect(result.errors).toBeDefined();
     });
   });
+
+  describe('Maximum Depth Scenarios', () => {
+    test('handles deeply nested discriminator chains', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Level1: {
+              oneOf: [
+                { $ref: '#/components/schemas/Level2A' },
+                { $ref: '#/components/schemas/Level2B' }
+              ],
+              discriminator: {
+                propertyName: 'type'
+              }
+            },
+            Level2A: {
+              type: 'object',
+              required: ['type', 'next'],
+              properties: {
+                type: { type: 'string', enum: ['level2a'] },
+                next: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/Level3A' },
+                    { $ref: '#/components/schemas/Level3B' }
+                  ],
+                  discriminator: {
+                    propertyName: 'type'
+                  }
+                }
+              }
+            },
+            Level2B: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['level2b'] }
+              }
+            },
+            Level3A: {
+              type: 'object',
+              required: ['type', 'next'],
+              properties: {
+                type: { type: 'string', enum: ['level3a'] },
+                next: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/Level4A' },
+                    { $ref: '#/components/schemas/Level4B' }
+                  ],
+                  discriminator: {
+                    propertyName: 'type'
+                  }
+                }
+              }
+            },
+            Level3B: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['level3b'] }
+              }
+            },
+            Level4A: {
+              type: 'object',
+              required: ['type', 'next'],
+              properties: {
+                type: { type: 'string', enum: ['level4a'] },
+                next: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/Level5A' },
+                    { $ref: '#/components/schemas/Level5B' }
+                  ],
+                  discriminator: {
+                    propertyName: 'type'
+                  }
+                }
+              }
+            },
+            Level4B: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['level4b'] }
+              }
+            },
+            Level5A: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['level5a'] }
+              }
+            },
+            Level5B: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['level5b'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('handles deep branching discriminator trees', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Root: {
+              oneOf: [
+                { $ref: '#/components/schemas/BranchA' },
+                { $ref: '#/components/schemas/BranchB' },
+                { $ref: '#/components/schemas/BranchC' }
+              ],
+              discriminator: {
+                propertyName: 'type'
+              }
+            },
+            BranchA: {
+              type: 'object',
+              required: ['type', 'subBranch'],
+              properties: {
+                type: { type: 'string', enum: ['branch-a'] },
+                subBranch: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/SubBranchA1' },
+                    { $ref: '#/components/schemas/SubBranchA2' }
+                  ],
+                  discriminator: {
+                    propertyName: 'subType'
+                  }
+                }
+              }
+            },
+            BranchB: {
+              type: 'object',
+              required: ['type', 'subBranch'],
+              properties: {
+                type: { type: 'string', enum: ['branch-b'] },
+                subBranch: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/SubBranchB1' },
+                    { $ref: '#/components/schemas/SubBranchB2' }
+                  ],
+                  discriminator: {
+                    propertyName: 'subType'
+                  }
+                }
+              }
+            },
+            BranchC: {
+              type: 'object',
+              required: ['type', 'subBranch'],
+              properties: {
+                type: { type: 'string', enum: ['branch-c'] },
+                subBranch: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/SubBranchC1' },
+                    { $ref: '#/components/schemas/SubBranchC2' }
+                  ],
+                  discriminator: {
+                    propertyName: 'subType'
+                  }
+                }
+              }
+            },
+            // Pre-define all sub-branch schemas
+            SubBranchA1: {
+              type: 'object',
+              required: ['subType'],
+              properties: {
+                subType: { type: 'string', enum: ['sub-a1'] }
+              }
+            },
+            SubBranchA2: {
+              type: 'object',
+              required: ['subType'],
+              properties: {
+                subType: { type: 'string', enum: ['sub-a2'] }
+              }
+            },
+            SubBranchB1: {
+              type: 'object',
+              required: ['subType'],
+              properties: {
+                subType: { type: 'string', enum: ['sub-b1'] }
+              }
+            },
+            SubBranchB2: {
+              type: 'object',
+              required: ['subType'],
+              properties: {
+                subType: { type: 'string', enum: ['sub-b2'] }
+              }
+            },
+            SubBranchC1: {
+              type: 'object',
+              required: ['subType'],
+              properties: {
+                subType: { type: 'string', enum: ['sub-c1'] }
+              }
+            },
+            SubBranchC2: {
+              type: 'object',
+              required: ['subType'],
+              properties: {
+                subType: { type: 'string', enum: ['sub-c2'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+  });
 });
