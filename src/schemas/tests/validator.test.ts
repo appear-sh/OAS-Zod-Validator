@@ -2022,4 +2022,193 @@ describe('Discriminator Validation', () => {
       expect(result.errors).toBeDefined();
     });
   });
+
+  describe('Edge Cases in Mixed Configurations', () => {
+    test('handles empty discriminator mapping', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Mixed: {
+              oneOf: [
+                { $ref: '#/components/schemas/TypeA' },
+                { $ref: '#/components/schemas/TypeB' }
+              ],
+              discriminator: {
+                propertyName: 'type',
+                mapping: {} // empty mapping
+              }
+            },
+            TypeA: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['a'] }
+              }
+            },
+            TypeB: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['b'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('handles circular references in discriminator mapping', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Parent: {
+              oneOf: [
+                { $ref: '#/components/schemas/Child' }
+              ],
+              discriminator: {
+                propertyName: 'type',
+                mapping: {
+                  child: '#/components/schemas/Child',
+                  parent: '#/components/schemas/Parent' // circular reference
+                }
+              }
+            },
+            Child: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['child'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('handles discriminator with null enum values', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            NullableType: {
+              oneOf: [
+                { $ref: '#/components/schemas/ValidType' },
+                { $ref: '#/components/schemas/NullType' }
+              ],
+              discriminator: {
+                propertyName: 'type'
+              }
+            },
+            ValidType: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['valid'] }
+              }
+            },
+            NullType: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: [null] } // invalid enum value
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('handles discriminator with duplicate enum values', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Status: {
+              oneOf: [
+                { $ref: '#/components/schemas/Success' },
+                { $ref: '#/components/schemas/SuccessAlias' }
+              ],
+              discriminator: {
+                propertyName: 'status'
+              }
+            },
+            Success: {
+              type: 'object',
+              required: ['status'],
+              properties: {
+                status: { type: 'string', enum: ['success'] }
+              }
+            },
+            SuccessAlias: {
+              type: 'object',
+              required: ['status'],
+              properties: {
+                status: { type: 'string', enum: ['success'] } // duplicate enum value
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('handles discriminator with missing enum values', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Result: {
+              oneOf: [
+                { $ref: '#/components/schemas/Success' },
+                { $ref: '#/components/schemas/Error' }
+              ],
+              discriminator: {
+                propertyName: 'type'
+              }
+            },
+            Success: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string' } // missing enum
+              }
+            },
+            Error: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['error'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+  });
 });
