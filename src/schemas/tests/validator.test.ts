@@ -1,6 +1,5 @@
 import { validateOpenAPI } from '../validator';
 import { describe, test, expect } from '@jest/globals';
-import { z } from 'zod';
 
 describe('OpenAPI Validator', () => {
   test('validates a basic valid OpenAPI spec', () => {
