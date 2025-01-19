@@ -1485,6 +1485,90 @@ describe('Discriminator Validation', () => {
     expect(result.errors).toBeDefined();
   });
 
+  test('validates anyOf with discriminator', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          Response: {
+            anyOf: [
+              { $ref: '#/components/schemas/Success' },
+              { $ref: '#/components/schemas/Error' }
+            ],
+            discriminator: {
+              propertyName: 'status'
+            }
+          },
+          Success: {
+            type: 'object',
+            required: ['status'],
+            properties: {
+              status: { type: 'string', enum: ['success'] },
+              data: { type: 'object' }
+            }
+          },
+          Error: {
+            type: 'object',
+            required: ['status'],
+            properties: {
+              status: { type: 'string', enum: ['error'] },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('validates anyOf with mapped discriminator', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          ApiResponse: {
+            anyOf: [
+              { $ref: '#/components/schemas/SuccessResponse' },
+              { $ref: '#/components/schemas/ErrorResponse' }
+            ],
+            discriminator: {
+              propertyName: 'type',
+              mapping: {
+                ok: '#/components/schemas/SuccessResponse',
+                fail: '#/components/schemas/ErrorResponse'
+              }
+            }
+          },
+          SuccessResponse: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['ok'] },
+              result: { type: 'object' }
+            }
+          },
+          ErrorResponse: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['fail'] },
+              error: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
   test('validates discriminator with explicit mapping', () => {
     const spec = {
       openapi: '3.0.0',
@@ -1599,5 +1683,150 @@ describe('Discriminator Validation', () => {
     const result = validateOpenAPI(spec, { strict: true });
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
+  });
+
+  describe('Invalid Discriminator Configurations', () => {
+    test('rejects discriminator with missing property in schema', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Pet: {
+              oneOf: [
+                { $ref: '#/components/schemas/Cat' },
+                { $ref: '#/components/schemas/Dog' }
+              ],
+              discriminator: {
+                propertyName: 'petKind' // property doesn't exist in schemas
+              }
+            },
+            Cat: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['cat'] }
+              }
+            },
+            Dog: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['dog'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('rejects discriminator with invalid mapping references', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Shape: {
+              oneOf: [
+                { $ref: '#/components/schemas/Circle' }
+              ],
+              discriminator: {
+                propertyName: 'type',
+                mapping: {
+                  circle: '#/components/schemas/Circle',
+                  square: '#/components/schemas/Square' // non-existent schema
+                }
+              }
+            },
+            Circle: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['circle'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('rejects discriminator with non-required property', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Vehicle: {
+              oneOf: [
+                { $ref: '#/components/schemas/Car' },
+                { $ref: '#/components/schemas/Bike' }
+              ],
+              discriminator: {
+                propertyName: 'type'
+              }
+            },
+            Car: {
+              type: 'object',
+              // type is not in required array
+              properties: {
+                type: { type: 'string', enum: ['car'] }
+              }
+            },
+            Bike: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['bike'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('rejects discriminator with invalid mapping format', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Result: {
+              oneOf: [
+                { $ref: '#/components/schemas/Success' }
+              ],
+              discriminator: {
+                propertyName: 'status',
+                mapping: {
+                  success: 'invalid-reference-format' // should be #/components/...
+                }
+              }
+            },
+            Success: {
+              type: 'object',
+              required: ['status'],
+              properties: {
+                status: { type: 'string', enum: ['success'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
   });
 });
