@@ -1829,4 +1829,197 @@ describe('Discriminator Validation', () => {
       expect(result.errors).toBeDefined();
     });
   });
+
+  describe('Mixed Invalid Configurations', () => {
+    test('rejects mixed oneOf/anyOf with inconsistent discriminator', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Response: {
+              oneOf: [
+                { $ref: '#/components/schemas/Success' },
+                { 
+                  anyOf: [
+                    { $ref: '#/components/schemas/ErrorA' },
+                    { $ref: '#/components/schemas/ErrorB' }
+                  ]
+                }
+              ],
+              discriminator: {
+                propertyName: 'type'
+              }
+            },
+            Success: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['success'] }
+              }
+            },
+            ErrorA: {
+              type: 'object',
+              required: ['kind'], // different discriminator property
+              properties: {
+                kind: { type: 'string', enum: ['error-a'] }
+              }
+            },
+            ErrorB: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['error-b'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('rejects mixed required and optional discriminators', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Animal: {
+              anyOf: [
+                { $ref: '#/components/schemas/Cat' },
+                { $ref: '#/components/schemas/Dog' }
+              ],
+              discriminator: {
+                propertyName: 'species'
+              }
+            },
+            Cat: {
+              type: 'object',
+              required: ['species'], // required here
+              properties: {
+                species: { type: 'string', enum: ['cat'] }
+              }
+            },
+            Dog: {
+              type: 'object',
+              properties: { // not required here
+                species: { type: 'string', enum: ['dog'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('rejects mixed valid and invalid mapping references', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Shape: {
+              oneOf: [
+                { $ref: '#/components/schemas/Circle' },
+                { $ref: '#/components/schemas/Square' }
+              ],
+              discriminator: {
+                propertyName: 'type',
+                mapping: {
+                  circle: '#/components/schemas/Circle', // valid
+                  square: 'invalid-reference', // invalid
+                  triangle: '#/components/schemas/Triangle' // non-existent
+                }
+              }
+            },
+            Circle: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['circle'] }
+              }
+            },
+            Square: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['square'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+
+    test('rejects nested discriminators with mixed validity', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        components: {
+          schemas: {
+            Entity: {
+              oneOf: [
+                { $ref: '#/components/schemas/Person' },
+                { $ref: '#/components/schemas/Organization' }
+              ],
+              discriminator: {
+                propertyName: 'entityType'
+              }
+            },
+            Person: {
+              type: 'object',
+              required: ['entityType', 'type'],
+              properties: {
+                entityType: { type: 'string', enum: ['person'] },
+                type: { type: 'string' },
+                details: {
+                  oneOf: [
+                    { $ref: '#/components/schemas/Employee' },
+                    { $ref: '#/components/schemas/Customer' }
+                  ],
+                  discriminator: {
+                    propertyName: 'type' // conflicts with parent property
+                  }
+                }
+              }
+            },
+            Organization: {
+              type: 'object',
+              required: ['entityType'],
+              properties: {
+                entityType: { type: 'string', enum: ['org'] }
+              }
+            },
+            Employee: {
+              type: 'object',
+              properties: { // missing required discriminator
+                type: { type: 'string', enum: ['employee'] }
+              }
+            },
+            Customer: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['customer'] }
+              }
+            }
+          }
+        }
+      };
+
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+    });
+  });
 });
