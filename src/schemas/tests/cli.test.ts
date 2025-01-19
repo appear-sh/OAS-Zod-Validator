@@ -24,6 +24,7 @@ import path from 'path';
 import { execSync, ExecSyncOptions } from 'child_process';
 import { validateFromYaml } from '../../utils/validateFromYaml';
 import { z } from 'zod';
+import chalk from 'chalk';
 
 describe('CLI Unit Tests', () => {
   const mockValidateFromYaml = jest.mocked(validateFromYaml);
@@ -41,7 +42,14 @@ describe('CLI Unit Tests', () => {
 
   test('shows usage when no filename provided', () => {
     runCLI([]);
-    expect(mockConsoleError).toHaveBeenCalledWith(expect.stringContaining('Usage:'));
+    expect(mockConsoleLog).toHaveBeenNthCalledWith(1, chalk.blue('\nOAS-Zod-Validator CLI'));
+    expect(mockConsoleLog).toHaveBeenNthCalledWith(2, chalk.dim('\nUsage:'));
+    expect(mockConsoleLog).toHaveBeenNthCalledWith(3, '  ts-node cli.ts <path-to-yaml> [options]\n');
+    expect(mockConsoleLog).toHaveBeenNthCalledWith(4, chalk.dim('Options:'));
+    expect(mockConsoleLog).toHaveBeenNthCalledWith(5, '  --strict                Enable strict validation');
+    expect(mockConsoleLog).toHaveBeenNthCalledWith(6, '  --allow-future          Allow future OAS versions');
+    expect(mockConsoleLog).toHaveBeenNthCalledWith(7, '  --require-rate-limits   Require rate limit headers');
+    expect(mockConsoleLog).toHaveBeenNthCalledWith(8, '  --help                  Show this help message\n');
     expect(mockExit).toHaveBeenCalledWith(1);
   });
 
@@ -52,7 +60,7 @@ describe('CLI Unit Tests', () => {
 
     runCLI(['nonexistent.yaml']);
     expect(mockConsoleError).toHaveBeenCalledWith(
-      'Error reading or validating YAML file:',
+      chalk.red('\nError reading or validating YAML file:'),
       expect.any(Error)
     );
     expect(mockExit).toHaveBeenCalledWith(1);
@@ -60,30 +68,38 @@ describe('CLI Unit Tests', () => {
 
   test('handles validation success', () => {
     mockReadFileSync.mockReturnValue('valid yaml');
-    mockValidateFromYaml.mockReturnValue({ valid: true, resolvedRefs: [] });
+    mockValidateFromYaml.mockReturnValue({ 
+      valid: true, 
+      resolvedRefs: [] 
+    });
 
     runCLI(['valid.yaml']);
-    expect(mockConsoleLog).toHaveBeenCalledWith('YAML spec is valid OAS');
+    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.green('\n✅ YAML spec is valid OAS'));
     expect(mockExit).toHaveBeenCalledWith(0);
   });
 
   test('handles validation failure', () => {
     mockReadFileSync.mockReturnValue('invalid yaml');
+    const zodError = new z.ZodError([{
+      code: z.ZodIssueCode.invalid_type,
+      expected: 'string',
+      received: 'number',
+      path: ['info', 'title'],
+      message: 'Expected string, received number'
+    }]);
+
     mockValidateFromYaml.mockReturnValue({ 
       valid: false, 
-      errors: new z.ZodError([{
-        code: z.ZodIssueCode.custom,
-        path: [],
-        message: 'Validation failed'
-      }]),
+      errors: zodError,
       resolvedRefs: []
     });
 
     runCLI(['invalid.yaml']);
-    expect(mockConsoleError).toHaveBeenCalledWith(
-      'YAML spec is invalid:',
-      expect.any(Error)
-    );
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.red('\n❌ YAML spec is invalid:'));
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.yellow('\nPath: info.title'));
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.red('Error: Expected string, received number'));
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Expected: string'));
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Received: number'));
     expect(mockExit).toHaveBeenCalledWith(1);
   });
 });
