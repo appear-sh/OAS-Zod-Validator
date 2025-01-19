@@ -1443,3 +1443,161 @@ describe('Schema Composition Keywords', () => {
     expect(result.errors).toBeDefined();
   });
 });
+
+describe('Discriminator Validation', () => {
+  test('validates basic discriminator usage', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          Pet: {
+            oneOf: [
+              { $ref: '#/components/schemas/Cat' },
+              { $ref: '#/components/schemas/Dog' }
+            ],
+            discriminator: {
+              propertyName: 'type'
+            }
+          },
+          Cat: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['cat'] },
+              meow: { type: 'boolean' }
+            }
+          },
+          Dog: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['dog'] },
+              bark: { type: 'boolean' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('validates discriminator with explicit mapping', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          Vehicle: {
+            oneOf: [
+              { $ref: '#/components/schemas/Car' },
+              { $ref: '#/components/schemas/Bike' }
+            ],
+            discriminator: {
+              propertyName: 'type',
+              mapping: {
+                car: '#/components/schemas/Car',
+                bike: '#/components/schemas/Bike'
+              }
+            }
+          },
+          Car: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['car'] }
+            }
+          },
+          Bike: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['bike'] }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('rejects discriminator with missing required property', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          Shape: {
+            oneOf: [
+              { $ref: '#/components/schemas/Circle' },
+              { $ref: '#/components/schemas/Square' }
+            ],
+            discriminator: {
+              propertyName: 'type'
+            }
+          },
+          Circle: {
+            type: 'object',
+            // Missing required discriminator property
+            properties: {
+              type: { type: 'string', enum: ['circle'] },
+              radius: { type: 'number' }
+            }
+          },
+          Square: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['square'] },
+              sideLength: { type: 'number' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('rejects discriminator with invalid mapping reference', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          Animal: {
+            oneOf: [
+              { $ref: '#/components/schemas/Lion' }
+            ],
+            discriminator: {
+              propertyName: 'type',
+              mapping: {
+                lion: '#/components/schemas/Lion',
+                tiger: '#/components/schemas/Tiger' // Non-existent schema
+              }
+            }
+          },
+          Lion: {
+            type: 'object',
+            required: ['type'],
+            properties: {
+              type: { type: 'string', enum: ['lion'] }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+});
