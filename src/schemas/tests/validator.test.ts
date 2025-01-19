@@ -1338,3 +1338,108 @@ describe('Reference Validation', () => {
     expect(result.errors?.issues).toHaveLength(1);
   });
 });
+
+describe('Schema Composition Keywords', () => {
+  test('validates oneOf schema composition', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          Pet: {
+            oneOf: [
+              { $ref: '#/components/schemas/Cat' },
+              { $ref: '#/components/schemas/Dog' }
+            ]
+          },
+          Cat: {
+            type: 'object',
+            required: ['type', 'name'],
+            properties: {
+              type: { type: 'string', enum: ['cat'] },
+              name: { type: 'string' }
+            }
+          },
+          Dog: {
+            type: 'object',
+            required: ['type', 'name'],
+            properties: {
+              type: { type: 'string', enum: ['dog'] },
+              name: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('validates allOf schema composition', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          ErrorResponse: {
+            allOf: [
+              { $ref: '#/components/schemas/BaseError' },
+              {
+                type: 'object',
+                properties: {
+                  details: { type: 'string' }
+                }
+              }
+            ]
+          },
+          BaseError: {
+            type: 'object',
+            properties: {
+              code: { type: 'integer' },
+              message: { type: 'string' }
+            }
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
+  test('validates anyOf schema composition', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          Parameter: {
+            anyOf: [
+              {
+                type: 'object',
+                properties: {
+                  type: { type: 'string', enum: ['string'] },
+                  value: { type: 'string' }
+                }
+              },
+              {
+                type: 'object',
+                properties: {
+                  type: { type: 'string', enum: ['number'] },
+                  value: { type: 'number' }
+                }
+              }
+            ]
+          }
+        }
+      }
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+});
