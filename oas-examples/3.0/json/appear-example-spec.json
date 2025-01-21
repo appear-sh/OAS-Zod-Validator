@@ -93,7 +93,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Service"
+                  "$ref": "#/components/schemas/ServiceRegistration"
                 }
               }
             }
@@ -115,17 +115,10 @@
           }
         }
       },
-      "/services/{serviceId}": {
+      "/services/{id}": {
         "parameters": [
           {
-            "name": "serviceId",
-            "in": "path",
-            "required": true,
-            "description": "Unique identifier of the service",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
+            "$ref": "#/components/parameters/id"
           }
         ],
         "get": {
@@ -167,37 +160,6 @@
           "responses": {
             "200": {
               "description": "Service updated successfully",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Service"
-                  }
-                }
-              }
-            },
-            "404": {
-              "description": "Service not found"
-            }
-          }
-        },
-        "patch": {
-          "tags": ["services"],
-          "summary": "Partial service update",
-          "description": "Update specific fields of a service without replacing the entire resource.",
-          "operationId": "patchService",
-          "requestBody": {
-            "required": true,
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ServicePatch"
-                }
-              }
-            }
-          },
-          "responses": {
-            "200": {
-              "description": "Service patched successfully",
               "content": {
                 "application/json": {
                   "schema": {
@@ -277,23 +239,18 @@
           }
         }
       },
-      "/analytics/metrics/{serviceId}": {
+      "/analytics/metrics/{metricId}": {
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/metricId"
+          }
+        ],
         "get": {
           "tags": ["analytics"],
           "summary": "Get service metrics",
           "description": "Retrieve performance metrics and usage statistics for a specific service.",
           "operationId": "getServiceMetrics",
           "parameters": [
-            {
-              "name": "serviceId",
-              "in": "path",
-              "required": true,
-              "description": "Unique identifier of the service",
-              "schema": {
-                "type": "string",
-                "format": "uuid"
-              }
-            },
             {
               "name": "timeframe",
               "in": "query",
@@ -350,6 +307,28 @@
       }
     },
     "components": {
+      "parameters": {
+        "id": {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "description": "Unique identifier of the service",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "metricId": {
+          "name": "metricId",
+          "in": "path",
+          "required": true,
+          "description": "Unique identifier for the metrics",
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "schemas": {
         "Service": {
           "type": "object",
@@ -359,6 +338,29 @@
               "type": "string",
               "format": "uuid"
             },
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["active", "deprecated", "development"]
+            },
+            "description": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "ServiceRegistration": {
+          "type": "object",
+          "required": ["name", "version", "status"],
+          "properties": {
             "name": {
               "type": "string"
             },
@@ -389,8 +391,7 @@
               }
             },
             "total": {
-              "type": "integer",
-              "format": "int32"
+              "type": "integer"
             }
           }
         },
@@ -410,12 +411,10 @@
               "type": "integer"
             },
             "averageLatency": {
-              "type": "number",
-              "format": "float"
+              "type": "number"
             },
             "errorRate": {
-              "type": "number",
-              "format": "float"
+              "type": "number"
             },
             "statusCodes": {
               "type": "object",
@@ -509,4 +508,4 @@
         }
       }
     }
-  }
+}
