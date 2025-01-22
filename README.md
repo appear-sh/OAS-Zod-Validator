@@ -1,7 +1,3 @@
-# NOTE: This ReadMe is a work in progress, as I am still working on the project. There is no package yet, so the project can only be tested locally as is.
-
------
-
 # OAS-Zod-Validator Documentation
 
 ## Overview
@@ -32,6 +28,14 @@ npm install oas-zod-validator (not yet published)
 - Security scheme validation
 
 ## Usage Examples
+
+
+### Testing the validator
+open the spec-tester.ts file and include the spec you wish to test with its location. Once you have done this, run the following from the project root:
+```
+npx ts-node src/utils/spec-tester.ts
+```
+
 
 ### Basic Validation
 
