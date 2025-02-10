@@ -15,16 +15,27 @@ jest.mock('fs', () => ({
   mkdirSync: mockMkdirSync,
   rmSync: mockRmSync
 }));
-jest.mock('../../utils/validateFromYaml');
+jest.mock('../../utils/validateFromYaml.js', () => ({
+  validateFromYaml: jest.fn()
+}));
 
-import { runCLI } from '../cli'; 
+jest.mock('chalk', () => ({
+  green: jest.fn(str => str),
+  red: jest.fn(str => str),
+  yellow: jest.fn(str => str),
+  blue: jest.fn(str => str),
+  dim: jest.fn(str => str)
+}));
+
+import { runCLI } from '../cli.js'; 
 import { describe, test, expect, jest, beforeEach, beforeAll, afterAll, afterEach } from '@jest/globals';
 import fs from 'fs';
 import path from 'path';
 import { execSync, ExecSyncOptions } from 'child_process';
-import { validateFromYaml } from '../../utils/validateFromYaml';
+import { validateFromYaml } from '../../utils/validateFromYaml.js';
 import { z } from 'zod';
 import chalk from 'chalk';
+import { fileURLToPath } from 'url';
 
 describe('CLI Unit Tests', () => {
   const mockValidateFromYaml = jest.mocked(validateFromYaml);
@@ -102,17 +113,113 @@ describe('CLI Unit Tests', () => {
     expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Received: number'));
     expect(mockExit).toHaveBeenCalledWith(1);
   });
+
+  test('handles validation failure with different Zod issues', () => {
+    const yamlContent = 'invalid yaml content';
+    const zodError = new z.ZodError([
+      {
+        code: z.ZodIssueCode.invalid_type,
+        expected: 'string',
+        received: 'number',
+        path: ['info', 'title'],
+        message: 'Expected string, received number'
+      },
+      {
+        code: z.ZodIssueCode.invalid_union,
+        path: ['paths', '/test', 'get'],
+        message: 'Invalid input',
+        unionErrors: [
+          new z.ZodError([{ 
+            code: z.ZodIssueCode.invalid_type,
+            expected: 'object',
+            received: 'string',
+            path: [],
+            message: 'Expected object, received string'
+          }])
+        ]
+      },
+      {
+        code: z.ZodIssueCode.invalid_enum_value,
+        path: ['info', 'version'],
+        message: 'Invalid enum value',
+        options: ['1.0.0', '2.0.0'],
+        received: '3.0.0'
+      },
+      {
+        code: z.ZodIssueCode.unrecognized_keys,
+        path: ['info'],
+        message: 'Unrecognized key(s) in object',
+        keys: ['invalid_key']
+      }
+    ]);
+
+    mockReadFileSync.mockReturnValue(yamlContent);
+    mockValidateFromYaml.mockReturnValue({ 
+      valid: false, 
+      errors: zodError,
+      resolvedRefs: []
+    });
+
+    runCLI(['invalid.yaml']);
+    expect(mockReadFileSync).toHaveBeenCalledWith('invalid.yaml', 'utf-8');
+    expect(mockValidateFromYaml).toHaveBeenCalledWith(yamlContent, expect.any(Object));
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.red('\n❌ YAML spec is invalid:'));
+    
+    // Check each error type was handled
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Expected: string'));
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Received: number'));
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Union Errors: Expected object, received string'));
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Expected one of: 1.0.0, 2.0.0'));
+    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Unrecognized keys: invalid_key'));
+    
+    expect(mockExit).toHaveBeenCalledWith(1);
+  });
+
+  test('handles validation success with resolved references', () => {
+    const yamlContent = 'valid yaml with refs';
+    mockReadFileSync.mockReturnValue(yamlContent);
+    mockValidateFromYaml.mockReturnValue({ 
+      valid: true, 
+      resolvedRefs: ['#/components/schemas/User', '#/components/responses/Error']
+    });
+
+    runCLI(['valid.yaml']);
+    expect(mockReadFileSync).toHaveBeenCalledWith('valid.yaml', 'utf-8');
+    expect(mockValidateFromYaml).toHaveBeenCalledWith(yamlContent, expect.any(Object));
+    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.green('\n✅ YAML spec is valid OAS'));
+    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.blue('\nResolved references:'));
+    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.dim('  #/components/schemas/User'));
+    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.dim('  #/components/responses/Error'));
+    expect(mockExit).toHaveBeenCalledWith(0);
+  });
+
+  test('passes validation options correctly', () => {
+    const yamlContent = 'valid yaml';
+    mockReadFileSync.mockReturnValue(yamlContent);
+    mockValidateFromYaml.mockReturnValue({ valid: true, resolvedRefs: [] });
+
+    runCLI(['valid.yaml', '--strict', '--allow-future', '--require-rate-limits']);
+    expect(mockValidateFromYaml).toHaveBeenCalledWith(yamlContent, {
+      strict: true,
+      allowFutureOASVersions: true,
+      strictRules: {
+        requireRateLimitHeaders: true
+      }
+    });
+  });
 });
 
 describe('CLI Integration Tests', () => {
-  const testDir = path.resolve(__dirname, 'test-specs');
+  const currentFilePath = fileURLToPath(import.meta.url);
+  const currentDirPath = path.dirname(currentFilePath);
+  const testDir = path.resolve(currentDirPath, 'test-specs');
   const execOptions: ExecSyncOptions = { 
     stdio: 'pipe',
     encoding: 'utf-8',
-    cwd: path.resolve(__dirname, '../..')
+    cwd: path.resolve(currentDirPath, '../..')
   };
   
-  const cliPath = path.resolve(__dirname, '../cli.ts');
+  const cliPath = path.resolve(currentDirPath, '../cli.js');
   
   // Store real fs module
   let realFs: typeof fs;
@@ -120,7 +227,7 @@ describe('CLI Integration Tests', () => {
   beforeAll(() => {
     // Ensure no mocks are active
     jest.unmock('fs');
-    jest.unmock('../../utils/validateFromYaml');
+    jest.unmock('../../utils/validateFromYaml.js');
     
     // Re-import real fs
     realFs = jest.requireActual('fs');
@@ -148,7 +255,7 @@ paths: {}
     const validFile = path.resolve(testDir, 'valid.yaml');
     realFs.writeFileSync(validFile, validYaml, 'utf8');
     
-    const command = `node -r ts-node/register "${cliPath}" "${validFile}" --strict`;
+    const command = `node "${cliPath}" "${validFile}" --strict`;
     const outputStrict = execSync(command, execOptions);
     expect(outputStrict.toString()).toContain('YAML spec is valid OAS');
   });
@@ -165,7 +272,7 @@ paths:
     const invalidFile = path.resolve(testDir, 'invalid-syntax.yaml');
     realFs.writeFileSync(invalidFile, invalidYaml, 'utf8');
 
-    const command = `node -r ts-node/register "${cliPath}" "${invalidFile}"`;
+    const command = `node "${cliPath}" "${invalidFile}"`;
     expect(() => {
       execSync(command, execOptions);
     }).toThrow(/YAML spec is invalid/);
