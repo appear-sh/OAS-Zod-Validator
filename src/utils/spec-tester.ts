@@ -1,9 +1,9 @@
-import { validateOpenAPI } from '../schemas/validator';
+import { validateOpenAPI } from '../schemas/validator.js';
 import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
 import { z } from 'zod';
-import { OpenAPISpec, Operation, PathItem } from '../schemas/types';
+import { OpenAPISpec, Operation, PathItem } from '../schemas/types.js';
 
 interface ValidationSummary {
   total: number;
@@ -16,7 +16,7 @@ interface ValidationSummary {
   };
 }
 
-function countOperations(spec: OpenAPISpec): number {
+export function countOperations(spec: OpenAPISpec): number {
   const methods = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace'];
   let count = 0;
   
@@ -30,7 +30,7 @@ function countOperations(spec: OpenAPISpec): number {
   return count;
 }
 
-function countUnsecuredEndpoints(spec: OpenAPISpec): number {
+export function countUnsecuredEndpoints(spec: OpenAPISpec): number {
   const methods = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace'];
   let count = 0;
   
@@ -47,7 +47,7 @@ function countUnsecuredEndpoints(spec: OpenAPISpec): number {
   return count;
 }
 
-function checkBestPractices(spec: OpenAPISpec): string[] {
+export function checkBestPractices(spec: OpenAPISpec): string[] {
   const warnings: string[] = [];
   
   if (!spec.info?.description) {
@@ -86,7 +86,7 @@ function checkBestPractices(spec: OpenAPISpec): string[] {
   return warnings;
 }
 
-function findCircularRefs(spec: OpenAPISpec): string[] {
+export function findCircularRefs(spec: OpenAPISpec): string[] {
   const circularRefs: string[] = [];
   const visited = new Set<string>();
   
@@ -112,7 +112,7 @@ function findCircularRefs(spec: OpenAPISpec): string[] {
   return [...new Set(circularRefs)];
 }
 
-function countExternalRefs(spec: OpenAPISpec): number {
+export function countExternalRefs(spec: OpenAPISpec): number {
   let count = 0;
   
   function traverse(obj: unknown): void {
@@ -134,7 +134,7 @@ function countExternalRefs(spec: OpenAPISpec): number {
   return count;
 }
 
-async function testSpec() {
+export async function testSpec() {
   try {
     const specPath = path.join(process.cwd(), 'oas-examples', '3.1', 'json', 'petstore.json');
     // const specPath = path.join(process.cwd(), 'oas-examples', '3.0', 'json', 'appear-example-spec.json');

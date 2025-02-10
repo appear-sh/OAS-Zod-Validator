@@ -1,4 +1,4 @@
-import { SecuritySchemeObject, SecurityRequirementObject } from '../security';
+import { SecuritySchemeObject, SecurityRequirementObject } from '../security.js';
 import { describe, test, expect } from '@jest/globals';
 
 describe('Security Schema Validation', () => {

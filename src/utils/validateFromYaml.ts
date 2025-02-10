@@ -1,5 +1,5 @@
-import { load } from 'js-yaml';
-import { validateOpenAPI, ValidationOptions, ValidationResult } from '../schemas/validator';
+import yaml from 'js-yaml';
+import { validateOpenAPI, ValidationOptions, ValidationResult } from '../schemas/validator.js';
 import { z } from 'zod';
 
 export function validateFromYaml(
@@ -21,7 +21,7 @@ export function validateFromYaml(
   }
 
   try {
-    const parsed = load(yamlString);
+    const parsed = yaml.load(yamlString);
     
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return {

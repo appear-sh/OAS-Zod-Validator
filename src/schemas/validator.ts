@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { OpenAPIObject } from './openapi';
-import { OpenAPIObject31 } from './openapi31';
-import { verifyRefTargets } from '../utils/verifyRefTargets';
-import { OpenAPISpec, PathItem, Operation } from './types';
-import { BulkRequestSchema, BulkResponseSchema, PaginationHeadersSchema, PaginationParamsSchema } from './api_patterns';
+import { OpenAPIObject } from './openapi.js';
+import { OpenAPIObject31 } from './openapi31.js';
+import { verifyRefTargets } from '../utils/verifyRefTargets.js';
+import { OpenAPISpec, PathItem, Operation } from './types.js';
+import { BulkRequestSchema, BulkResponseSchema, PaginationHeadersSchema, PaginationParamsSchema } from './api_patterns.js';
 
 export interface ValidationOptions {
   strict?: boolean;

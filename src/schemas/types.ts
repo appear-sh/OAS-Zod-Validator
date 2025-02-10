@@ -1,6 +1,6 @@
 import type { z } from 'zod';
-import type { OpenAPIObject } from './openapi';
-import type { OpenAPIObject31 } from './openapi31';
+import type { OpenAPIObject } from './openapi.js';
+import type { OpenAPIObject31 } from './openapi31.js';
 
 export type OpenAPISpec = z.infer<typeof OpenAPIObject | typeof OpenAPIObject31>;
 

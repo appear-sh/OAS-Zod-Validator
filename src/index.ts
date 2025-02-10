@@ -1,5 +1,5 @@
-import { validateOpenAPI, ValidationOptions, ValidationResult } from './schemas/validator';
-import { validateFromYaml } from './utils/validateFromYaml';
+import { validateOpenAPI, ValidationOptions, ValidationResult } from './schemas/validator.js';
+import { validateFromYaml } from './utils/validateFromYaml.js';
 
 // Core validation functions
 export {
@@ -14,5 +14,5 @@ export type {
 };
 
 // Re-export types that consumers might need
-export type { OpenAPIObject } from './schemas/openapi';
-export type { OpenAPIObject31 } from './schemas/openapi31';
+export type { OpenAPIObject } from './schemas/openapi.js';
+export type { OpenAPIObject31 } from './schemas/openapi31.js';

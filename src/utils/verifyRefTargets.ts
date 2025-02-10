@@ -1,4 +1,4 @@
-import { get } from 'lodash';
+import { get } from 'lodash-es';
 
 export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): void {
   const collectRefs = (obj: unknown): void => {

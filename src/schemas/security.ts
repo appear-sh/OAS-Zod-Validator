@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ExtensibleObject } from './core';
+import { ExtensibleObject } from './core.js';
 
 export const SecurityRequirementObject = z.record(z.array(z.string()));
 

@@ -1,4 +1,4 @@
-import { ParameterObject } from '../paths';
+import { ParameterObject } from '../paths.js';
 import { describe, test, expect } from '@jest/globals';
 
 describe('Parameter Object Validation', () => {

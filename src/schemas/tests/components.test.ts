@@ -1,4 +1,4 @@
-import { ComponentsObject } from '../components';
+import { ComponentsObject } from '../components.js';
 import { describe, test, expect } from '@jest/globals';
 
 describe('Components Object Validation', () => {

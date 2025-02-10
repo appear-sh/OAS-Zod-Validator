@@ -1,4 +1,4 @@
-import { ExtensibleObject, ReferenceObject, VendorExtensible } from '../core';
+import { ExtensibleObject, ReferenceObject, VendorExtensible } from '../core.js';
 import { describe, test, expect } from '@jest/globals';
 import { z } from 'zod';
 

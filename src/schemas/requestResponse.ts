@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SchemaObject, ReferenceObject } from './core';
+import { SchemaObject, ReferenceObject } from './core.js';
 
 // Media Type Object
 export const MediaTypeObject = z.object({

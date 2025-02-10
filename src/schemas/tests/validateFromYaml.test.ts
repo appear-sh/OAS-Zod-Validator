@@ -1,4 +1,4 @@
-import { validateFromYaml } from '../../utils/validateFromYaml';
+import { validateFromYaml } from '../../utils/validateFromYaml.js';
 import { describe, test, expect } from '@jest/globals';
 
 describe('YAML Validation', () => {

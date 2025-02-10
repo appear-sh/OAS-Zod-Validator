@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { SchemaObject, ReferenceObject } from './core';
-import { RequestBodyObject, ResponseObject } from './requestResponse';
+import { SchemaObject, ReferenceObject } from './core.js';
+import { RequestBodyObject, ResponseObject } from './requestResponse.js';
 
 // Parameter Object (reused from paths.ts to avoid circular dependency)
 const ParameterObject = z.object({

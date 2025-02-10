@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { PathsObject } from './paths';
-import { ComponentsObject } from './components';
-import { RequestBodyObject, ResponsesObject } from './requestResponse';
+import { PathsObject } from './paths.js';
+import { ComponentsObject } from './components.js';
+import { RequestBodyObject, ResponsesObject } from './requestResponse.js';
 
 const WebhookOperationObject = z.object({
   requestBody: RequestBodyObject.optional(),

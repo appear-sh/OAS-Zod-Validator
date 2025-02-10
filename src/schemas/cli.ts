@@ -1,8 +1,14 @@
 import fs from 'fs';
-import { validateFromYaml } from '../utils/validateFromYaml';
-import { ValidationOptions } from '../schemas/validator';
+import { validateFromYaml } from '../utils/validateFromYaml.js';
+import { validateOpenAPI, ValidationOptions } from '../schemas/validator.js';
 import chalk from 'chalk';
 import { ZodIssue } from 'zod';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+// Get the current file's directory path
+const currentFilePath = fileURLToPath(import.meta.url);
+const currentDirPath = path.dirname(currentFilePath);
 
 export function runCLI(args: string[]): void {
   const fileName = args[0];
@@ -34,7 +40,7 @@ export function runCLI(args: string[]): void {
       console.log(chalk.green('\n✅ YAML spec is valid OAS'));
       if (result.resolvedRefs.length > 0) {
         console.log(chalk.blue('\nResolved references:'));
-        result.resolvedRefs.forEach(ref => {
+        result.resolvedRefs.forEach((ref: string) => {
           console.log(chalk.dim(`  ${ref}`));
         });
       }
@@ -71,6 +77,10 @@ export function runCLI(args: string[]): void {
   }
 }
 
-if (require.main === module) {
+// Check if this module is being run directly
+const isMainModule = import.meta.url.startsWith('file:') && 
+  process.argv[1] === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
   runCLI(process.argv.slice(2));
 }

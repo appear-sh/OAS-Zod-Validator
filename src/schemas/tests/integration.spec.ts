@@ -1,10 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
-import { validateOpenAPI } from '../validator';
+import { validateOpenAPI } from '../validator.js';
 import { describe, test, expect, beforeAll } from '@jest/globals';
 
 describe('Integration tests for multiple OAS specs', () => {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const specsDir = path.join(__dirname, 'test-specs');
   
   // Add a static test that will always run

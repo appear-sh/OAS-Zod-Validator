@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { ComponentsObject, LinkObject } from './components';
-import { PathsObject } from './paths';
-import { ReferenceObject } from './reference';
-import { MediaTypeObject } from './requestResponse';
+import { ComponentsObject, LinkObject } from './components.js';
+import { PathsObject } from './paths.js';
+import { ReferenceObject } from './reference.js';
+import { MediaTypeObject } from './requestResponse.js';
 
 export const ServerObject = z.object({
   url: z.string(),
