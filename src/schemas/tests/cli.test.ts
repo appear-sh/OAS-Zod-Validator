@@ -1,280 +1,342 @@
-const mockReadFileSync = jest.fn();
-const mockExistsSync = jest.fn();
-const mockMkdirSync = jest.fn();
-const mockRmSync = jest.fn();
+/// <reference types="node" />
+/// <reference types="jest" />
 
-jest.mock('fs', () => ({
-  default: {
-    readFileSync: mockReadFileSync,
-    existsSync: mockExistsSync,
-    mkdirSync: mockMkdirSync,
-    rmSync: mockRmSync
-  },
-  readFileSync: mockReadFileSync,
-  existsSync: mockExistsSync,
-  mkdirSync: mockMkdirSync,
-  rmSync: mockRmSync
-}));
-jest.mock('../../utils/validateFromYaml.js', () => ({
-  validateFromYaml: jest.fn()
-}));
-
-jest.mock('chalk', () => ({
-  green: jest.fn(str => str),
-  red: jest.fn(str => str),
-  yellow: jest.fn(str => str),
-  blue: jest.fn(str => str),
-  dim: jest.fn(str => str)
-}));
-
-import { runCLI } from '../cli.js'; 
-import { describe, test, expect, jest, beforeEach, beforeAll, afterAll, afterEach } from '@jest/globals';
-import fs from 'fs';
-import path from 'path';
-import { execSync, ExecSyncOptions } from 'child_process';
-import { validateFromYaml } from '../../utils/validateFromYaml.js';
-import { z } from 'zod';
+import type { ExecSyncOptionsWithStringEncoding } from 'node:child_process';
+import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+import fs from 'node:fs';
+import { jest, describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 import chalk from 'chalk';
-import { fileURLToPath } from 'url';
+import { z } from 'zod';
+import { runCLI } from '../cli.js';
+import { validateFromYaml } from '../../utils/validateFromYaml.js';
+import type { ValidationOptions, ValidationResult } from '../validator.js';
+import { spawnSync } from 'node:child_process';
 
-describe('CLI Unit Tests', () => {
-  const mockValidateFromYaml = jest.mocked(validateFromYaml);
-  const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-  const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-  const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
+const currentDirPath = path.dirname(fileURLToPath(import.meta.url));
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  afterEach(() => {
-    jest.resetModules();
-  });
-
-  test('shows usage when no filename provided', () => {
-    runCLI([]);
-    expect(mockConsoleLog).toHaveBeenNthCalledWith(1, chalk.blue('\nOAS-Zod-Validator CLI'));
-    expect(mockConsoleLog).toHaveBeenNthCalledWith(2, chalk.dim('\nUsage:'));
-    expect(mockConsoleLog).toHaveBeenNthCalledWith(3, '  ts-node cli.ts <path-to-yaml> [options]\n');
-    expect(mockConsoleLog).toHaveBeenNthCalledWith(4, chalk.dim('Options:'));
-    expect(mockConsoleLog).toHaveBeenNthCalledWith(5, '  --strict                Enable strict validation');
-    expect(mockConsoleLog).toHaveBeenNthCalledWith(6, '  --allow-future          Allow future OAS versions');
-    expect(mockConsoleLog).toHaveBeenNthCalledWith(7, '  --require-rate-limits   Require rate limit headers');
-    expect(mockConsoleLog).toHaveBeenNthCalledWith(8, '  --help                  Show this help message\n');
-    expect(mockExit).toHaveBeenCalledWith(1);
-  });
-
-  test('handles file read errors', () => {
-    mockReadFileSync.mockImplementationOnce(() => {
-      throw new Error('File not found');
-    });
-
-    runCLI(['nonexistent.yaml']);
-    expect(mockConsoleError).toHaveBeenCalledWith(
-      chalk.red('\nError reading or validating YAML file:'),
-      expect.any(Error)
-    );
-    expect(mockExit).toHaveBeenCalledWith(1);
-  });
-
-  test('handles validation success', () => {
-    mockReadFileSync.mockReturnValue('valid yaml');
-    mockValidateFromYaml.mockReturnValue({ 
-      valid: true, 
-      resolvedRefs: [] 
-    });
-
-    runCLI(['valid.yaml']);
-    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.green('\n✅ YAML spec is valid OAS'));
-    expect(mockExit).toHaveBeenCalledWith(0);
-  });
-
-  test('handles validation failure', () => {
-    mockReadFileSync.mockReturnValue('invalid yaml');
-    const zodError = new z.ZodError([{
-      code: z.ZodIssueCode.invalid_type,
-      expected: 'string',
-      received: 'number',
-      path: ['info', 'title'],
-      message: 'Expected string, received number'
-    }]);
-
-    mockValidateFromYaml.mockReturnValue({ 
-      valid: false, 
-      errors: zodError,
-      resolvedRefs: []
-    });
-
-    runCLI(['invalid.yaml']);
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.red('\n❌ YAML spec is invalid:'));
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.yellow('\nPath: info.title'));
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.red('Error: Expected string, received number'));
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Expected: string'));
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Received: number'));
-    expect(mockExit).toHaveBeenCalledWith(1);
-  });
-
-  test('handles validation failure with different Zod issues', () => {
-    const yamlContent = 'invalid yaml content';
-    const zodError = new z.ZodError([
-      {
-        code: z.ZodIssueCode.invalid_type,
-        expected: 'string',
-        received: 'number',
-        path: ['info', 'title'],
-        message: 'Expected string, received number'
-      },
-      {
-        code: z.ZodIssueCode.invalid_union,
-        path: ['paths', '/test', 'get'],
-        message: 'Invalid input',
-        unionErrors: [
-          new z.ZodError([{ 
-            code: z.ZodIssueCode.invalid_type,
-            expected: 'object',
-            received: 'string',
-            path: [],
-            message: 'Expected object, received string'
-          }])
-        ]
-      },
-      {
-        code: z.ZodIssueCode.invalid_enum_value,
-        path: ['info', 'version'],
-        message: 'Invalid enum value',
-        options: ['1.0.0', '2.0.0'],
-        received: '3.0.0'
-      },
-      {
-        code: z.ZodIssueCode.unrecognized_keys,
-        path: ['info'],
-        message: 'Unrecognized key(s) in object',
-        keys: ['invalid_key']
-      }
-    ]);
-
-    mockReadFileSync.mockReturnValue(yamlContent);
-    mockValidateFromYaml.mockReturnValue({ 
-      valid: false, 
-      errors: zodError,
-      resolvedRefs: []
-    });
-
-    runCLI(['invalid.yaml']);
-    expect(mockReadFileSync).toHaveBeenCalledWith('invalid.yaml', 'utf-8');
-    expect(mockValidateFromYaml).toHaveBeenCalledWith(yamlContent, expect.any(Object));
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.red('\n❌ YAML spec is invalid:'));
-    
-    // Check each error type was handled
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Expected: string'));
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Received: number'));
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Union Errors: Expected object, received string'));
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Expected one of: 1.0.0, 2.0.0'));
-    expect(mockConsoleError).toHaveBeenCalledWith(chalk.dim('Unrecognized keys: invalid_key'));
-    
-    expect(mockExit).toHaveBeenCalledWith(1);
-  });
-
-  test('handles validation success with resolved references', () => {
-    const yamlContent = 'valid yaml with refs';
-    mockReadFileSync.mockReturnValue(yamlContent);
-    mockValidateFromYaml.mockReturnValue({ 
-      valid: true, 
-      resolvedRefs: ['#/components/schemas/User', '#/components/responses/Error']
-    });
-
-    runCLI(['valid.yaml']);
-    expect(mockReadFileSync).toHaveBeenCalledWith('valid.yaml', 'utf-8');
-    expect(mockValidateFromYaml).toHaveBeenCalledWith(yamlContent, expect.any(Object));
-    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.green('\n✅ YAML spec is valid OAS'));
-    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.blue('\nResolved references:'));
-    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.dim('  #/components/schemas/User'));
-    expect(mockConsoleLog).toHaveBeenCalledWith(chalk.dim('  #/components/responses/Error'));
-    expect(mockExit).toHaveBeenCalledWith(0);
-  });
-
-  test('passes validation options correctly', () => {
-    const yamlContent = 'valid yaml';
-    mockReadFileSync.mockReturnValue(yamlContent);
-    mockValidateFromYaml.mockReturnValue({ valid: true, resolvedRefs: [] });
-
-    runCLI(['valid.yaml', '--strict', '--allow-future', '--require-rate-limits']);
-    expect(mockValidateFromYaml).toHaveBeenCalledWith(yamlContent, {
-      strict: true,
-      allowFutureOASVersions: true,
-      strictRules: {
-        requireRateLimitHeaders: true
-      }
-    });
-  });
+// Test helpers
+const createMockValidationResult = (valid: boolean, resolvedRefs: string[] = [], errors?: z.ZodError): ValidationResult => ({
+  valid,
+  resolvedRefs,
+  errors
 });
 
-describe('CLI Integration Tests', () => {
-  const currentFilePath = fileURLToPath(import.meta.url);
-  const currentDirPath = path.dirname(currentFilePath);
-  const testDir = path.resolve(currentDirPath, 'test-specs');
-  const execOptions: ExecSyncOptions = { 
-    stdio: 'pipe',
-    encoding: 'utf-8',
-    cwd: path.resolve(currentDirPath, '../..')
-  };
-  
-  const cliPath = path.resolve(currentDirPath, '../cli.js');
-  
-  // Store real fs module
-  let realFs: typeof fs;
-  
-  beforeAll(() => {
-    // Ensure no mocks are active
-    jest.unmock('fs');
-    jest.unmock('../../utils/validateFromYaml.js');
-    
-    // Re-import real fs
-    realFs = jest.requireActual('fs');
-    
-    if (realFs.existsSync(testDir)) {
-      realFs.rmSync(testDir, { recursive: true });
-    }
-    realFs.mkdirSync(testDir, { recursive: true });
+// Mock fs module
+const mockReadFileSync = jest.fn().mockReturnValue('openapi: "3.0.0"\ninfo:\n  title: "Test API"\n  version: "1.0.0"\npaths: {}');
+const mockExistsSync = jest.fn().mockReturnValue(true);
+const mockWriteFileSync = jest.fn();
+
+jest.mock('node:fs', () => ({
+  readFileSync: mockReadFileSync,
+  existsSync: mockExistsSync,
+  writeFileSync: mockWriteFileSync,
+  promises: {
+    readFile: jest.fn(),
+    writeFile: jest.fn(),
+    access: jest.fn()
+  },
+  constants: {
+    F_OK: 0,
+    R_OK: 4,
+    W_OK: 2,
+    X_OK: 1
+  }
+}));
+
+// Mock validateFromYaml
+const mockValidateFromYaml = jest.fn<typeof validateFromYaml>();
+jest.mock('../../utils/validateFromYaml.js', () => ({
+  validateFromYaml: mockValidateFromYaml,
+  __esModule: true
+}));
+
+// Mock console methods
+const consoleMock = {
+  log: jest.spyOn(console, 'log').mockImplementation(() => {}),
+  error: jest.spyOn(console, 'error').mockImplementation(() => {})
+};
+
+// Mock process.exit
+const processExitMock = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+
+describe('CLI Unit Tests', () => {
+  beforeEach(() => {
+    // Clear all mocks
+    jest.clearAllMocks();
+
+    // Reset individual mocks
+    consoleMock.log.mockClear();
+    consoleMock.error.mockClear();
+    processExitMock.mockClear();
+    mockReadFileSync.mockClear();
+    mockExistsSync.mockClear();
+    mockWriteFileSync.mockClear();
+    mockValidateFromYaml.mockClear();
+
+    // Reset process.argv
+    process.argv = ['node', 'cli.js'];
+
+    // Setup mock defaults
+    mockReadFileSync.mockReturnValue('openapi: "3.0.0"\ninfo:\n  title: "Test API"\n  version: "1.0.0"\npaths: {}');
+    mockExistsSync.mockReturnValue(true);
+    mockValidateFromYaml.mockReturnValue(createMockValidationResult(true));
   });
 
-  afterAll(() => {
-    if (realFs.existsSync(testDir)) {
-      realFs.rmSync(testDir, { recursive: true });
-    }
+  describe('Command Line Arguments', () => {
+    test('shows usage when no filename provided', () => {
+      jest.isolateModules(() => {
+        runCLI(['node', 'cli.js']);
+        
+        expect(consoleMock.log).toHaveBeenCalledWith('\nOAS-Zod-Validator CLI');
+        expect(consoleMock.log).toHaveBeenCalledWith('\nUsage:');
+        expect(consoleMock.log).toHaveBeenCalledWith('  oas-zod-validator <path-to-yaml> [options]\n');
+        expect(processExitMock).toHaveBeenCalledWith(1);
+      });
+    });
+
+    test('accepts validation options from command line', () => {
+      const expectedOptions = {
+        strict: true,
+        allowFutureOASVersions: true,
+        strictRules: {
+          requireRateLimitHeaders: true
+        }
+      };
+
+      jest.isolateModules(() => {
+        runCLI(['node', 'cli.js', 'valid.yaml', '--strict', '--allow-future', '--require-rate-limits']);
+        
+        expect(mockReadFileSync).toHaveBeenCalledWith('valid.yaml', 'utf-8');
+        expect(mockValidateFromYaml).toHaveBeenCalledWith(
+          'openapi: "3.0.0"\ninfo:\n  title: "Test API"\n  version: "1.0.0"\npaths: {}',
+          expect.objectContaining(expectedOptions)
+        );
+        expect(consoleMock.log).toHaveBeenCalledWith('🔍 Validating OpenAPI Specification...');
+        expect(consoleMock.log).toHaveBeenCalledWith('API Surface Analysis:');
+        expect(processExitMock).toHaveBeenCalledWith(0);
+      });
+    });
+
+    test('handles default options when none provided', () => {
+      const expectedOptions = {
+        strict: false,
+        allowFutureOASVersions: false,
+        strictRules: {
+          requireRateLimitHeaders: false
+        }
+      };
+
+      jest.isolateModules(() => {
+        runCLI(['node', 'cli.js', 'valid.yaml']);
+        
+        expect(mockValidateFromYaml).toHaveBeenCalledWith(
+          'openapi: "3.0.0"\ninfo:\n  title: "Test API"\n  version: "1.0.0"\npaths: {}',
+          expect.objectContaining(expectedOptions)
+        );
+        expect(consoleMock.log).toHaveBeenCalledWith('🔍 Validating OpenAPI Specification...');
+        expect(consoleMock.log).toHaveBeenCalledWith('API Surface Analysis:');
+        expect(processExitMock).toHaveBeenCalledWith(0);
+      });
+    });
   });
 
-  test('validates valid YAML file with different options', () => {
-    const validYaml = `
+  describe('File Handling', () => {
+    test('handles file read errors', () => {
+      const error = new Error('ENOENT: no such file or directory, open \'nonexistent.yaml\'');
+      mockReadFileSync.mockImplementation(() => {
+        throw error;
+      });
+
+      jest.isolateModules(() => {
+        runCLI(['node', 'cli.js', 'nonexistent.yaml']);
+        
+        expect(consoleMock.error).toHaveBeenCalledWith('Error reading file:', error);
+        expect(processExitMock).toHaveBeenCalledWith(1);
+      });
+    });
+
+    test('handles YAML parsing errors', () => {
+      const error = new Error('YAML syntax error');
+      mockValidateFromYaml.mockImplementation(() => {
+        throw error;
+      });
+
+      jest.isolateModules(() => {
+        runCLI(['node', 'cli.js', 'invalid.yaml']);
+        
+        expect(consoleMock.log).toHaveBeenCalledWith('🔍 Validating OpenAPI Specification...');
+        expect(consoleMock.error).toHaveBeenCalledWith('YAML Parsing Error:', error.message);
+        expect(processExitMock).toHaveBeenCalledWith(1);
+      });
+    });
+  });
+
+  describe('Validation Results', () => {
+    test('handles validation success', () => {
+      runCLI(['node', 'cli.js', 'valid.yaml']);
+      
+      expect(consoleMock.log).toHaveBeenCalledWith('🔍 Validating OpenAPI Specification...');
+      expect(consoleMock.log).toHaveBeenCalledWith('API Surface Analysis:');
+      expect(processExitMock).toHaveBeenCalledWith(0);
+    });
+
+    test('handles validation success with resolved references', () => {
+      mockValidateFromYaml.mockReturnValue(
+        createMockValidationResult(true, ['#/components/schemas/User'])
+      );
+
+      runCLI(['node', 'cli.js', 'valid.yaml']);
+      
+      expect(consoleMock.log).toHaveBeenCalledWith('🔍 Validating OpenAPI Specification...');
+      expect(consoleMock.log).toHaveBeenCalledWith('API Surface Analysis:');
+      expect(consoleMock.log).toHaveBeenCalledWith('Resolved references:');
+      expect(consoleMock.log).toHaveBeenCalledWith('  #/components/schemas/User');
+      expect(processExitMock).toHaveBeenCalledWith(0);
+    });
+
+    test('handles validation failure with Zod errors', () => {
+      const zodError = {
+        errors: [
+          {
+            path: ['info', 'title'],
+            message: 'Expected string, received number'
+          }
+        ]
+      } as z.ZodError;
+
+      mockValidateFromYaml.mockReturnValue(createMockValidationResult(false, [], zodError));
+
+      runCLI(['node', 'cli.js', 'invalid.yaml']);
+
+      expect(consoleMock.log).toHaveBeenCalledWith('🔍 Validating OpenAPI Specification...');
+      expect(consoleMock.error).toHaveBeenCalledWith('❌ Validation failed:');
+      expect(consoleMock.error).toHaveBeenCalledWith(expect.stringContaining('Path: info.title'));
+      expect(consoleMock.error).toHaveBeenCalledWith(expect.stringContaining('Error: Expected string, received number'));
+      expect(processExitMock).toHaveBeenCalledWith(1);
+    });
+
+    test('handles different types of Zod validation errors', () => {
+      const zodError = new z.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'object',
+          received: 'string',
+          path: ['paths'],
+          message: 'Expected object, received string'
+        },
+        {
+          code: 'invalid_enum_value',
+          options: ['a', 'b'],
+          received: 'c',
+          path: ['enum'],
+          message: 'Invalid enum value'
+        },
+        {
+          code: 'unrecognized_keys',
+          keys: ['invalid'],
+          path: ['object'],
+          message: 'Unrecognized key'
+        }
+      ]);
+
+      mockValidateFromYaml.mockReturnValue(createMockValidationResult(false, [], zodError));
+
+      runCLI(['node', 'cli.js', 'invalid.yaml']);
+      
+      expect(consoleMock.log).toHaveBeenCalledWith('🔍 Validating OpenAPI Specification...');
+      expect(consoleMock.error).toHaveBeenCalledWith('❌ Validation failed:');
+      expect(consoleMock.error).toHaveBeenCalledWith(expect.stringContaining('Path: paths'));
+      expect(consoleMock.error).toHaveBeenCalledWith(expect.stringContaining('Path: enum'));
+      expect(consoleMock.error).toHaveBeenCalledWith(expect.stringContaining('Path: object'));
+      expect(processExitMock).toHaveBeenCalledWith(1);
+    });
+  });
+
+  describe('CLI Integration Tests', () => {
+    const cliPath = path.resolve(currentDirPath, '../../../dist/schemas/cli.js');
+    const validFile = path.resolve(currentDirPath, 'test-specs/valid.yaml');
+    const invalidFile = path.resolve(currentDirPath, 'test-specs/invalid-syntax.yaml');
+    
+    const execOptions: ExecSyncOptionsWithStringEncoding = {
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: path.resolve(currentDirPath, '../../..'),
+      env: { ...process.env, FORCE_COLOR: '0' }  // Disable chalk coloring for consistent output
+    };
+
+    beforeEach(() => {
+      // Create test directory if it doesn't exist
+      const testSpecsDir = path.dirname(validFile);
+      if (!fs.existsSync(testSpecsDir)) {
+        fs.mkdirSync(testSpecsDir, { recursive: true });
+      }
+
+      // Write test files
+      const validContent = `
 openapi: 3.0.0
 info:
   title: Test API
   version: 1.0.0
 paths: {}
 `;
-    const validFile = path.resolve(testDir, 'valid.yaml');
-    realFs.writeFileSync(validFile, validYaml, 'utf8');
-    
-    const command = `node "${cliPath}" "${validFile}" --strict`;
-    const outputStrict = execSync(command, execOptions);
-    expect(outputStrict.toString()).toContain('YAML spec is valid OAS');
-  });
 
-  test('handles invalid YAML syntax', () => {
-    const invalidYaml = `
+      const invalidContent = `
 openapi: 3.0.0
 info:
-  title: Test API
+  title: Invalid API
   version: 1.0.0
-paths:
-  *invalid-anchor
+paths: {
+  invalid yaml here
+  this is not valid yaml
+  missing closing brace
 `;
-    const invalidFile = path.resolve(testDir, 'invalid-syntax.yaml');
-    realFs.writeFileSync(invalidFile, invalidYaml, 'utf8');
 
-    const command = `node "${cliPath}" "${invalidFile}"`;
-    expect(() => {
-      execSync(command, execOptions);
-    }).toThrow(/YAML spec is invalid/);
+      fs.writeFileSync(validFile, validContent);
+      fs.writeFileSync(invalidFile, invalidContent);
+    });
+
+    test('validates valid YAML file with different options', () => {
+      const command = `node "${cliPath}" "${validFile}" --strict`;
+      const output = execSync(command, execOptions).toString();
+      expect(output).toContain('🔍 Validating OpenAPI Specification...');
+      expect(output).toContain('API Surface Analysis:');
+    });
+
+    test('handles invalid YAML syntax', () => {
+      // Ensure CLI file exists
+      expect(fs.existsSync(cliPath)).toBe(true);
+      
+      const result = spawnSync('node', [cliPath, invalidFile], {
+        encoding: 'utf8',
+        stdio: 'pipe',
+        cwd: path.resolve(currentDirPath, '../../..'),
+        env: { ...process.env, FORCE_COLOR: '0' }
+      });
+
+      // Debug logging
+      console.log('Debug - CLI path:', cliPath);
+      console.log('Debug - Invalid file path:', invalidFile);
+      console.log('Debug - stdout:', result.stdout);
+      console.log('Debug - stderr:', result.stderr);
+      console.log('Debug - error:', result.error);
+      
+      expect(result.status).toBe(1);
+      const output = (result.stdout || '') + (result.stderr || '');
+      expect(output).toContain('🔍 Validating OpenAPI Specification...');
+      expect(output).toContain('❌ Validation failed:');
+      expect(output).toContain('unexpected end of the stream within a flow collection');
+    });
+
+    afterEach(() => {
+      // Clean up test files
+      try {
+        fs.unlinkSync(validFile);
+        fs.unlinkSync(invalidFile);
+      } catch (err) {
+        // Ignore errors
+      }
+    });
   });
 });

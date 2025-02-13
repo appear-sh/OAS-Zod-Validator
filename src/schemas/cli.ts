@@ -1,86 +1,144 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import { validateFromYaml } from '../utils/validateFromYaml.js';
-import { validateOpenAPI, ValidationOptions } from '../schemas/validator.js';
+import { ValidationOptions } from './validator.js';
 import chalk from 'chalk';
 import { ZodIssue } from 'zod';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { Command } from 'commander';
 
 // Get the current file's directory path
 const currentFilePath = fileURLToPath(import.meta.url);
 const currentDirPath = path.dirname(currentFilePath);
 
-export function runCLI(args: string[]): void {
-  const fileName = args[0];
-  const options: ValidationOptions = {
-    allowFutureOASVersions: args.includes('--allow-future'),
-    strict: args.includes('--strict'),
-    strictRules: {
-      requireRateLimitHeaders: args.includes('--require-rate-limits')
-    }
-  };
+// Error handling utilities
+const formatZodError = (issue: ZodIssue): string[] => {
+  const messages: string[] = [
+    chalk.yellow(`Path: ${issue.path.join('.')}`),
+    chalk.red(`Error: ${issue.message}`)
+  ];
 
-  if (!fileName || args.includes('--help')) {
-    console.log(chalk.blue('\nOAS-Zod-Validator CLI'));
-    console.log(chalk.dim('\nUsage:'));
-    console.log('  ts-node cli.ts <path-to-yaml> [options]\n');
-    console.log(chalk.dim('Options:'));
+  switch (issue.code) {
+    case 'invalid_type':
+      messages.push(
+        chalk.dim(`Expected: ${issue.expected}`),
+        chalk.dim(`Received: ${issue.received}`)
+      );
+      break;
+    case 'invalid_union':
+      if (issue.unionErrors?.length > 0) {
+        messages.push(chalk.dim(`Union Errors: ${issue.unionErrors.map(e => e.message).join(', ')}`));
+      }
+      break;
+    case 'invalid_enum_value':
+      messages.push(chalk.dim(`Expected one of: ${issue.options.join(', ')}`));
+      break;
+    case 'unrecognized_keys':
+      messages.push(chalk.dim(`Unrecognized keys: ${issue.keys.join(', ')}`));
+      break;
+  }
+
+  return messages;
+};
+
+export interface CLIOptions {
+  strict?: boolean;
+  allowFuture?: boolean;
+  requireRateLimits?: boolean;
+  help?: boolean;
+}
+
+export function runCLI(args: string[]): void {
+  const program = new Command();
+  
+  program
+    .name('oas-zod-validator')
+    .description('OpenAPI Specification validator built with Zod')
+    .argument('[file]', 'YAML file to validate')
+    .option('--strict', 'Enable strict validation')
+    .option('--allow-future', 'Allow future OAS versions')
+    .option('--require-rate-limits', 'Require rate limit headers')
+    .option('--help', 'Show help')
+    .allowUnknownOption(true);
+
+  program.parse(args);
+
+  const options = program.opts<CLIOptions>();
+  const fileName = program.args[0];
+
+  if (!fileName || options.help) {
+    console.log('\nOAS-Zod-Validator CLI');
+    console.log('\nUsage:');
+    console.log('  oas-zod-validator <path-to-yaml> [options]\n');
+    console.log('Options:');
     console.log('  --strict                Enable strict validation');
     console.log('  --allow-future          Allow future OAS versions');
     console.log('  --require-rate-limits   Require rate limit headers');
     console.log('  --help                  Show this help message\n');
     process.exit(1);
+    return;
+  }
+
+  // Prepare validation options
+  const validationOptions: ValidationOptions = {
+    strict: options.strict ?? false,
+    allowFutureOASVersions: options.allowFuture ?? false,
+    strictRules: {
+      requireRateLimitHeaders: options.requireRateLimits ?? false
+    }
+  };
+
+  let yamlContent: string;
+
+  // Log validation message before any potential error handling
+  console.log('🔍 Validating OpenAPI Specification...');
+
+  try {
+    yamlContent = fs.readFileSync(fileName, 'utf-8');
+  } catch (err) {
+    console.error('Error reading file:', err);
+    process.exit(1);
+    return;
   }
 
   try {
-    const yamlContent = fs.readFileSync(fileName, 'utf-8');
-    const result = validateFromYaml(yamlContent, options);
+    const result = validateFromYaml(yamlContent, validationOptions);
     
     if (result.valid) {
-      console.log(chalk.green('\n✅ YAML spec is valid OAS'));
-      if (result.resolvedRefs.length > 0) {
-        console.log(chalk.blue('\nResolved references:'));
+      console.log('API Surface Analysis:');
+      
+      if (result.resolvedRefs?.length > 0) {
+        console.log('Resolved references:');
         result.resolvedRefs.forEach((ref: string) => {
-          console.log(chalk.dim(`  ${ref}`));
+          console.log(`  ${ref}`);
         });
       }
+      
       process.exit(0);
     } else {
-      console.error(chalk.red('\n❌ YAML spec is invalid:'));
-      result.errors?.issues.forEach((issue: ZodIssue) => {
-        console.error(chalk.yellow(`\nPath: ${issue.path.join('.')}`));
-        console.error(chalk.red(`Error: ${issue.message}`));
-        
-        // Handle different types of Zod issues
-        switch (issue.code) {
-          case 'invalid_type':
-            console.error(chalk.dim(`Expected: ${issue.expected}`));
-            console.error(chalk.dim(`Received: ${issue.received}`));
-            break;
-          case 'invalid_union':
-            console.error(chalk.dim(`Union Errors: ${issue.unionErrors.map(e => e.message).join(', ')}`));
-            break;
-          case 'invalid_enum_value':
-            console.error(chalk.dim(`Expected one of: ${issue.options.join(', ')}`));
-            break;
-          case 'unrecognized_keys':
-            console.error(chalk.dim(`Unrecognized keys: ${issue.keys.join(', ')}`));
-            break;
-          // Add other cases as needed
-        }
-      });
+      console.error('❌ Validation failed:');
+      
+      if (result.errors?.issues) {
+        result.errors.issues.forEach((issue: ZodIssue) => {
+          const messages = formatZodError(issue);
+          messages.forEach(msg => console.error(msg));
+        });
+      }
+      
       process.exit(1);
     }
   } catch (err) {
-    console.error(chalk.red('\nError reading or validating YAML file:'), err);
+    if (err instanceof Error) {
+      console.error('YAML Parsing Error:', err.message);
+    } else {
+      console.error('YAML Parsing Error:', String(err));
+    }
     process.exit(1);
   }
 }
 
-// Check if this module is being run directly
-const isMainModule = import.meta.url.startsWith('file:') && 
-  process.argv[1] === fileURLToPath(import.meta.url);
-
-if (isMainModule) {
-  runCLI(process.argv.slice(2));
+// Only run CLI when executed directly
+if (import.meta.url.startsWith('file:') && 
+    process.argv[1] === fileURLToPath(import.meta.url)) {
+  runCLI(process.argv);
 }

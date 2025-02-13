@@ -4,6 +4,7 @@ import * as path from 'path';
 import chalk from 'chalk';
 import { z } from 'zod';
 import { OpenAPISpec, Operation, PathItem } from '../schemas/types.js';
+import { ValidationResult } from '../schemas/validator.js';
 
 interface ValidationSummary {
   total: number;
@@ -249,12 +250,11 @@ export async function testSpec() {
       }
     }
   } catch (error) {
-    console.error(chalk.red('\n❌ Error during validation:'));
-    console.error(error);
+    console.error('Error:', error);
   }
 }
 
-function generateValidationSummary(spec: any, result: any): ValidationSummary {
+function generateValidationSummary(spec: OpenAPISpec, result: ValidationResult): ValidationSummary {
   const summary: ValidationSummary = {
     total: 0,
     valid: 0,
@@ -269,7 +269,7 @@ function generateValidationSummary(spec: any, result: any): ValidationSummary {
   // Process schemas
   if (spec.components?.schemas) {
     Object.keys(spec.components.schemas).forEach(schemaName => {
-      const isValid = !result.errors?.issues.some((issue: any) => 
+      const isValid = !result.errors?.issues.some((issue: z.ZodIssue) => 
         issue.path[0] === 'components' && 
         issue.path[1] === 'schemas' && 
         issue.path[2] === schemaName
@@ -286,7 +286,7 @@ function generateValidationSummary(spec: any, result: any): ValidationSummary {
   // Process paths
   if (spec.paths) {
     Object.keys(spec.paths).forEach(pathName => {
-      const isValid = !result.errors?.issues.some((issue: any) => 
+      const isValid = !result.errors?.issues.some((issue: z.ZodIssue) => 
         issue.path[0] === 'paths' && 
         issue.path[1] === pathName
       );
@@ -323,3 +323,5 @@ function generateValidationSummary(spec: any, result: any): ValidationSummary {
 
 // Run the test
 testSpec();
+
+export { generateValidationSummary };
