@@ -33,3 +33,7 @@ yarn-error.log*
 
 # Debug
 debug.log 
+
+# Cursor rules
+.cursor-rules/
+.cursor-rules/rules/*
