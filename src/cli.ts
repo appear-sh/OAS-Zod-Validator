@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
-import { validateFromYaml } from '../utils/validateFromYaml.js';
-import { ValidationOptions } from './validator.js';
+import { validateFromYaml } from './src/utils/validateFromYaml.js';
+import { ValidationOptions } from './src/schemas/validator.js';
 import chalk from 'chalk';
 import { ZodIssue } from 'zod';
 import { fileURLToPath } from 'url';
@@ -51,6 +51,11 @@ export interface CLIOptions {
 export function runCLI(args: string[]): void {
   const program = new Command();
   
+  // Override Commander.js's exit behavior
+  program.exitOverride((err) => {
+    throw new Error(`process.exit called with "${err.exitCode}"`);
+  });
+  
   program
     .name('oas-zod-validator')
     .description('OpenAPI Specification validator built with Zod')
@@ -75,7 +80,7 @@ export function runCLI(args: string[]): void {
     console.log('  --allow-future          Allow future OAS versions');
     console.log('  --require-rate-limits   Require rate limit headers');
     console.log('  --help                  Show this help message\n');
-    process.exit(1);
+    process.exit(0);
     return;
   }
 
@@ -88,11 +93,10 @@ export function runCLI(args: string[]): void {
     }
   };
 
-  let yamlContent: string;
-
   // Log validation message before any potential error handling
   console.log('🔍 Validating OpenAPI Specification...');
 
+  let yamlContent: string;
   try {
     yamlContent = fs.readFileSync(fileName, 'utf-8');
   } catch (err) {
