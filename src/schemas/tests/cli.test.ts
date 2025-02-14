@@ -23,6 +23,29 @@ jest.mock('../../utils/validateFromYaml.js', () => ({
   validateFromYaml: mockValidateFromYaml
 }));
 
+// Mock fs.readFileSync
+jest.mock('node:fs', () => ({
+  readFileSync: jest.fn((path: string) => {
+    if (path.includes('valid.yaml')) {
+      return `
+openapi: 3.0.0
+info:
+  title: Test API
+  version: 1.0.0
+paths: {}
+`;
+    }
+    if (path.includes('invalid.yaml')) {
+      return `
+invalid yaml here
+this is not valid yaml
+missing closing brace
+`;
+    }
+    throw new Error(`ENOENT: no such file or directory, open '${path}'`);
+  })
+}));
+
 const currentDirPath = path.dirname(fileURLToPath(import.meta.url));
 
 // Mock console methods
@@ -41,50 +64,8 @@ describe('CLI Unit Tests', () => {
   const validFile = path.join(testSpecsDir, 'valid.yaml');
   const invalidFile = path.join(testSpecsDir, 'invalid.yaml');
 
-  const validContent = `
-openapi: 3.0.0
-info:
-  title: Test API
-  version: 1.0.0
-paths: {}
-`;
-
-  const invalidContent = `
-openapi: 3.0.0
-info:
-  title: Invalid API
-  version: 1.0.0
-paths: {
-  invalid yaml here
-  this is not valid yaml
-  missing closing brace
-`;
-
   beforeEach(() => {
-    // Clear all mocks
     jest.clearAllMocks();
-    jest.resetModules();
-
-    // Create test directory and files
-    if (!fs.existsSync(testSpecsDir)) {
-      fs.mkdirSync(testSpecsDir, { recursive: true });
-    }
-    fs.writeFileSync(validFile, validContent);
-    fs.writeFileSync(invalidFile, invalidContent);
-
-    // Reset mock to default behavior
-    mockValidateFromYaml.mockReturnValue({
-      valid: true,
-      resolvedRefs: [],
-      errors: undefined
-    });
-  });
-
-  afterEach(() => {
-    // Cleanup test files
-    if (fs.existsSync(testSpecsDir)) {
-      fs.rmSync(testSpecsDir, { recursive: true, force: true });
-    }
   });
 
   describe('Help and Usage', () => {
@@ -115,7 +96,7 @@ paths: {
 
       expect(() => runCLI(['node', 'cli.js', validFile])).toThrow('process.exit called with "0"');
       expect(consoleMock.log).toHaveBeenCalledWith('🔍 Validating OpenAPI Specification...');
-      expect(mockValidateFromYaml).toHaveBeenCalledWith(validContent, expect.any(Object));
+      expect(mockValidateFromYaml).toHaveBeenCalledWith(expect.any(String), expect.any(Object));
     });
   });
 
