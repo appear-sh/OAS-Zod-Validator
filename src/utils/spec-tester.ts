@@ -89,23 +89,43 @@ export function checkBestPractices(spec: OpenAPISpec): string[] {
 
 export function findCircularRefs(spec: OpenAPISpec): string[] {
   const circularRefs: string[] = [];
-  const visited = new Set<string>();
+  const visitedPaths = new Set<string>();
   
-  function traverse(obj: unknown, path: string[] = []): void {
+  function traverse(obj: unknown, currentPath: string[] = []): void {
     if (typeof obj !== 'object' || obj === null) return;
     
-    if (obj && typeof obj === 'object' && '$ref' in obj) {
-      const refPath = obj.$ref as string;
-      if (visited.has(refPath)) {
+    const pathStr = currentPath.join('/');
+    if (visitedPaths.has(pathStr)) return;
+    visitedPaths.add(pathStr);
+    
+    if ('$ref' in obj && typeof obj.$ref === 'string') {
+      const refPath = obj.$ref;
+      const refParts = refPath.split('/');
+      
+      // Check if this reference points to an ancestor in our current path
+      const targetPath = refParts.slice(1).join('/');
+      const currentPathStr = currentPath.join('/');
+      if (currentPathStr.includes(targetPath)) {
         circularRefs.push(refPath);
+        return;
       }
-      visited.add(refPath);
+      
+      // Follow the reference
+      let target = spec;
+      for (let i = 1; i < refParts.length; i++) {
+        if (target && typeof target === 'object') {
+          target = target[refParts[i] as keyof typeof target];
+        }
+      }
+      
+      if (target && typeof target === 'object') {
+        traverse(target, [...currentPath, refPath]);
+      }
     }
     
-    if (obj && typeof obj === 'object') {
-      Object.entries(obj).forEach(([key, value]) => {
-        traverse(value, [...path, key]);
-      });
+    // Traverse object properties
+    for (const [key, value] of Object.entries(obj)) {
+      traverse(value, [...currentPath, key]);
     }
   }
   

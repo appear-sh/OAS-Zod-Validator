@@ -1,4 +1,4 @@
-import fs from 'node:fs';
+import * as fs from 'node:fs';
 import { validateFromYaml } from '../utils/validateFromYaml.js';
 import { ValidationOptions } from './validator.js';
 import chalk from 'chalk';

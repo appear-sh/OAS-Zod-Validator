@@ -1,7 +1,6 @@
 
-          openapi: invalid
-          info:
-            title: Invalid API
-            version: 1.0.0
-          paths: {}
-        
+openapi: invalid
+info:
+  title: Invalid API
+  version: 1.0.0
+paths: {}
