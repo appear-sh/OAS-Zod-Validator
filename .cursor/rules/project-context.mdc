@@ -1,0 +1,174 @@
+---
+description: Setting project context
+globs: *
+---
+// Start of Selection
+
+# OAS Zod Validator – .cursorrules Use-Case
+
+This document captures the essence of the OAS Zod Validator project and provides clear guidelines for delivering maximum value. It is intended to realign agents and contributors toward focusing on the core purpose of the project and avoiding time spent on validating irrelevant parts of the code.
+
+---
+
+## 1. Project Overview
+
+The **OAS Zod Validator** is an open-source npm package designed for **robust validation of OpenAPI Specification (OAS) documents** using [Zod](mdc:oas-zod-validator/oas-zod-validator/https:/github.com/colinhacks/zod). Its goal is to provide a **feature-complete** solution capable of handling the complexity of OpenAPI specs—including multiple versions (3.0 and 3.1), reference resolution, and strict rule enforcement (e.g., rate limit headers, API pattern checks).
+
+The project is built to:
+
+- **Be imported as a library:** Allowing developers to integrate validation directly into their code workflows.
+- **Offer an optional CLI experience:** Enabling quick, standalone validations, integration in CI/CD pipelines, and a pleasant npm install experience.
+
+---
+
+## 2. Core Library vs. CLI Component
+
+### Core Library
+
+- **Purpose:**  
+  Expose robust validation functionality (e.g., `validateFromYaml` and `validateOpenAPISpec`) that users can import and integrate into their projects.
+- **Design Goals:**
+  - **Feature-Complete Validation:** Handle all the intricacies of OpenAPI specs.
+  - **Minimal Dependencies:** Keep the core lightweight and focused.
+  - **TypeScript Support:** Ensure full type safety and ease of integration.
+
+### CLI Component (CLI.ts and cli.test.ts)
+
+- **Purpose:**  
+  Provide an optional, user-friendly command-line interface for running validations.
+- **Implementation:**
+  - Uses Commander for parsing arguments, displaying help, and handling options.
+  - Acts as a thin wrapper around the core library.
+- **Testing Focus:**
+  - Verify that CLI arguments, help messages, and exit codes (`0` for success, `1` for failure) work as intended.
+  - **Decoupled from Core Logic:** Avoid over-validating CLI-specific code so that emphasis remains on robust core validation.
+
+---
+
+## 3. Best-in-Class Developer Experience (DX)
+
+### Installation and Setup
+
+#### For Library Use
+
+- **Installation (NPM/Yarn/pnpm):**npm install openapi-zod-validator
+
+# or
+
+yarn add openapi-zod-validator
+
+# or
+
+pnpm add openapi-zod-validator
+
+````
+
+### Usage Example (JavaScript/TypeScript):
+
+```ts
+import { validateOpenAPISpec } from "openapi-zod-validator";
+import mySpec from "./openapi.json";
+
+const validationResult = validateOpenAPISpec(mySpec);
+console.log(validationResult);
+````
+
+### Expectations
+
+- **Clear, human-readable validation results.**
+- **Minimal boilerplate to integrate into any project.**
+
+## 4. For CLI Use
+
+Global or npx Usage:
+
+```sh
+npm install -g openapi-zod-validator
+# Then run:
+openapi-zod-validator ./openapi.yaml
+# Or simply:
+npx openapi-zod-validator ./openapi.yaml
+```
+
+### CLI Features
+
+- Instant feedback with proper exit codes (`0` for success, `1` for failure).
+- Optional JSON output (e.g., via a `--json` flag) for CI/CD integration.
+
+## 5. Integration with CI/CD
+
+#### Seamless CI/CD Support
+
+The CLI can be integrated into GitHub Actions, GitLab CI, Jenkins, etc.
+
+#### Example GitHub Action
+
+```yaml
+name: Validate OpenAPI Spec
+on: [push, pull_request]
+
+jobs:
+  validate-spec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate OpenAPI Spec
+        run: npx openapi-zod-validator ./openapi.yaml
+```
+
+#### Outcome
+
+- Failing validations break the build, ensuring only valid API specs are deployed.
+
+## 6. Advanced DX Features (Nice-to-Haves)
+
+#### VSCode Plugin Integration
+
+- Inline validation of OpenAPI specs during development.
+
+#### Web Playground or REPL Mode
+
+- An online demo or CLI REPL for quick testing and experimentation.
+
+#### Enhanced Error Messages
+
+- Human-friendly errors with precise schema paths, line numbers, and suggestions.
+
+Example:
+
+```sh
+Error: Property 'email' in '/users' schema must be of type 'string', but found 'integer' (line 23, column 15).
+```
+
+---
+
+## 7. Agent and Contributor Alignment
+
+### Core Focus
+
+- Prioritize the Core Library:
+  - Ensure that the primary validation logic is robust, feature-complete, and well-tested. This is the heart of the project.
+- Optional CLI:
+  - The CLI (and its tests) should be maintained as a thin layer that enhances the user experience without interfering with the core functionality.
+- Avoid Over-Validation:
+  - Do not waste time on validating parts of the CLI that do not contribute to the overall validation logic. Focus on delivering value through comprehensive and reliable API validation.
+
+### Our Commitment
+
+- Quality and DX:
+  - This package is a showcase of how much Appear cares about APIs. It must provide a world-class developer experience from installation through integration.
+- Open Source Excellence:
+  - Clear documentation, extensive tests, and community contributions are essential. Our goal is to deliver a tool that developers are proud to use.
+
+---
+
+## 8. Conclusion
+
+The OAS Zod Validator is designed to be both a robust validation library and an optional CLI tool. This document should guide agents and contributors to focus on enhancing the core functionality and ensuring a best-in-class developer experience. By adhering to these guidelines, every improvement and fix contributes directly to the value and reliability of the project.
+
+Let's build a tool that not only meets but exceeds the expectations of senior software engineers and showcases Appear's commitment to high-quality APIs.

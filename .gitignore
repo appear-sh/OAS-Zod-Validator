@@ -38,3 +38,4 @@ yarn-error.log*
 
 # cursor rules
 .cursor-rules/
+.cursor-rules/rules/*
