@@ -15,7 +15,13 @@
     }
   },
   "files": [
-    "dist",
+    "dist/cli.{js,d.ts}",
+    "dist/index.{js,d.ts}",
+    "dist/schemas/*.{js,d.ts}",
+    "dist/utils/*.{js,d.ts}",
+    "!dist/**/*.test.*",
+    "!dist/**/*.spec.*",
+    "!dist/**/tests/**",
     "README.md"
   ],
   "scripts": {
@@ -50,6 +56,7 @@
   },
   "devDependencies": {
     "@types/chalk": "^0.4.31",
+    "@types/inquirer": "^9.0.7",
     "@types/jest": "^29.5.14",
     "@types/js-yaml": "^4.0.9",
     "@types/lodash": "^4.17.15",
