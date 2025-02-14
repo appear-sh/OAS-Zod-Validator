@@ -1,0 +1,125 @@
+openapi: 3.0.0
+info:
+  title: Basic API Example
+  version: 1.0.0
+  description: A simple example showing basic OpenAPI features
+
+paths:
+  /users:
+    get:
+      summary: List users
+      description: Returns a list of users
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of users to return
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 10
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    post:
+      summary: Create user
+      description: Creates a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique identifier
+        email:
+          type: string
+          format: email
+          description: User email address
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: User full name
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+            - pending
+          default: pending
+          description: User status
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+    
+    UserInput:
+      type: object
+      required:
+        - email
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: User full name
+    
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message 

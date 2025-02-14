@@ -1,0 +1,240 @@
+openapi: 3.0.0
+info:
+  title: Security Example
+  version: 1.0.0
+  description: Example showcasing security schema validation
+
+security:
+  - OAuth2: [read:users, write:users]
+  - ApiKeyAuth: []
+
+paths:
+  /auth/token:
+    post:
+      summary: Get OAuth2 token
+      security: []  # No auth required for token endpoint
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - grant_type
+                - client_id
+                - client_secret
+              properties:
+                grant_type:
+                  type: string
+                  enum: [client_credentials, password, refresh_token]
+                client_id:
+                  type: string
+                  format: uuid
+                client_secret:
+                  type: string
+                  format: password
+                  minLength: 32
+                username:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Token response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /users/me:
+    get:
+      summary: Get current user
+      security:
+        - OAuth2: [read:users]
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/users:
+    post:
+      summary: Create user (Admin only)
+      security:
+        - OAuth2: [write:users]
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+components:
+  securitySchemes:
+    OAuth2:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /auth/token
+          scopes:
+            read:users: Read user information
+            write:users: Create and modify users
+        password:
+          tokenUrl: /auth/token
+          scopes:
+            read:users: Read user information
+            write:users: Create and modify users
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TokenResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          pattern: '^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$'
+        token_type:
+          type: string
+          enum: [bearer]
+        expires_in:
+          type: integer
+          minimum: 1
+        refresh_token:
+          type: string
+        scope:
+          type: string
+
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+        - password
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+          pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$'
+        role:
+          type: string
+          enum: [user, admin]
+        metadata:
+          type: object
+          additionalProperties: true
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - role
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [user, admin]
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+        lastLogin:
+          type: string
+          format: date-time
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code:
+                type: string
+                enum: [UNAUTHORIZED]
+              message:
+                type: string
+
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code:
+                type: string
+                enum: [FORBIDDEN]
+              message:
+                type: string
+
+    Conflict:
+      description: Resource already exists
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code:
+                type: string
+                enum: [CONFLICT]
+              message:
+                type: string 

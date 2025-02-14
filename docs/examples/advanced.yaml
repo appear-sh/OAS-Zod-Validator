@@ -1,0 +1,278 @@
+openapi: 3.0.0
+info:
+  title: Advanced API Example
+  version: 1.0.0
+  description: Advanced example showcasing complex validation scenarios
+
+paths:
+  /products:
+    get:
+      summary: List products with complex filtering
+      description: Returns a filtered list of products with pagination and advanced search
+      parameters:
+        - name: filter
+          in: query
+          description: Complex filter object
+          required: false
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductFilter'
+        - name: sort
+          in: query
+          description: Sort criteria
+          required: false
+          schema:
+            type: array
+            items:
+              type: object
+              required: [field, direction]
+              properties:
+                field:
+                  type: string
+                  enum: [name, price, createdAt]
+                direction:
+                  type: string
+                  enum: [asc, desc]
+      responses:
+        '200':
+          description: Successful response
+          headers:
+            X-Rate-Limit:
+              description: Rate limit details
+              required: true
+              schema:
+                $ref: '#/components/schemas/RateLimit'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProducts'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    post:
+      summary: Create product with validation
+      description: Creates a new product with strict validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  schemas:
+    ProductFilter:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            type: string
+            format: uuid
+        priceRange:
+          type: object
+          properties:
+            min:
+              type: number
+              format: float
+              minimum: 0
+            max:
+              type: number
+              format: float
+          required: [min, max]
+        tags:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+          maxItems: 5
+        searchText:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9\\s-]+$'
+        availability:
+          type: string
+          enum: [in_stock, out_of_stock, pre_order]
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+          multipleOf: 0.5
+
+    Product:
+      type: object
+      required: [id, name, price, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+          nullable: true
+        price:
+          type: number
+          format: float
+          exclusiveMinimum: 0
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+          minItems: 1
+        metadata:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+              - type: boolean
+        variants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductVariant'
+        status:
+          type: string
+          enum: [draft, published, archived]
+          default: draft
+        createdAt:
+          type: string
+          format: date-time
+
+    ProductInput:
+      allOf:
+        - $ref: '#/components/schemas/Product'
+        - type: object
+          properties:
+            id:
+              not: {}
+            createdAt:
+              not: {}
+
+    ProductVariant:
+      type: object
+      required: [sku, attributes]
+      properties:
+        sku:
+          type: string
+          pattern: '^[A-Z]{2}-[0-9]{6}$'
+        attributes:
+          type: object
+          additionalProperties:
+            type: string
+          minProperties: 1
+        stock:
+          type: integer
+          minimum: 0
+          default: 0
+
+    Category:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+
+    PaginatedProducts:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+        total:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 100
+        hasMore:
+          type: boolean
+
+    RateLimit:
+      type: object
+      required: [limit, remaining, reset]
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+        remaining:
+          type: integer
+          minimum: 0
+        reset:
+          type: string
+          format: date-time
+
+    ValidationError:
+      type: object
+      required: [code, message, details]
+      properties:
+        code:
+          type: string
+          enum: [VALIDATION_ERROR]
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              code:
+                type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code:
+                type: string
+                enum: [BAD_REQUEST]
+              message:
+                type: string
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError' 

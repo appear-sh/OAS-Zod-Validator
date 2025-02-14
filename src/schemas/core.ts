@@ -9,53 +9,239 @@ export const ReferenceObject = z.object({
     }),
 }).strict();
 
-// Improved schema object with more specific types
-export const SchemaObject: z.ZodType = z.lazy(() => 
-  z.object({
-    type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
-    format: z.enum([
-      'date-time', 'date', 'time', 'email', 'hostname', 'ipv4', 'ipv6',
-      'uri', 'uuid', 'password', 'byte', 'binary'
-    ]).optional(),
+// Define format types for better error messages
+const StringFormats = z.enum([
+  'date-time', 'date', 'time', 'email', 'hostname', 'ipv4', 'ipv6',
+  'uri', 'uuid', 'password', 'byte', 'binary'
+], {
+  errorMap: () => ({
+    message: 'Invalid string format. Must be one of: date-time, date, time, email, hostname, ipv4, ipv6, uri, uuid, password, byte, binary'
+  })
+});
+
+const NumericFormats = z.enum([
+  'int32', 'int64', 'float', 'double'
+], {
+  errorMap: () => ({
+    message: 'Invalid numeric format. Must be one of: int32, int64, float, double'
+  })
+});
+
+// Helper function to get parent type from context
+function getParentType(ctx: z.RefinementCtx): string | undefined {
+  if (ctx.path.length <= 1) return undefined;
+  const parentPath = ctx.path[ctx.path.length - 2];
+  return typeof parentPath === 'string' ? parentPath : undefined;
+}
+
+// Improved schema object with more specific types and better error messages
+export const SchemaObject: z.ZodType = z.lazy(() => {
+  const baseSchema = z.object({
+    type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object'], {
+      errorMap: () => ({
+        message: 'Invalid type. Must be one of: string, number, integer, boolean, array, object'
+      })
+    }),
+    format: z.union([StringFormats, NumericFormats])
+      .optional()
+      .superRefine((format, ctx) => {
+        if (!format) return;
+        const type = getParentType(ctx);
+        if (!type) return;
+
+        if (['int32', 'int64', 'float', 'double'].includes(format) && !['number', 'integer'].includes(type)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Format '${format}' can only be used with numeric types (number, integer)`,
+            path: ['format']
+          });
+        }
+        if (['date-time', 'date', 'time', 'email', 'hostname', 'ipv4', 'ipv6', 'uri', 'uuid', 'password', 'byte', 'binary'].includes(format) && type !== 'string') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Format '${format}' can only be used with string type`,
+            path: ['format']
+          });
+        }
+      }),
     title: z.string().optional(),
     description: z.string().optional(),
     default: z.unknown().optional(),
     nullable: z.boolean().optional(),
     deprecated: z.boolean().optional(),
-    minLength: z.number().int().positive().optional(),
-    maxLength: z.number().int().positive().optional(),
-    pattern: z.string().optional(),
-    minimum: z.number().optional(),
-    maximum: z.number().optional(),
-    exclusiveMinimum: z.boolean().optional(),
-    exclusiveMaximum: z.boolean().optional(),
+    minLength: z.number().int().positive()
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type !== 'string') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'minLength can only be used with string type',
+            path: ['minLength']
+          });
+        }
+      }),
+    maxLength: z.number().int().positive()
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type !== 'string') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'maxLength can only be used with string type',
+            path: ['maxLength']
+          });
+        }
+      }),
+    pattern: z.string()
+      .optional()
+      .superRefine((val, ctx) => {
+        if (!val) return;
+        const type = getParentType(ctx);
+        if (type !== 'string') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'pattern can only be used with string type',
+            path: ['pattern']
+          });
+          return;
+        }
+        try {
+          new RegExp(val);
+        } catch (e) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Invalid regular expression pattern',
+            path: ['pattern']
+          });
+        }
+      }),
+    minimum: z.number()
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type && !['number', 'integer'].includes(type)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'minimum can only be used with numeric types (number, integer)',
+            path: ['minimum']
+          });
+        }
+      }),
+    maximum: z.number()
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type && !['number', 'integer'].includes(type)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'maximum can only be used with numeric types (number, integer)',
+            path: ['maximum']
+          });
+        }
+      }),
+    exclusiveMinimum: z.boolean()
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type && !['number', 'integer'].includes(type)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'exclusiveMinimum can only be used with numeric types (number, integer)',
+            path: ['exclusiveMinimum']
+          });
+        }
+      }),
+    exclusiveMaximum: z.boolean()
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type && !['number', 'integer'].includes(type)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'exclusiveMaximum can only be used with numeric types (number, integer)',
+            path: ['exclusiveMaximum']
+          });
+        }
+      }),
     enum: z.array(z.unknown()).optional(),
-    required: z.array(z.string()).optional(),
-    properties: z.record(z.string(), z.union([SchemaObject, ReferenceObject])).optional(),
-    items: z.union([SchemaObject, ReferenceObject]).optional(),
-    additionalProperties: z.union([z.boolean(), SchemaObject, ReferenceObject]).optional(),
-  }).refine((schema) => {
+    required: z.array(z.string())
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type !== 'object') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'required can only be used with object type',
+            path: ['required']
+          });
+        }
+      }),
+    properties: z.record(z.string(), z.union([z.lazy(() => SchemaObject), ReferenceObject]))
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type !== 'object') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'properties can only be used with object type',
+            path: ['properties']
+          });
+        }
+      }),
+    items: z.union([z.lazy(() => SchemaObject), ReferenceObject])
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type !== 'array') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'items can only be used with array type',
+            path: ['items']
+          });
+        }
+      }),
+    additionalProperties: z.union([z.boolean(), z.lazy(() => SchemaObject), ReferenceObject])
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getParentType(ctx);
+        if (type !== 'object') {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'additionalProperties can only be used with object type',
+            path: ['additionalProperties']
+          });
+        }
+      }),
+  });
+
+  return baseSchema.superRefine((schema, ctx) => {
     // Validate that array types have items
     if (schema.type === 'array' && !schema.items) {
-      return false;
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Array types must define items',
+        path: ['items']
+      });
     }
-    // Validate that object types have properties
+    // Validate that object types have properties or additionalProperties
     if (schema.type === 'object' && !schema.properties && !schema.additionalProperties) {
-      return false;
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Object types must define either properties or additionalProperties',
+        path: ['properties']
+      });
     }
-    return true;
-  }, {
-    message: 'Array types must define items and object types must define properties or additionalProperties'
-  })
-);
+  });
+});
 
 // Basic extensible object that allows any additional properties
 export const ExtensibleObject = z.object({}).passthrough();
 
-// Strict vendor extension validation
+// Strict vendor extension validation with better error messages
 export const VendorExtensible = z.object({}).catchall(z.unknown()).refine((val) => {
   const extraKeys = Object.keys(val).filter(key => !key.startsWith('x-'));
   return extraKeys.length === 0;
 }, {
-  message: 'Unknown field. Custom extensions must start with x-'
+  message: 'Unknown field detected. Custom extensions must start with "x-". For example: x-custom-field'
 });
