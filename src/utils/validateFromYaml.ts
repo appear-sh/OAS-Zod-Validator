@@ -1,50 +1,24 @@
-import yaml from 'js-yaml';
-import { validateOpenAPI, ValidationOptions, ValidationResult } from '../schemas/validator.js';
+import { load } from 'js-yaml';
+import { ValidationOptions, ValidationResult, validateOpenAPI } from '../schemas/validator.js';
 import { z } from 'zod';
 
-export function validateFromYaml(
-  yamlString: string, 
-  options: ValidationOptions = {}
-): ValidationResult {
-  if (typeof yamlString !== 'string') {
-    return {
-      valid: false,
-      errors: new z.ZodError([{
-        code: z.ZodIssueCode.invalid_type,
-        expected: 'string',
-        received: typeof yamlString,
-        path: [],
-        message: 'Input must be a string'
-      }]),
-      resolvedRefs: []
-    };
-  }
-
+/**
+ * Validates an OpenAPI specification from a YAML or JSON string
+ * @param content - YAML or JSON string containing the OpenAPI specification
+ * @param options - Validation options
+ * @returns Validation result
+ */
+export function validateFromYaml(content: string, options: ValidationOptions = {}): ValidationResult {
   try {
-    const parsed = yaml.load(yamlString);
-    
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return {
-        valid: false,
-        errors: new z.ZodError([{
-          code: z.ZodIssueCode.invalid_type,
-          expected: 'object',
-          received: Array.isArray(parsed) ? 'array' : typeof parsed,
-          path: [],
-          message: 'YAML must contain an object'
-        }]),
-        resolvedRefs: []
-      };
-    }
-
-    return validateOpenAPI(parsed, options);
-  } catch (error) {
+    const doc = load(content);
+    return validateOpenAPI(doc, options);
+  } catch (err) {
     return {
       valid: false,
       errors: new z.ZodError([{
         code: z.ZodIssueCode.custom,
         path: [],
-        message: error instanceof Error ? error.message : 'Failed to parse YAML content'
+        message: `Failed to parse YAML/JSON: ${err instanceof Error ? err.message : String(err)}`
       }]),
       resolvedRefs: []
     };

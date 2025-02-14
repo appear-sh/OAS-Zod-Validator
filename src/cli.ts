@@ -1,452 +1,339 @@
-import * as fs from 'node:fs';
+#!/usr/bin/env node
+'use strict';
+
 import { validateFromYaml } from './utils/validateFromYaml.js';
-import { ValidationOptions, ValidationResult } from './schemas/validator.js';
+import { ValidationOptions } from './schemas/validator.js';
 import chalk from 'chalk';
-import { ZodIssue } from 'zod';
-import { fileURLToPath } from 'url';
-import path from 'path';
 import { Command } from 'commander';
-import { OpenAPISpec, Operation, PathItem } from './schemas/types.js';
+import inquirer from 'inquirer';
+import fs from 'node:fs';
+import path from 'node:path';
+import ora from 'ora';
+import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 
-// Get the current file's directory path
-const currentFilePath = fileURLToPath(import.meta.url);
-const currentDirPath = path.dirname(currentFilePath);
+// Get package version for CLI
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const packageJson = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')
+);
 
-// Validation summary interface
-interface ValidationSummary {
-  total: number;
-  valid: number;
-  invalid: number;
-  details: {
-    schemas: { valid: string[]; invalid: string[] };
-    paths: { valid: string[]; invalid: string[] };
-    components: { valid: string[]; invalid: string[] };
-  };
-}
-
-// Analysis utilities
-function countOperations(spec: OpenAPISpec): number {
-  const methods = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace'];
-  let count = 0;
-  
-  Object.entries(spec.paths || {}).forEach(([_, pathItem]) => {
-    const item = pathItem as PathItem;
-    methods.forEach(method => {
-      if (item[method as keyof PathItem]) count++;
-    });
-  });
-  
-  return count;
-}
-
-function countUnsecuredEndpoints(spec: OpenAPISpec): number {
-  const methods = ['get', 'post', 'put', 'delete', 'patch', 'options', 'head', 'trace'];
-  let count = 0;
-  
-  Object.entries(spec.paths || {}).forEach(([_, pathItem]) => {
-    const item = pathItem as PathItem;
-    methods.forEach(method => {
-      const operation = item[method as keyof PathItem] as Operation | undefined;
-      if (operation && !spec.security) {
-        count++;
-      }
-    });
-  });
-  
-  return count;
-}
-
-function checkBestPractices(spec: OpenAPISpec): string[] {
-  const warnings: string[] = [];
-  
-  if (!spec.info?.description) {
-    warnings.push('API description is missing');
-  }
-  
-  Object.entries(spec.paths || {}).forEach(([path, pathItem]) => {
-    const item = pathItem as PathItem;
-    Object.entries(item).forEach(([method, op]) => {
-      if (method !== '$ref') {
-        const operation = op as Operation;
-        if (!operation.responses) {
-          warnings.push(`Operation ${method.toUpperCase()} ${path} is missing responses`);
-        } else {
-          const hasSuccessResponse = Object.keys(operation.responses)
-            .some(code => code.startsWith('2'));
-          if (!hasSuccessResponse) {
-            warnings.push(`Operation ${method.toUpperCase()} ${path} is missing success response`);
-          }
-        }
-      }
-    });
-  });
-  
-  if (spec.components?.schemas) {
-    Object.entries(spec.components.schemas).forEach(([name, schema]) => {
-      if (typeof schema === 'object' && schema && !('description' in schema)) {
-        warnings.push(`Schema "${name}" is missing description`);
-      }
-    });
-  }
-  
-  return warnings;
-}
-
-function findCircularRefs(spec: OpenAPISpec): string[] {
-  const circularRefs: string[] = [];
-  const visitedPaths = new Set<string>();
-  
-  function traverse(obj: unknown, currentPath: string[] = []): void {
-    if (typeof obj !== 'object' || obj === null) return;
-    
-    const pathStr = currentPath.join('/');
-    if (visitedPaths.has(pathStr)) return;
-    visitedPaths.add(pathStr);
-    
-    if ('$ref' in obj && typeof obj.$ref === 'string') {
-      const refPath = obj.$ref;
-      const refParts = refPath.split('/');
-      
-      const targetPath = refParts.slice(1).join('/');
-      const currentPathStr = currentPath.join('/');
-      if (currentPathStr.includes(targetPath)) {
-        circularRefs.push(refPath);
-        return;
-      }
-      
-      let target = spec;
-      for (let i = 1; i < refParts.length; i++) {
-        if (target && typeof target === 'object') {
-          target = target[refParts[i] as keyof typeof target];
-        }
-      }
-      
-      if (target && typeof target === 'object') {
-        traverse(target, [...currentPath, refPath]);
-      }
-    }
-    
-    for (const [key, value] of Object.entries(obj)) {
-      traverse(value, [...currentPath, key]);
-    }
-  }
-  
-  traverse(spec);
-  return [...new Set(circularRefs)];
-}
-
-function countExternalRefs(spec: OpenAPISpec): number {
-  let count = 0;
-  
-  function traverse(obj: unknown): void {
-    if (typeof obj !== 'object' || obj === null) return;
-    
-    if (obj && typeof obj === 'object' && '$ref' in obj) {
-      const ref = obj.$ref as string;
-      if (!ref.startsWith('#/')) {
-        count++;
-      }
-    }
-    
-    if (obj && typeof obj === 'object') {
-      Object.values(obj).forEach(traverse);
-    }
-  }
-  
-  traverse(spec);
-  return count;
-}
-
-function generateValidationSummary(spec: OpenAPISpec, result: ValidationResult): ValidationSummary {
-  const summary: ValidationSummary = {
-    total: 0,
-    valid: 0,
-    invalid: 0,
-    details: {
-      schemas: { valid: [], invalid: [] },
-      paths: { valid: [], invalid: [] },
-      components: { valid: [], invalid: [] }
-    }
-  };
-
-  if (spec.components?.schemas) {
-    Object.keys(spec.components.schemas).forEach(schemaName => {
-      const isValid = !result.errors?.issues.some((issue: ZodIssue) => 
-        issue.path[0] === 'components' && 
-        issue.path[1] === 'schemas' && 
-        issue.path[2] === schemaName
-      );
-      
-      if (isValid) {
-        summary.details.schemas.valid.push(schemaName);
-      } else {
-        summary.details.schemas.invalid.push(schemaName);
-      }
-    });
-  }
-
-  if (spec.paths) {
-    Object.keys(spec.paths).forEach(pathName => {
-      const isValid = !result.errors?.issues.some((issue: ZodIssue) => 
-        issue.path[0] === 'paths' && 
-        issue.path[1] === pathName
-      );
-      
-      if (isValid) {
-        summary.details.paths.valid.push(pathName);
-      } else {
-        summary.details.paths.invalid.push(pathName);
-      }
-    });
-  }
-
-  summary.total = 
-    summary.details.schemas.valid.length + 
-    summary.details.schemas.invalid.length +
-    summary.details.paths.valid.length +
-    summary.details.paths.invalid.length +
-    summary.details.components.valid.length +
-    summary.details.components.invalid.length;
-    
-  summary.valid = 
-    summary.details.schemas.valid.length +
-    summary.details.paths.valid.length +
-    summary.details.components.valid.length;
-    
-  summary.invalid = 
-    summary.details.schemas.invalid.length +
-    summary.details.paths.invalid.length +
-    summary.details.components.invalid.length;
-
-  return summary;
-}
-
-// Error handling utilities
-const formatZodError = (issue: ZodIssue): string[] => {
-  const messages: string[] = [
-    chalk.yellow(`Path: ${issue.path.join('.')}`),
-    chalk.red(`Error: ${issue.message}`)
-  ];
-
-  switch (issue.code) {
-    case 'invalid_type':
-      messages.push(
-        chalk.dim(`Expected: ${issue.expected}`),
-        chalk.dim(`Received: ${issue.received}`)
-      );
-      break;
-    case 'invalid_union':
-      if (issue.unionErrors?.length > 0) {
-        messages.push(chalk.dim(`Union Errors: ${issue.unionErrors.map(e => e.message).join(', ')}`));
-      }
-      break;
-    case 'invalid_enum_value':
-      messages.push(chalk.dim(`Expected one of: ${issue.options.join(', ')}`));
-      break;
-    case 'unrecognized_keys':
-      messages.push(chalk.dim(`Unrecognized keys: ${issue.keys.join(', ')}`));
-      break;
-  }
-
-  return messages;
-};
-
+/**
+ * CLI configuration options interface
+ */
 export interface CLIOptions {
   strict?: boolean;
-  allowFuture?: boolean;
-  requireRateLimits?: boolean;
-  help?: boolean;
-  json?: boolean;
+  allowFutureOASVersions?: boolean;
+  requireRateLimitHeaders?: boolean;
+  format?: 'json' | 'pretty';
+  config?: string;
+  interactive?: boolean;
 }
 
-export function runCLI(args: string[]): void {
-  const program = new Command();
-  
-  program.exitOverride((err) => {
-    throw new Error(`process.exit called with "${err.exitCode}"`);
-  });
-  
-  program
-    .name('oas-zod-validator')
-    .description('OpenAPI Specification validator built with Zod')
-    .argument('[file]', 'YAML/JSON file to validate')
-    .option('--strict', 'Enable strict validation')
-    .option('--allow-future', 'Allow future OAS versions')
-    .option('--require-rate-limits', 'Require rate limit headers')
-    .option('--json', 'Output results in JSON format')
-    .option('--help', 'Show help')
-    .allowUnknownOption(true);
+/**
+ * Configuration file interface
+ */
+export interface ConfigFile {
+  strict?: boolean;
+  allowFutureOASVersions?: boolean;
+  requireRateLimitHeaders?: boolean;
+  format?: 'json' | 'pretty';
+}
 
-  program.parse(args);
+// ASCII art banner with modern gradient
+const asciiArt = `
+ ██████   █████  ███████     ███████  ██████  ██████      ██    ██  █████  ██      ██ ██████   █████  ████████  ██████  ██████  
+██    ██ ██   ██ ██             ███  ██    ██ ██   ██     ██    ██ ██   ██ ██      ██ ██   ██ ██   ██    ██    ██    ██ ██   ██ 
+██    ██ ███████ ███████       ███   ██    ██ ██   ██     ██    ██ ███████ ██      ██ ██   ██ ███████    ██    ██    ██ ██████  
+██    ██ ██   ██      ██      ███    ██    ██ ██   ██      ██  ██  ██   ██ ██      ██ ██   ██ ██   ██    ██    ██    ██ ██   ██ 
+ ██████  ██   ██ ███████     ███████  ██████  ██████        ████   ██   ██ ███████ ██ ██████  ██   ██    ██     ██████  ██   ██                                                                                                                                   
+`;
 
-  const options = program.opts<CLIOptions>();
-  const fileName = program.args[0];
+const gradientColors = [
+  '#35D1BA',  // Fresh teal
+  '#61C49E',  // Mint
+  '#96B37C',  // Sage
+  '#D39F56',  // Warm gold
+  '#EE9644',  // Sunset orange
+];
 
-  if (!fileName || options.help) {
-    console.log('\nOAS-Zod-Validator CLI');
-    console.log('\nUsage:');
-    console.log('  oas-zod-validator <path-to-spec> [options]\n');
-    console.log('Options:');
-    console.log('  --strict                Enable strict validation');
-    console.log('  --allow-future          Allow future OAS versions');
-    console.log('  --require-rate-limits   Require rate limit headers');
-    console.log('  --json                  Output results in JSON format');
-    console.log('  --help                  Show this help message\n');
-    process.exit(0);
-    return;
-  }
+/**
+ * Displays a welcoming CLI banner with gradient colors
+ */
+function displayWelcome(): void {
+  const lines = asciiArt.split('\n');
+  const coloredArt = lines
+    .map((line, index) => {
+      const color = gradientColors[Math.min(index, gradientColors.length - 1)];
+      return chalk.hex(color)(line);
+    })
+    .join('\n');
 
-  const validationOptions: ValidationOptions = {
-    strict: options.strict ?? false,
-    allowFutureOASVersions: options.allowFuture ?? false,
-    strictRules: {
-      requireRateLimitHeaders: options.requireRateLimits ?? false
-    }
-  };
+  console.log(coloredArt);
+  console.log(chalk.hex('#35D1BA')('\n📋 OpenAPI Specification Validator'));
+  console.log(chalk.hex('#EE9644')('━'.repeat(40), '\n'));
+}
 
-  console.log(chalk.blue('🔍 Validating OpenAPI Specification...'));
+/**
+ * Loads and validates a configuration file
+ * @param configPath - Path to the configuration file
+ * @returns Parsed configuration options
+ */
+async function loadConfig(configPath: string): Promise<ConfigFile> {
+  const spinner = ora({
+    text: 'Loading configuration...',
+    color: 'cyan'
+  }).start();
 
   try {
-    const fileContent = fs.readFileSync(fileName, 'utf-8');
-    const parsedSpec = yaml.load(fileContent) as OpenAPISpec;
+    const config = JSON.parse(await fs.promises.readFile(configPath, 'utf8')) as ConfigFile;
+    spinner.succeed('Configuration loaded successfully');
+    return config;
+  } catch (err) {
+    spinner.fail('Failed to load configuration');
+    if (err instanceof Error) {
+      throw new Error(`Configuration error: ${err.message}`);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Validates an OpenAPI specification file
+ * @param filePath - Path to the specification file
+ * @param cliOptions - Validation options
+ */
+async function validateSpec(
+  filePath: string,
+  cliOptions: CLIOptions
+): Promise<void> {
+  const spinner = ora({
+    text: 'Validating OpenAPI specification...',
+    color: 'cyan'
+  }).start();
+
+  try {
+    const fileContent = await fs.promises.readFile(filePath, 'utf8');
+    const validationOptions: ValidationOptions = {
+      strict: cliOptions.strict,
+      allowFutureOASVersions: cliOptions.allowFutureOASVersions,
+      strictRules: {
+        requireRateLimitHeaders: cliOptions.requireRateLimitHeaders
+      }
+    };
+
     const result = validateFromYaml(fileContent, validationOptions);
-    
-    if (options.json) {
-      // JSON output mode
-      console.log(JSON.stringify({
-        valid: result.valid,
-        summary: generateValidationSummary(parsedSpec, result),
-        analysis: {
-          endpoints: Object.keys(parsedSpec.paths || {}).length,
-          operations: countOperations(parsedSpec),
-          schemas: Object.keys(parsedSpec.components?.schemas || {}).length,
-          securitySchemes: Object.keys(parsedSpec.components?.securitySchemes || {}).length,
-          unsecuredEndpoints: countUnsecuredEndpoints(parsedSpec),
-          circularRefs: findCircularRefs(parsedSpec),
-          externalRefs: countExternalRefs(parsedSpec),
-          warnings: checkBestPractices(parsedSpec)
-        },
-        errors: result.errors?.issues || []
-      }, null, 2));
-      
-      process.exit(result.valid ? 0 : 1);
-      return;
-    }
 
-    // Initial spec information
-    console.log(chalk.blue(`Version: ${parsedSpec.openapi}`));
-    console.log(chalk.blue(`Title: ${parsedSpec.info?.title}`));
-    console.log(chalk.blue(`Description: ${parsedSpec.info?.description || 'No description provided'}\n`));
-
-    // API Surface Analysis
-    console.log(chalk.white.bold('API Surface Analysis:'));
-    console.log(`Endpoints: ${Object.keys(parsedSpec.paths || {}).length}`);
-    console.log(`Operations: ${countOperations(parsedSpec)}`);
-    console.log(`Schemas: ${Object.keys(parsedSpec.components?.schemas || {}).length}`);
-    console.log(`Security Schemes: ${Object.keys(parsedSpec.components?.securitySchemes || {}).length}\n`);
-
-    // Security Analysis
-    console.log(chalk.white.bold('Security Analysis:'));
-    if (parsedSpec.security) {
-      console.log('Global Security:');
-      parsedSpec.security.forEach((scheme: Record<string, unknown>) => {
-        console.log(`  - ${Object.keys(scheme).join(', ')}`);
-      });
-    }
-    console.log(`Endpoints without Security: ${countUnsecuredEndpoints(parsedSpec)}\n`);
-
-    // Reference Analysis
-    console.log(chalk.white.bold('Reference Analysis:'));
-    console.log(`Total References: ${result.resolvedRefs.length}`);
-    console.log(`Circular References: ${findCircularRefs(parsedSpec).length}`);
-    console.log(`External References: ${countExternalRefs(parsedSpec)}\n`);
-
-    // Best Practice Warnings
-    console.log(chalk.yellow.bold('Best Practice Warnings:'));
-    const warnings = checkBestPractices(parsedSpec);
-    if (warnings.length === 0) {
-      console.log(chalk.green('✓ No best practice violations found\n'));
-    } else {
-      warnings.forEach(warning => {
-        console.log(chalk.yellow(`⚠️  ${warning}`));
-      });
-      console.log('');
-    }
-    
     if (result.valid) {
-      const summary = generateValidationSummary(parsedSpec, result);
-      console.log(chalk.green('✅ OpenAPI spec is valid\n'));
-      console.log(chalk.white.bold('Validation Summary:'));
-      console.log(`Total Objects: ${summary.total}`);
-      console.log(`Valid Components: ${chalk.green(summary.valid)}`);
+      spinner.succeed('Validation successful! ✨');
       
-      if (summary.details.schemas.valid.length > 0) {
-        console.log(chalk.green(`\n✓ ${summary.details.schemas.valid.length} valid schemas`));
+      if (cliOptions.format === 'json') {
+        console.log(JSON.stringify(result, null, 2));
+      } else {
+        console.log('\n', chalk.green('✓'), 'Schema is valid');
+        // Note: warnings are handled through Zod custom errors in strict mode
       }
-      if (summary.details.paths.valid.length > 0) {
-        console.log(chalk.green(`✓ ${summary.details.paths.valid.length} valid paths`));
-      }
-      if (summary.details.components.valid.length > 0) {
-        console.log(chalk.green(`✓ ${summary.details.components.valid.length} valid components`));
-      }
-
-      if (result.resolvedRefs) {
-        console.log(chalk.green('\n✓ All references resolved successfully'));
-      }
-      
-      process.exit(0);
     } else {
-      const summary = generateValidationSummary(parsedSpec, result);
-      console.log(chalk.red('❌ OpenAPI spec validation failed\n'));
+      spinner.fail('Validation failed');
       
-      console.log(chalk.white.bold('Validation Summary:'));
-      console.log(`Total Objects: ${summary.total}`);
-      console.log(`Valid: ${chalk.green(summary.valid)}`);
-      console.log(`Invalid: ${chalk.red(summary.invalid)}\n`);
-
-      if (summary.details.schemas.invalid.length > 0) {
-        console.log(chalk.yellow.bold('Schema Issues:'));
-        summary.details.schemas.invalid.forEach(schema => {
-          console.log(chalk.red(`  ❌ ${schema}`));
+      if (cliOptions.format === 'json') {
+        console.log(JSON.stringify(result.errors, null, 2));
+      } else {
+        console.log('\n', chalk.red('✗'), 'Schema validation errors:');
+        result.errors?.issues.forEach(issue => {
+          console.log('\n', chalk.red('•'), `${issue.path.join('.')}`);
+          console.log('  ', chalk.dim(issue.message));
+          if ('expected' in issue) {
+            console.log('   Expected:', chalk.cyan(issue.expected));
+            console.log('   Received:', chalk.yellow(issue.received));
+          }
         });
       }
-
-      if (summary.details.paths.invalid.length > 0) {
-        console.log(chalk.yellow.bold('Path Issues:'));
-        summary.details.paths.invalid.forEach(path => {
-          console.log(chalk.red(`  ❌ ${path}`));
-        });
-      }
-
-      if (summary.details.components.invalid.length > 0) {
-        console.log(chalk.yellow.bold('Component Issues:'));
-        summary.details.components.invalid.forEach(component => {
-          console.log(chalk.red(`  ❌ ${component}`));
-        });
-      }
-
-      console.log(chalk.yellow.bold('\nDetailed Errors:'));
-      result.errors?.issues.forEach((issue: ZodIssue) => {
-        const messages = formatZodError(issue);
-        messages.forEach(msg => console.error(msg));
-        console.log('');
-      });
-      
       process.exit(1);
     }
-  } catch (err: unknown) {
+  } catch (err) {
+    spinner.fail('Validation failed');
     if (err instanceof Error) {
-      console.error(chalk.red('Parsing Error:'), err.message);
+      console.error(chalk.red('\n❌ Error:'), err.message);
     } else {
-      console.error(chalk.red('Parsing Error:'), String(err));
+      console.error(chalk.red('\n❌ An unexpected error occurred'));
     }
     process.exit(1);
   }
 }
 
-// Only run CLI when executed directly
-if (import.meta.url.startsWith('file:') && 
-    process.argv[1] === fileURLToPath(import.meta.url)) {
-  runCLI(process.argv);
+/**
+ * Runs the interactive CLI wizard
+ * @returns User selected options and file path
+ */
+async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOptions }> {
+  const answers = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'filePath',
+      message: '📄 Path to OpenAPI specification:',
+      validate: (input: string) => {
+        if (!fs.existsSync(input)) {
+          return 'File does not exist';
+        }
+        const ext = path.extname(input).toLowerCase();
+        if (!['.yaml', '.yml', '.json'].includes(ext)) {
+          return 'File must be YAML or JSON';
+        }
+        return true;
+      }
+    },
+    {
+      type: 'confirm',
+      name: 'strict',
+      message: '🔍 Enable strict validation?',
+      default: false
+    },
+    {
+      type: 'confirm',
+      name: 'allowFutureOASVersions',
+      message: '🔄 Allow future OpenAPI versions?',
+      default: false
+    },
+    {
+      type: 'confirm',
+      name: 'requireRateLimitHeaders',
+      message: '⚡ Require rate limiting headers?',
+      default: false
+    },
+    {
+      type: 'list',
+      name: 'format',
+      message: '📊 Output format:',
+      choices: [
+        { name: 'Pretty (human readable)', value: 'pretty' },
+        { name: 'JSON', value: 'json' }
+      ]
+    },
+    {
+      type: 'confirm',
+      name: 'saveConfig',
+      message: '💾 Save these settings as default?',
+      default: false
+    }
+  ]);
+
+  if (answers.saveConfig) {
+    const config: ConfigFile = {
+      strict: answers.strict,
+      allowFutureOASVersions: answers.allowFutureOASVersions,
+      requireRateLimitHeaders: answers.requireRateLimitHeaders,
+      format: answers.format
+    };
+    
+    await fs.promises.writeFile(
+      '.oas-validate.json',
+      JSON.stringify(config, null, 2)
+    );
+    console.log(chalk.green('\n✅ Configuration saved to .oas-validate.json'));
+  }
+
+  return {
+    filePath: answers.filePath,
+    options: {
+      strict: answers.strict,
+      allowFutureOASVersions: answers.allowFutureOASVersions,
+      requireRateLimitHeaders: answers.requireRateLimitHeaders,
+      format: answers.format
+    }
+  };
+}
+
+/**
+ * Main CLI entry point
+ * @param args - Command line arguments
+ */
+export async function runCLI(args: string[]): Promise<void> {
+  displayWelcome();
+
+  const program = new Command()
+    .name('oas-validate')
+    .description('Modern OpenAPI Specification validator with enhanced reporting')
+    .version(packageJson.version)
+    .argument('[file]', 'OpenAPI specification file (YAML or JSON)')
+    .option('-s, --strict', 'Enable strict validation mode')
+    .option('-f, --future', 'Allow future OpenAPI versions')
+    .option('-r, --rate-limits', 'Require rate limiting headers')
+    .option('-j, --json', 'Output results in JSON format')
+    .option('-i, --interactive', 'Run in interactive mode')
+    .option('-c, --config <path>', 'Path to config file');
+
+  program.parse(args);
+
+  const opts = program.opts();
+  const [file] = program.args;
+
+  try {
+    let options: CLIOptions = {
+      strict: false,
+      allowFutureOASVersions: false,
+      requireRateLimitHeaders: false,
+      format: 'pretty'
+    };
+
+    // Load config file if specified
+    if (opts.config) {
+      const config = await loadConfig(opts.config);
+      options = { ...options, ...config };
+    }
+
+    // Override with command line options
+    options = {
+      ...options,
+      strict: opts.strict ?? options.strict,
+      allowFutureOASVersions: opts.future ?? options.allowFutureOASVersions,
+      requireRateLimitHeaders: opts.rateLimits ?? options.requireRateLimitHeaders,
+      format: opts.json ? 'json' : options.format
+    };
+
+    if (opts.interactive || !file) {
+      const result = await runInteractiveMode();
+      await validateSpec(result.filePath, { ...options, ...result.options });
+    } else {
+      await validateSpec(file, options);
+    }
+  } catch (err) {
+    console.error(chalk.red('\n❌ Error:'), err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+}
+
+// Only run CLI if not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  runCLI(process.argv).catch((error: Error) => {
+    console.error(chalk.red('\n❌ Error:'), error.message);
+    process.exit(1);
+  });
+}
+
+// Show help if requested
+if (process.argv.includes('--help') || process.argv.includes('-h')) {
+  console.log(`
+Usage: oas-validate [options] [file]
+
+Options:
+  --help, -h     Show this help message
+  --version, -v  Show version number
+  --strict       Enable strict validation mode
+  --future       Allow future OpenAPI versions
+  --rate-limits  Require rate limiting headers
+  --json         Output results in JSON format
+  
+Examples:
+  $ oas-validate openapi.json
+  $ oas-validate --strict swagger.yaml
+  `);
+  process.exit(0);
+}
+
+// Show version if requested
+if (process.argv.includes('--version') || process.argv.includes('-v')) {
+  console.log(`v${packageJson.version}`);
+  process.exit(0);
 }

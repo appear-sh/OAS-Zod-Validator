@@ -5,6 +5,9 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "oas-validate": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -16,23 +19,32 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && chmod +x dist/cli.js",
     "prepublishOnly": "npm run build",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "lint": "eslint . --ext .ts",
     "test:clean": "rimraf coverage && NODE_OPTIONS=--experimental-vm-modules jest --coverage",
-    "clean": "rimraf coverage"
+    "clean": "rimraf coverage && rimraf dist"
   },
-  "keywords": [],
+  "keywords": [
+    "openapi",
+    "swagger",
+    "validation",
+    "zod",
+    "typescript",
+    "cli"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^13.1.0",
+    "inquirer": "^9.2.16",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
+    "ora": "^8.0.1",
     "typescript": "^5.7.3",
     "zod": "^3.24.1"
   },
