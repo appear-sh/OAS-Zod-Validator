@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { HeaderObject } from './components';
+import { HeaderObject } from './components.js';
 
 // Bulk Operations Pattern
 export const BulkOperationSchema = z.object({

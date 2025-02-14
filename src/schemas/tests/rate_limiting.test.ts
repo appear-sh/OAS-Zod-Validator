@@ -1,6 +1,6 @@
-import { validateOpenAPI } from '../validator';
+import { validateOpenAPI } from '../validator.js';
 import { describe, test, expect } from '@jest/globals';
-import type { OpenAPISpec } from '.././types';
+import type { OpenAPISpec } from '../types.js';
 
 describe('Rate Limiting Validation', () => {
   test('validates rate limiting headers', () => {

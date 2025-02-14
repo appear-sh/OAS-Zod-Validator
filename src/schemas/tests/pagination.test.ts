@@ -1,6 +1,6 @@
-import { validateOpenAPI } from '../validator';
+import { validateOpenAPI } from '../validator.js';
 import { describe, test, expect } from '@jest/globals';
-import type { OpenAPISpec } from '../types';
+import type { OpenAPISpec } from '../types.js';
 
 describe('Pagination Standards', () => {
   test('validates standard REST pagination', () => {

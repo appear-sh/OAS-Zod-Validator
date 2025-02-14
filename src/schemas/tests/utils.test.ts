@@ -1,4 +1,4 @@
-import { validateOpenAPI } from '../validator';
+import { validateOpenAPI } from '../validator.js';
 import { describe, test, expect } from '@jest/globals';
 import yaml from 'js-yaml';
 

@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
-      "target": "es2018",
-      "module": "commonjs",
+      "target": "ES2022",
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
       "strict": true,
       "esModuleInterop": true,
       "skipLibCheck": true,
@@ -10,6 +11,6 @@
       "declaration": true,
       "rootDir": "./src"
     },
-    "include": ["src/**/*", "src/index.ts"],
-    "exclude": ["node_modules", "**/*.test.ts", "**/*.spec.ts"]
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"]
   }

@@ -1,10 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
-import { validateOpenAPI } from '../validator';
+import { validateOpenAPI } from '../validator.js';
 import { describe, test, expect, beforeAll } from '@jest/globals';
 
 describe('Integration tests for multiple OAS specs', () => {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const specsDir = path.join(__dirname, 'test-specs');
   
   // Add a static test that will always run
@@ -34,26 +37,49 @@ describe('Integration tests for multiple OAS specs', () => {
       // Write test files if they don't exist
       const testSpecs = {
         'valid-basic.yaml': `
-          openapi: 3.0.0
-          info:
-            title: Basic Valid API
-            version: 1.0.0
-          paths: {}
-        `,
+openapi: 3.0.0
+info:
+  title: Basic Valid API
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - name
+`,
         'invalid-basic.yaml': `
-          openapi: invalid
-          info:
-            title: Invalid API
-            version: 1.0.0
-          paths: {}
-        `,
+openapi: invalid
+info:
+  title: Invalid API
+  version: 1.0.0
+paths: {}
+`,
         'valid-3.1.yaml': `
-          openapi: 3.1.0
-          info:
-            title: Future Valid API
-            version: 1.0.0
-          paths: {}
-        `
+openapi: 3.1.0
+info:
+  title: Future Valid API
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+      required:
+        - name
+`
       };
 
       Object.entries(testSpecs).forEach(([filename, content]) => {
