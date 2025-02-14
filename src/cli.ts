@@ -435,7 +435,7 @@ export function runCLI(args: string[]): void {
       
       process.exit(1);
     }
-  } catch (err) {
+  } catch (err: unknown) {
     if (err instanceof Error) {
       console.error(chalk.red('Parsing Error:'), err.message);
     } else {
