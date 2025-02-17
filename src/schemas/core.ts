@@ -29,9 +29,8 @@ const NumericFormats = z.enum([
 
 // Helper function to get parent type from context
 function getParentType(ctx: z.RefinementCtx): string | undefined {
-  if (ctx.path.length <= 1) return undefined;
-  const parentPath = ctx.path[ctx.path.length - 2];
-  return typeof parentPath === 'string' ? parentPath : undefined;
+  const parent = (ctx as any).parent;
+  return parent ? parent.type : undefined;
 }
 
 // Improved schema object with more specific types and better error messages
@@ -213,9 +212,33 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           });
         }
       }),
-  });
+  }).passthrough();
 
-  return baseSchema.superRefine((schema, ctx) => {
+  return z.preprocess((raw) => {
+    if (raw && typeof raw === 'object' && 'type' in raw) {
+      const typeVal = (raw as any).type;
+      if (typeVal === 'number' || typeVal === 'integer') {
+        const allowedNumeric = new Set([
+          'type',
+          'format',
+          'default',
+          'nullable',
+          'deprecated',
+          'minimum',
+          'maximum',
+          'exclusiveMinimum',
+          'exclusiveMaximum',
+          'multipleOf',
+          'enum',
+          'example',
+          'title',
+          'description'
+        ]);
+        return Object.fromEntries(Object.entries(raw).filter(([key]) => allowedNumeric.has(key)));
+      }
+    }
+    return raw;
+  }, baseSchema).superRefine((schema, ctx) => {
     // Validate that array types have items
     if (schema.type === 'array' && !schema.items) {
       ctx.addIssue({
