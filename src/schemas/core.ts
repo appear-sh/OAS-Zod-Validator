@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { validateNumericFormat } from './numeric-formats.js';
 
 // Enhanced error messages and stricter validation
 export const ReferenceObject = z.object({
@@ -29,13 +30,36 @@ const NumericFormats = z.enum([
 
 // Helper function to get parent type from context
 function getParentType(ctx: z.RefinementCtx): string | undefined {
-  if (ctx.path.length <= 1) return undefined;
-  const parentPath = ctx.path[ctx.path.length - 2];
-  return typeof parentPath === 'string' ? parentPath : undefined;
+  const parent = (ctx as any).parent;
+  return parent ? parent.type : undefined;
+}
+
+// Helper to retrieve the root schema type from the refinement context
+function getRootType(ctx: any): string | undefined {
+  if (ctx.parent && typeof ctx.parent === 'object' && ctx.parent.type) {
+    return ctx.parent.type;
+  }
+  if (ctx.data && typeof ctx.data === 'object' && 'type' in ctx.data) {
+    return ctx.data.type;
+  }
+  if (ctx.options && (ctx.options as any).data && (ctx.options as any).data.type) {
+    return (ctx.options as any).data.type;
+  }
+  return undefined;
 }
 
 // Improved schema object with more specific types and better error messages
 export const SchemaObject: z.ZodType = z.lazy(() => {
+  // Preprocessor to select ReferenceObject if $ref exists, stripping extraneous keys
+  const SchemaOrRef = z.preprocess(
+    (data) => {
+      if (typeof data === 'object' && data !== null && ('$ref' in data)) {
+        return { $ref: (data as any).$ref };
+      }
+      return data;
+    },
+    z.union([z.lazy(() => SchemaObject), ReferenceObject])
+  );
   const baseSchema = z.object({
     type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object'], {
       errorMap: () => ({
@@ -46,22 +70,24 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
       .optional()
       .superRefine((format, ctx) => {
         if (!format) return;
-        const type = getParentType(ctx);
-        if (!type) return;
-
-        if (['int32', 'int64', 'float', 'double'].includes(format) && !['number', 'integer'].includes(type)) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Format '${format}' can only be used with numeric types (number, integer)`,
-            path: ['format']
-          });
-        }
-        if (['date-time', 'date', 'time', 'email', 'hostname', 'ipv4', 'ipv6', 'uri', 'uuid', 'password', 'byte', 'binary'].includes(format) && type !== 'string') {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Format '${format}' can only be used with string type`,
-            path: ['format']
-          });
+        if (ctx.path.filter(key => key === 'format').length > 1) return;
+        if (typeof (ctx as any).parent !== 'object') return;
+        const type = getRootType(ctx);
+        if (type !== undefined) {
+          if (['int32', 'int64', 'float', 'double'].includes(format) && (type !== 'number' && type !== 'integer')) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Format '${format}' can only be used with numeric types (number, integer)`,
+              path: ['format']
+            });
+          }
+          if (['date-time', 'date', 'time', 'email', 'hostname', 'ipv4', 'ipv6', 'uri', 'uuid', 'password', 'byte', 'binary'].includes(format) && (type !== 'string')) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Format '${format}' can only be used with string type`,
+              path: ['format']
+            });
+          }
         }
       }),
     title: z.string().optional(),
@@ -72,7 +98,8 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     minLength: z.number().int().positive()
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
+        if (type === undefined) return;
         if (type !== 'string') {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -84,7 +111,8 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     maxLength: z.number().int().positive()
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
+        if (type === undefined) return;
         if (type !== 'string') {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -96,30 +124,32 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     pattern: z.string()
       .optional()
       .superRefine((val, ctx) => {
-        if (!val) return;
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
+        if (type === undefined) return;
         if (type !== 'string') {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'pattern can only be used with string type',
             path: ['pattern']
           });
-          return;
-        }
-        try {
-          new RegExp(val);
-        } catch (e) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Invalid regular expression pattern',
-            path: ['pattern']
-          });
+        } else {
+          if (val !== undefined) {
+            try {
+              new RegExp(val);
+            } catch (e) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Invalid regular expression pattern',
+                path: ['pattern']
+              });
+            }
+          }
         }
       }),
     minimum: z.number()
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
         if (type && !['number', 'integer'].includes(type)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -131,7 +161,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     maximum: z.number()
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
         if (type && !['number', 'integer'].includes(type)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -143,7 +173,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     exclusiveMinimum: z.boolean()
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
         if (type && !['number', 'integer'].includes(type)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -155,7 +185,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     exclusiveMaximum: z.boolean()
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
         if (type && !['number', 'integer'].includes(type)) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -168,7 +198,8 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     required: z.array(z.string())
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
+        if (type === undefined) return;
         if (type !== 'object') {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -177,10 +208,11 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           });
         }
       }),
-    properties: z.record(z.string(), z.union([z.lazy(() => SchemaObject), ReferenceObject]))
+    properties: z.record(z.string(), SchemaOrRef)
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
+        if (type === undefined) return;
         if (type !== 'object') {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -189,10 +221,11 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           });
         }
       }),
-    items: z.union([z.lazy(() => SchemaObject), ReferenceObject])
+    items: SchemaOrRef
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
+        if (type === undefined) return;
         if (type !== 'array') {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -201,10 +234,11 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           });
         }
       }),
-    additionalProperties: z.union([z.boolean(), z.lazy(() => SchemaObject), ReferenceObject])
+    additionalProperties: z.union([z.boolean(), SchemaOrRef])
       .optional()
       .superRefine((val, ctx) => {
-        const type = getParentType(ctx);
+        const type = getRootType(ctx);
+        if (type === undefined) return;
         if (type !== 'object') {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -213,9 +247,33 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           });
         }
       }),
-  });
+  }).passthrough();
 
-  return baseSchema.superRefine((schema, ctx) => {
+  return z.preprocess((raw) => {
+    if (raw && typeof raw === 'object' && 'type' in raw) {
+      const typeVal = (raw as any).type;
+      if (typeVal === 'number' || typeVal === 'integer') {
+        const allowedNumeric = new Set([
+          'type',
+          'format',
+          'default',
+          'nullable',
+          'deprecated',
+          'minimum',
+          'maximum',
+          'exclusiveMinimum',
+          'exclusiveMaximum',
+          'multipleOf',
+          'enum',
+          'example',
+          'title',
+          'description'
+        ]);
+        return Object.fromEntries(Object.entries(raw).filter(([key]) => allowedNumeric.has(key)));
+      }
+    }
+    return raw;
+  }, baseSchema).superRefine((schema, ctx) => {
     // Validate that array types have items
     if (schema.type === 'array' && !schema.items) {
       ctx.addIssue({
@@ -232,7 +290,85 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
         path: ['properties']
       });
     }
-  });
+    // Additional numeric format validation
+    if (schema.format && ['int32', 'int64', 'float', 'double'].includes(schema.format)) {
+      if (schema.type !== 'number' && schema.type !== 'integer') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Format '${schema.format}' can only be used with numeric types (number, integer)`,
+          path: ['format']
+        });
+      }
+    }
+    // New check: Validate the 'example' value if present for numeric formats
+    if (schema.example !== undefined && schema.format && ['int32', 'int64', 'float', 'double'].includes(schema.format)) {
+      if (typeof schema.example !== 'number' || !validateNumericFormat(schema.format, schema.example)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Example value ${schema.example} does not conform to the ${schema.format} format`,
+          path: ['example']
+        });
+      } else {
+        // Validate minimum constraint if provided
+        if (typeof schema.minimum === 'number') {
+          if (schema.exclusiveMinimum ? !(schema.example > schema.minimum) : !(schema.example >= schema.minimum)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Example value ${schema.example} must be ${schema.exclusiveMinimum ? 'greater than' : 'greater than or equal to'} ${schema.minimum}`,
+              path: ['example']
+            });
+          }
+        }
+        // Validate maximum constraint if provided
+        if (typeof schema.maximum === 'number') {
+          if (schema.exclusiveMaximum ? !(schema.example < schema.maximum) : !(schema.example <= schema.maximum)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Example value ${schema.example} must be ${schema.exclusiveMaximum ? 'less than' : 'less than or equal to'} ${schema.maximum}`,
+              path: ['example']
+            });
+          }
+        }
+        // Validate multipleOf constraint if provided
+        if (typeof schema.multipleOf === 'number') {
+          const quotient = schema.example / schema.multipleOf;
+          const tolerance = 1e-8;
+          if (Math.abs(quotient - Math.round(quotient)) > tolerance) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Example value ${schema.example} must be a multiple of ${schema.multipleOf}`,
+              path: ['example']
+            });
+          }
+        }
+      }
+    }
+  }).refine((schema: any) => {
+    if (schema.example === undefined || (schema.type !== 'number' && schema.type !== 'integer')) return true;
+    if (typeof schema.example !== 'number') return false;
+    if (typeof schema.minimum === 'number') {
+      return schema.exclusiveMinimum ? (schema.example > schema.minimum) : (schema.example >= schema.minimum);
+    }
+    return true;
+  }, { message: "Example value does not satisfy the minimum constraint", path: ['example'] })
+  .refine((schema: any) => {
+    if (schema.example === undefined || (schema.type !== 'number' && schema.type !== 'integer')) return true;
+    if (typeof schema.example !== 'number') return false;
+    if (typeof schema.maximum === 'number') {
+      return schema.exclusiveMaximum ? (schema.example < schema.maximum) : (schema.example <= schema.maximum);
+    }
+    return true;
+  }, { message: "Example value does not satisfy the maximum constraint", path: ['example'] })
+  .refine((schema: any) => {
+    if (schema.example === undefined || (schema.type !== 'number' && schema.type !== 'integer')) return true;
+    if (typeof schema.example !== 'number') return false;
+    if (typeof schema.multipleOf === 'number') {
+      const quotient = schema.example / schema.multipleOf;
+      const tolerance = 1e-8;
+      return Math.abs(quotient - Math.round(quotient)) <= tolerance;
+    }
+    return true;
+  }, { message: "Example value is not a multiple of the specified factor", path: ['example'] });
 });
 
 // Basic extensible object that allows any additional properties
@@ -243,5 +379,5 @@ export const VendorExtensible = z.object({}).catchall(z.unknown()).refine((val) 
   const extraKeys = Object.keys(val).filter(key => !key.startsWith('x-'));
   return extraKeys.length === 0;
 }, {
-  message: 'Unknown field detected. Custom extensions must start with "x-". For example: x-custom-field'
+  message: 'Custom extensions must start with x-. For example: x-custom-field'
 });

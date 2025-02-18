@@ -9,8 +9,23 @@ import { z } from 'zod';
  * @returns Validation result
  */
 export function validateFromYaml(content: string, options: ValidationOptions = {}): ValidationResult {
+  if (typeof content !== 'string') {
+    return {
+      valid: false,
+      errors: new z.ZodError([{ code: z.ZodIssueCode.custom, path: [], message: "Input must be a string" }]),
+      resolvedRefs: []
+    };
+  }
+
   try {
     const doc = load(content);
+    if (typeof doc !== 'object' || doc === null || Array.isArray(doc) || !('openapi' in doc)) {
+      return {
+        valid: false,
+        errors: new z.ZodError([{ code: z.ZodIssueCode.custom, path: [], message: "YAML must contain an object" }]),
+        resolvedRefs: []
+      };
+    }
     return validateOpenAPI(doc, options);
   } catch (err) {
     return {
