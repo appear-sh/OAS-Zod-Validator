@@ -39,45 +39,41 @@ export const validateNumericFormat = (format: string | undefined, value: number)
 
 // Zod schema for numeric format validation
 export const createNumericSchema = (format: string | undefined) => {
-  const baseSchema = z.number();
-
+  let schema;
   switch (format) {
     case 'int32':
-      return baseSchema
-        .int()
-        .min(INT32_MIN)
-        .max(INT32_MAX)
-        .describe('32-bit integer');
-
+      schema = z.preprocess(safeParseNumeric, z.number().int().min(INT32_MIN).max(INT32_MAX).describe('32-bit integer'));
+      break;
     case 'int64':
-      return baseSchema
-        .int()
-        .min(INT64_MIN)
-        .max(INT64_MAX)
-        .describe('64-bit integer');
-
+      schema = z.preprocess(safeParseNumeric, z.number().int().min(INT64_MIN).max(INT64_MAX).describe('64-bit integer'));
+      break;
     case 'float':
-      return baseSchema
-        .finite()
-        .describe('32-bit floating-point');
-
+      schema = z.preprocess(safeParseNumeric, z.number().refine((n) => Number.isFinite(n), { message: 'Value must be a finite number' }).describe('32-bit floating-point'));
+      break;
     case 'double':
-      return baseSchema
-        .finite()
-        .describe('64-bit floating-point');
-
+      schema = z.preprocess(safeParseNumeric, z.number().refine((n) => Number.isFinite(n), { message: 'Value must be a finite number' }).describe('64-bit floating-point'));
+      break;
     default:
-      return baseSchema;
+      schema = z.preprocess(safeParseNumeric, z.number());
+      break;
   }
+  return schema.superRefine((value, ctx) => {
+    createNumericValidator(format)(ctx, value);
+  });
 };
 
 // Type-safe numeric format validator
 export const createNumericValidator = (format: string | undefined) => {
   return (ctx: z.RefinementCtx, value: number) => {
     if (!validateNumericFormat(format, value)) {
+      let message = `Invalid ${format || 'number'} format`;
+      if (format === 'int32') message = NumericValidationErrors.int32Range;
+      else if (format === 'int64') message = NumericValidationErrors.int64Range;
+      else if (format === 'float') message = NumericValidationErrors.float;
+      else if (format === 'double') message = NumericValidationErrors.double;
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Invalid ${format || 'number'} format`,
+        message,
         path: ['format']
       });
       return false;
@@ -157,7 +153,7 @@ export const createNumericSchemaWithValidations = (options: NumericFormatOptions
 
   // Apply all validations in a single refinement
   if (validations.length > 0) {
-    const validatedSchema = baseSchema.superRefine((n, ctx) => {
+    const validatedSchema = baseSchema.superRefine((n: number, ctx: z.RefinementCtx) => {
       for (const validate of validations) {
         const result = validate(n);
         if (typeof result === 'string') {
@@ -174,7 +170,7 @@ export const createNumericSchemaWithValidations = (options: NumericFormatOptions
     return validatedSchema as unknown as z.ZodNumber;
   }
 
-  return baseSchema;
+  return baseSchema as unknown as z.ZodNumber;
 };
 
 // Utility function to check if a string represents a valid numeric literal
@@ -185,8 +181,7 @@ export const isValidNumericLiteral = (value: string): boolean => {
 };
 
 // Utility function to safely parse numeric values
+// Only accept values that are already numbers; if a string is provided, return null to force type validation failure.
 export const safeParseNumeric = (value: unknown): number | null => {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
-  if (typeof value === 'string' && isValidNumericLiteral(value)) return Number(value);
-  return null;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }; 

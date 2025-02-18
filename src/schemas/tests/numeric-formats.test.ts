@@ -1,4 +1,4 @@
-import { validateOpenAPI } from '../index.js';
+import { validateOpenAPI } from '../../index.js';
 import { z } from 'zod';
 
 describe('Numeric Format Validation', () => {
