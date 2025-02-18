@@ -1,5 +1,6 @@
 import { validateOpenAPI } from '../../index.js';
 import { z } from 'zod';
+import { getNumericFormatDescription, isValidNumericLiteral, safeParseNumeric, createNumericSchema, validateNumericFormat, createNumericSchemaWithValidations } from '../numeric-formats.js';
 
 describe('Numeric Format Validation', () => {
   describe('Integer Formats', () => {
@@ -346,5 +347,121 @@ describe('Numeric Format Validation', () => {
         }
       })).toEqual(expect.objectContaining({ valid: false }));
     });
+  });
+});
+
+describe('Numeric Utilities', () => {
+  test('getNumericFormatDescription returns correct description for int32', () => {
+    const desc = getNumericFormatDescription('int32');
+    expect(desc).toBe('32-bit integer (range: -2147483648 to 2147483647)');
+  });
+
+  test('isValidNumericLiteral returns true for valid number strings', () => {
+    expect(isValidNumericLiteral('123')).toBe(true);
+    expect(isValidNumericLiteral('3.14')).toBe(true);
+  });
+
+  test('isValidNumericLiteral returns false for non numeric strings', () => {
+    expect(isValidNumericLiteral('abc')).toBe(false);
+    expect(isValidNumericLiteral('')).toBe(false);
+  });
+
+  test('safeParseNumeric returns number for valid numeric value', () => {
+    expect(safeParseNumeric(42)).toBe(42);
+  });
+
+  test('safeParseNumeric returns null for invalid values', () => {
+    expect(safeParseNumeric("42")).toBe(null);
+    expect(safeParseNumeric(null)).toBe(null);
+  });
+});
+
+describe('Numeric Schema with Additional Validations', () => {
+  test('validates number within min and max for int32', () => {
+    const schema = createNumericSchemaWithValidations({ format: 'int32', minimum: 10, maximum: 100 });
+    expect(schema.safeParse(50).success).toBe(true);
+  });
+
+  test('rejects number below minimum for int32', () => {
+    const schema = createNumericSchemaWithValidations({ format: 'int32', minimum: 10, maximum: 100 });
+    expect(schema.safeParse(5).success).toBe(false);
+  });
+
+  test('rejects number above maximum for int32', () => {
+    const schema = createNumericSchemaWithValidations({ format: 'int32', minimum: 10, maximum: 100 });
+    expect(schema.safeParse(150).success).toBe(false);
+  });
+
+  test('validates multipleOf constraint', () => {
+    const schema = createNumericSchemaWithValidations({ format: 'int32', multipleOf: 5 });
+    expect(schema.safeParse(25).success).toBe(true);
+    expect(schema.safeParse(26).success).toBe(false);
+  });
+});
+
+describe('Direct Numeric Format Validation', () => {
+  test('returns true for valid int32', () => {
+    expect(validateNumericFormat('int32', 100)).toBe(true);
+  });
+  test('returns false for invalid int32', () => {
+    expect(validateNumericFormat('int32', 2147483648)).toBe(false);
+  });
+  test('returns false for invalid int64', () => {
+    expect(validateNumericFormat('int64', Number.MAX_SAFE_INTEGER + 1)).toBe(false);
+  });
+  test('returns false for float with Infinity', () => {
+    expect(validateNumericFormat('float', Infinity)).toBe(false);
+  });
+  test('returns false for double with NaN', () => {
+    expect(validateNumericFormat('double', NaN)).toBe(false);
+  });
+  test('returns true for undefined format', () => {
+    expect(validateNumericFormat(undefined, 100)).toBe(true);
+  });
+});
+
+describe('Get Numeric Format Description', () => {
+  test('int64 description', () => {
+    const desc = getNumericFormatDescription('int64');
+    expect(desc).toBe(`64-bit integer (range: ${Number.MIN_SAFE_INTEGER} to ${Number.MAX_SAFE_INTEGER})`);
+  });
+  test('float description', () => {
+    const desc = getNumericFormatDescription('float');
+    expect(desc).toBe('32-bit floating-point number');
+  });
+  test('double description', () => {
+    const desc = getNumericFormatDescription('double');
+    expect(desc).toBe('64-bit floating-point number');
+  });
+  test('returns "number" for unknown format', () => {
+    const desc = getNumericFormatDescription('unknown');
+    expect(desc).toBe('number');
+  });
+});
+
+describe('Exclusive Numeric Boundaries', () => {
+  test('rejects value equal to minimum when exclusiveMinimum is true', () => {
+    const schema = createNumericSchemaWithValidations({ format: 'int32', minimum: 10, exclusiveMinimum: true });
+    expect(schema.safeParse(10).success).toBe(false);
+    expect(schema.safeParse(11).success).toBe(true);
+  });
+  test('rejects value equal to maximum when exclusiveMaximum is true', () => {
+    const schema = createNumericSchemaWithValidations({ format: 'int32', maximum: 100, exclusiveMaximum: true });
+    expect(schema.safeParse(100).success).toBe(false);
+    expect(schema.safeParse(99).success).toBe(true);
+  });
+});
+
+describe('Create Numeric Schema', () => {
+  test('valid parsing for int32 schema', () => {
+    const schema = createNumericSchema('int32');
+    const result = schema.safeParse(50);
+    expect(result.success).toBe(true);
+  });
+
+  test('invalid parsing for int32 schema with string input', () => {
+    const schema = createNumericSchema('int32');
+    const result = schema.safeParse("20");
+    expect(result.success).toBe(false);
   });
 }); 
