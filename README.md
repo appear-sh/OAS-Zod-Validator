@@ -1,18 +1,18 @@
-# OAS-Zod-Validator
+# OAS Zod Validator
 
-A robust OpenAPI Specification (OAS) validator built with Zod, providing type-safe validation for both OAS 3.0.x and 3.1 documents.
+A robust OpenAPI Specification (OAS) validator built with Zod, providing type-safe schema validation for both OAS 3.0.x and 3.1 specifications.
 
 [![npm version](https://badge.fury.io/js/oas-zod-validator.svg)](https://badge.fury.io/js/oas-zod-validator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
 
-- ✨ Full OpenAPI 3.0.x and 3.1 support
-- 🛡️ Type-safe validation using Zod
-- 🔍 Detailed error messages
-- 📦 Zero external runtime dependencies
-- 🚀 Enterprise-ready with strict mode validation
-- 🌐 Supports both YAML and JSON formats
+- Full OpenAPI 3.0.x and 3.1 support
+- Type-safe validation using Zod
+- Detailed error messages
+- Zero external runtime dependencies
+- Enterprise-ready with strict mode validation
+- Supports both YAML and JSON formats
 
 ## Installation
 
@@ -92,4 +92,6 @@ npm run build
 
 ## License
 
-MIT © [Your Name]
+MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh
+X: @appear_api
+X: @Tom_mkV / @jakubriedl
