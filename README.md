@@ -92,6 +92,6 @@ npm run build
 
 ## License
 
-MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh
-X: @appear_api
-X: @Tom_mkV / @jakubriedl
+- MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh
+- X: @appear_api
+- X: @Tom_mkV / @jakubriedl
