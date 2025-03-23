@@ -1,5 +1,6 @@
 import { validateFromYaml } from '../../utils/validateFromYaml.js';
 import { describe, test, expect } from '@jest/globals';
+import { YAMLParseError, SchemaValidationError } from '../../errors/index.js';
 
 describe('YAML Validation', () => {
   test('validates valid OpenAPI 3.0 YAML', () => {
@@ -36,9 +37,18 @@ describe('YAML Validation', () => {
             invalid-indent
     `;
     
-    const result = validateFromYaml(yaml);
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
+    // Now errors are thrown, not returned in result
+    expect(() => validateFromYaml(yaml)).toThrow(YAMLParseError);
+    
+    try {
+      validateFromYaml(yaml);
+    } catch (error) {
+      expect(error).toBeInstanceOf(YAMLParseError);
+      if (error instanceof YAMLParseError) {
+        expect(error.code).toBe('INVALID_YAML');
+        expect(error.message).toContain('Failed to parse YAML/JSON');
+      }
+    }
   });
 
   test('handles non-object YAML content', () => {
@@ -50,11 +60,40 @@ describe('YAML Validation', () => {
       'null'
     ];
     
-    inputs.forEach(yaml => {
-      const result = validateFromYaml(yaml);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+    inputs.forEach(input => {
+      expect(() => validateFromYaml(input)).toThrow(SchemaValidationError);
     });
+    
+    // Test specific error attributes
+    try {
+      validateFromYaml('just a string');
+    } catch (error) {
+      expect(error).toBeInstanceOf(SchemaValidationError);
+      if (error instanceof SchemaValidationError) {
+        expect(error.code).toBe('SCHEMA_VALIDATION');
+        expect(error.message).toContain('OpenAPI object');
+        expect(error.context).toBeDefined();
+      }
+    }
+  });
+
+  test('handles invalid input types', () => {
+    const numberInput = 42;
+    
+    expect(() => {
+      validateFromYaml(numberInput as unknown as string);
+    }).toThrow(SchemaValidationError);
+    
+    try {
+      validateFromYaml(numberInput as unknown as string);
+    } catch (error) {
+      expect(error).toBeInstanceOf(SchemaValidationError);
+      if (error instanceof SchemaValidationError) {
+        expect(error.code).toBe('SCHEMA_VALIDATION');
+        expect(error.message).toBe('Input must be a string');
+        expect(error.context?.inputType).toBe('number');
+      }
+    }
   });
 
   test('validates YAML with references and options', () => {
@@ -85,15 +124,15 @@ describe('YAML Validation', () => {
       '',
       ' ',
       '\n',
-      undefined,
-      null
     ];
     
     inputs.forEach(input => {
-      const result = validateFromYaml(input as string);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+      expect(() => validateFromYaml(input)).toThrow(SchemaValidationError);
     });
+    
+    // Special cases for null/undefined that should be handled separately
+    expect(() => validateFromYaml(null as unknown as string)).toThrow(SchemaValidationError);
+    expect(() => validateFromYaml(undefined as unknown as string)).toThrow(SchemaValidationError);
   });
 
   test('validates YAML with future OpenAPI versions', () => {
@@ -121,9 +160,17 @@ describe('YAML Validation', () => {
         /test: {}
     `;
     
-    const result = validateFromYaml(invalidYaml);
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
+    expect(() => validateFromYaml(invalidYaml)).toThrow(YAMLParseError);
+    
+    try {
+      validateFromYaml(invalidYaml);
+    } catch (error) {
+      expect(error).toBeInstanceOf(YAMLParseError);
+      if (error instanceof YAMLParseError) {
+        expect(error.code).toBe('INVALID_YAML');
+        expect(error.message).toContain('invalid-anchor');
+      }
+    }
   });
 
   test('handles non-string inputs', () => {
@@ -138,9 +185,7 @@ describe('YAML Validation', () => {
     
     inputs.forEach(input => {
       // @ts-expect-error Testing invalid input types
-      const result = validateFromYaml(input);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+      expect(() => validateFromYaml(input)).toThrow(SchemaValidationError);
     });
   });
 
@@ -153,18 +198,21 @@ describe('YAML Validation', () => {
       paths: {}
     `;
     
-    // Test with different option combinations
-    const results = [
-      validateFromYaml(yaml, { allowFutureOASVersions: true, strict: true }),
-      validateFromYaml(yaml, { allowFutureOASVersions: true }),
-      validateFromYaml(yaml, { strict: true }),
-      validateFromYaml(yaml, {})
-    ];
-
-    expect(results[0].valid).toBe(true);
-    expect(results[1].valid).toBe(true);
-    expect(results[2].valid).toBe(false);
-    expect(results[3].valid).toBe(false);
+    // With allowFutureOASVersions, it should pass
+    const result1 = validateFromYaml(yaml, { allowFutureOASVersions: true, strict: true });
+    const result2 = validateFromYaml(yaml, { allowFutureOASVersions: true });
+    
+    expect(result1.valid).toBe(true);
+    expect(result2.valid).toBe(true);
+    
+    // Without allowFutureOASVersions, it should return an invalid result
+    const result3 = validateFromYaml(yaml, { strict: true });
+    const result4 = validateFromYaml(yaml, {});
+    
+    expect(result3.valid).toBe(false);
+    expect(result3.errors).toBeDefined();
+    expect(result4.valid).toBe(false);
+    expect(result4.errors).toBeDefined();
   });
 
   test('handles complex YAML parsing errors', () => {
@@ -192,26 +240,24 @@ describe('YAML Validation', () => {
     ];
 
     invalidYamls.forEach(yaml => {
-      const result = validateFromYaml(yaml);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+      expect(() => validateFromYaml(yaml)).toThrow();
     });
   });
 
   test('provides specific error messages for different error types', () => {
     // Test non-string error message
     const numberInput = 42;
-    const result1 = validateFromYaml(numberInput as unknown as string);
-    expect(result1.errors?.errors[0].message).toBe('Input must be a string');
+    expect(() => validateFromYaml(numberInput as unknown as string))
+      .toThrow('Input must be a string');
 
     // Test YAML parsing error message
     const invalidYaml = ']invalid[';
-    const result2 = validateFromYaml(invalidYaml);
-    expect(result2.errors?.errors[0].message).toMatch(/end of the stream or a document separator is expected/);
+    expect(() => validateFromYaml(invalidYaml))
+      .toThrow(/Failed to parse YAML\/JSON/);
 
     // Test custom error handling
     const arrayYaml = '- item1\n- item2';
-    const result3 = validateFromYaml(arrayYaml);
-    expect(result3.errors?.errors[0].message).toBe('YAML must contain an object');
+    expect(() => validateFromYaml(arrayYaml))
+      .toThrow('YAML must contain an OpenAPI object');
   });
 });
