@@ -29,7 +29,7 @@ const isDouble = (n: number): boolean => {
 };
 
 // Helper function to check if a number is a multiple of another with floating-point precision
-function isMultipleOf(value: number, multipleOf: number): boolean {
+export function isMultipleOf(value: number, multipleOf: number): boolean {
   if (multipleOf === 0) return false;
   const quotient = value / multipleOf;
   const tolerance = 1e-10; // Small tolerance to handle floating-point imprecisions
@@ -250,23 +250,14 @@ export const isValidNumericLiteral = (value: string): boolean => {
 };
 
 // Utility function to safely parse numeric values
-// Only accept values that are already numbers; if a string is provided, return null to force type validation failure.
+// Returns a number if valid, or null to force type validation failure
 export const safeParseNumeric = (value: unknown): number | null => {
-  // For backward compatibility with tests, only accept actual number values
-  // Comment out string parsing for now to maintain compatibility with tests
+  // Only accept actual number values that are finite
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
   }
   
-  /* 
-  // This would be a more flexible implementation, but it breaks tests
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value);
-    if (!Number.isNaN(parsed) && Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-  */
-  
+  // Strings are not automatically converted to handle type safety requirements
+  // This ensures strict validation of types in OpenAPI schemas
   return null;
 }; 
