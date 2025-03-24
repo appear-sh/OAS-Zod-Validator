@@ -1,6 +1,7 @@
 import { get } from 'lodash-es';
 import { ReferenceError, ErrorCode } from '../errors/index.js';
 import { JSONPointer, createJSONPointer } from '../types/index.js';
+import { getValidationCache } from './cache.js';
 
 /**
  * Verifies that all references in a document point to valid targets
@@ -10,6 +11,8 @@ import { JSONPointer, createJSONPointer } from '../types/index.js';
  * @throws {ReferenceError} If a reference is invalid or not found
  */
 export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): void {
+  const cache = getValidationCache();
+  
   /**
    * Recursively collects all references in an object
    * 
@@ -45,6 +48,13 @@ export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): 
     try {
       // Validate the format again to ensure type safety
       const jsonPointer = createJSONPointer(ref);
+      
+      // Check if we have this reference target cached
+      const cachedTarget = cache.getRefTarget(jsonPointer, doc);
+      if (cachedTarget !== undefined) {
+        return; // Reference exists in cache
+      }
+      
       const path = jsonPointer.substring(2).split('/');
       const target = get(doc, path);
       
@@ -55,6 +65,9 @@ export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): 
           { code: ErrorCode.REFERENCE_NOT_FOUND }
         );
       }
+      
+      // Cache the target for future reference lookups
+      cache.setRefTarget(jsonPointer, doc, target);
     } catch (error) {
       if (error instanceof ReferenceError) {
         throw error;

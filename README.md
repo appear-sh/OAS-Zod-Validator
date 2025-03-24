@@ -17,6 +17,7 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 - Comprehensive numeric format validations
 - Rate limit header enforcement options
 - Custom format validators
+- Performance optimization with caching for large schemas
 
 ## Installation
 
@@ -76,6 +77,45 @@ oas-validate --json api.yaml
 ```
 
 ## Advanced Usage
+
+### Performance Optimization with Caching
+
+Caching is enabled by default and significantly improves performance for repeated validations of the same specification:
+
+```typescript
+// Validate with default caching (enabled)
+const result = validateOpenAPI(spec);
+
+// Disable caching if needed
+const resultNoCache = validateOpenAPI(spec, {
+  cache: { enabled: false },
+});
+
+// Configure cache size
+const resultWithLargeCache = validateOpenAPI(spec, {
+  cache: { maxSize: 1000 },
+});
+
+// Reset the cache manually
+import { resetCache } from "oas-zod-validator";
+resetCache();
+
+// Configure the global cache
+import { configureCache } from "oas-zod-validator";
+configureCache({ maxSize: 2000 });
+```
+
+The caching system optimizes:
+
+- OpenAPI document validation
+- YAML/JSON parsing
+- Reference resolution
+
+This is particularly beneficial for:
+
+- Large API specifications
+- CI/CD pipelines with repeated validations
+- Development workflows with incremental changes
 
 ### Custom Format Validation
 

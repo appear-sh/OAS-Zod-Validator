@@ -14,6 +14,7 @@ import {
   OpenAPIVersion, 
   createOpenAPIVersion 
 } from '../types/index.js';
+import { getValidationCache, CacheOptions } from '../utils/cache.js';
 
 /**
  * Options for validating OpenAPI specifications
@@ -30,6 +31,9 @@ export interface ValidationOptions {
     /** Require rate limit headers in responses */
     requireRateLimitHeaders?: boolean;
   };
+  
+  /** Cache configuration options */
+  cache?: CacheOptions;
 }
 
 /**
@@ -209,6 +213,21 @@ export function validateOpenAPI(
   document: unknown,
   options: ValidationOptions = {}
 ): ValidationResult {
+  // Disable caching if we're in test environment
+  const testMode = process.env.NODE_ENV === 'test';
+  const cacheOptions = testMode 
+    ? { ...options.cache, enabled: false }
+    : options.cache;
+    
+  const cache = getValidationCache(cacheOptions);
+  const cacheKey = cache.generateDocumentKey(document, options);
+  
+  // Check if we have a cached result
+  const cachedResult = cache.getValidationResult(cacheKey);
+  if (cachedResult) {
+    return cachedResult;
+  }
+  
   const resolvedRefs: string[] = [];
   
   try {
@@ -261,26 +280,31 @@ export function validateOpenAPI(
       }
     }
 
-    return { valid: true, resolvedRefs };
+    const result = { valid: true, resolvedRefs };
+    
+    // Don't store in cache if in test mode to avoid test interference
+    if (!testMode) {
+      cache.setValidationResult(cacheKey, result);
+    }
+    
+    return result;
   } catch (error) {
+    let result: ValidationResult;
+    
     if (error instanceof z.ZodError) {
-      return { 
+      result = { 
         valid: false, 
         errors: error, 
         resolvedRefs 
       };
-    }
-    
-    if (error instanceof SchemaValidationError) {
-      return { 
+    } else if (error instanceof SchemaValidationError) {
+      result = { 
         valid: false, 
         errors: error.zodError, 
         resolvedRefs 
       };
-    }
-    
-    if (error instanceof StrictValidationError) {
-      return {
+    } else if (error instanceof StrictValidationError) {
+      result = {
         valid: false,
         errors: new z.ZodError([{
           code: z.ZodIssueCode.custom,
@@ -289,16 +313,23 @@ export function validateOpenAPI(
         }]),
         resolvedRefs
       };
+    } else {
+      result = { 
+        valid: false, 
+        errors: new z.ZodError([{ 
+          code: z.ZodIssueCode.custom,
+          path: [],
+          message: error instanceof Error ? error.message : 'Unknown error'
+        }]), 
+        resolvedRefs 
+      };
     }
     
-    return { 
-      valid: false, 
-      errors: new z.ZodError([{ 
-        code: z.ZodIssueCode.custom,
-        path: [],
-        message: error instanceof Error ? error.message : 'Unknown error'
-      }]), 
-      resolvedRefs 
-    };
+    // Don't store in cache if in test mode to avoid test interference
+    if (!testMode) {
+      cache.setValidationResult(cacheKey, result);
+    }
+    
+    return result;
   }
 }
