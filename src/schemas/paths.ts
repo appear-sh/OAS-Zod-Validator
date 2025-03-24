@@ -18,7 +18,7 @@ export const ParameterObject = z.discriminatedUnion('in', [
   // Path parameters are always required
   z.object({
     ...parameterBaseFields,
-    name: z.string(),
+    name: z.string().min(1, { message: 'Parameter name cannot be empty' }),
     in: z.literal('path'),
     required: z.literal(true),
     schema: z.union([SchemaObject, ReferenceObject]),
@@ -26,7 +26,7 @@ export const ParameterObject = z.discriminatedUnion('in', [
   // Query parameters
   z.object({
     ...parameterBaseFields,
-    name: z.string(),
+    name: z.string().min(1, { message: 'Parameter name cannot be empty' }),
     in: z.literal('query'),
     schema: z.union([SchemaObject, ReferenceObject]),
     allowReserved: z.boolean().optional(),
@@ -43,7 +43,7 @@ export const ParameterObject = z.discriminatedUnion('in', [
   // Cookie parameters
   z.object({
     ...parameterBaseFields,
-    name: z.string(),
+    name: z.string().min(1, { message: 'Parameter name cannot be empty' }),
     in: z.literal('cookie'),
     schema: z.union([SchemaObject, ReferenceObject]),
   }),
@@ -57,15 +57,32 @@ export const OperationObject = z.object({
   }).optional(),
   description: z.string().optional(),
   operationId: z.string()
-    .regex(/^[a-zA-Z0-9]+$/, {
-      message: 'operationId must contain only alphanumeric characters'
+    .regex(/^[a-z][a-zA-Z0-9]*$/, {
+      message: 'operationId must start with lowercase letter and contain only alphanumeric characters'
     })
     .optional(),
   parameters: z.array(z.union([ParameterObject, ReferenceObject]))
     .max(50, {
       message: 'Too many parameters. Consider restructuring the API.'
     })
-    .optional(),
+    .optional()
+    .refine(params => {
+      if (!params) return true;
+      
+      // Check for duplicate parameter names+locations
+      const seen = new Set();
+      for (const param of params) {
+        if ('$ref' in param) continue; // Skip reference objects
+        
+        const key = `${param.in}:${param.name}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+      }
+      
+      return true;
+    }, {
+      message: 'Duplicate parameters with same name and location are not allowed'
+    }),
   requestBody: z.union([RequestBodyObject, ReferenceObject]).optional(),
   responses: z.record(
     z.string().regex(/^[1-5][0-9][0-9]$|^default$/, {
@@ -99,6 +116,11 @@ export const PathItemObject = z.object({
       message: 'Server URL must be a valid URL'
     }),
     description: z.string().optional(),
+    variables: z.record(z.string(), z.object({
+      default: z.string(),
+      description: z.string().optional(),
+      enum: z.array(z.string()).optional(),
+    })).optional(),
   })).optional(),
   parameters: z.array(z.union([ParameterObject, ReferenceObject])).optional(),
 }).and(ExtensibleObject)
@@ -111,28 +133,84 @@ export const PathItemObject = z.object({
 });
 
 // Enhanced Paths Object with path validation
-export const PathsObject: z.ZodType = z.record(
+export const PathsObject: z.ZodType<Record<string, z.infer<typeof PathItemObject>>> = z.record(
   z.string()
     .regex(/^\//, { message: 'Path must start with forward slash' })
     .regex(/^\/[^?#]*$/, { 
       message: 'Path must not include query parameters or fragments' 
+    })
+    .regex(/^(?:\/[^/{}]+|\/\{[^/{}]+\})*\/?$/, {
+      message: 'Path must follow pattern of /segment or /{param} with no empty segments'
     }),
   PathItemObject
-).refine((paths) => {
-  // Check for path parameter consistency
-  const pathParams = new Set();
+)
+.refine((paths) => {
+  // Check for path parameter consistency and uniqueness
+  const pathParams = new Map();
+  
   for (const path of Object.keys(paths)) {
     const matches = path.match(/\{([^}]+)\}/g);
     if (matches) {
       for (const match of matches) {
+        // Check if this parameter name has been seen before
         if (pathParams.has(match)) {
-          return false;
+          // If seen in a different path, it's a duplicate across paths
+          if (pathParams.get(match) !== path) {
+            return false;
+          }
+        } else {
+          pathParams.set(match, path);
         }
-        pathParams.add(match);
       }
     }
   }
+  
   return true;
 }, {
   message: 'Path parameters must be unique across all paths'
+})
+.refine((paths) => {
+  // Check for path parameter definitions
+  for (const [path, pathItem] of Object.entries(paths)) {
+    const pathParamMatches = path.match(/\{([^}]+)\}/g) || [];
+    if (pathParamMatches.length === 0) continue; // No path parameters to check
+    
+    // Collect all defined parameters from the path item
+    const definedParams = new Set<string>();
+    
+    // Path-level parameters
+    const pathParams = pathItem.parameters || [];
+    for (const param of pathParams) {
+      if ('$ref' in param) continue; // Skip reference objects
+      if (param.in === 'path') {
+        definedParams.add(`{${param.name}}`);
+      }
+    }
+    
+    // Check operation-level parameters
+    const operations = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'] as const;
+    for (const op of operations) {
+      const operation = pathItem[op];
+      if (!operation) continue;
+      
+      const operationParams = operation.parameters || [];
+      for (const param of operationParams) {
+        if ('$ref' in param) continue; // Skip reference objects
+        if (param.in === 'path') {
+          definedParams.add(`{${param.name}}`);
+        }
+      }
+    }
+    
+    // Ensure all path parameters in the URL are defined in parameters
+    for (const pathParam of pathParamMatches) {
+      if (!definedParams.has(pathParam)) {
+        return false;
+      }
+    }
+  }
+  
+  return true;
+}, {
+  message: 'All path parameters in the URL must be defined in the parameters section'
 }); 

@@ -29,13 +29,13 @@ const NumericFormats = z.enum([
 });
 
 // Helper function to get parent type from context
-function getParentType(ctx: z.RefinementCtx): string | undefined {
+export function getParentType(ctx: z.RefinementCtx): string | undefined {
   const parent = (ctx as any).parent;
   return parent ? parent.type : undefined;
 }
 
 // Helper to retrieve the root schema type from the refinement context
-function getRootType(ctx: any): string | undefined {
+export function getRootType(ctx: any): string | undefined {
   if (ctx.parent && typeof ctx.parent === 'object' && ctx.parent.type) {
     return ctx.parent.type;
   }
@@ -95,6 +95,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     default: z.unknown().optional(),
     nullable: z.boolean().optional(),
     deprecated: z.boolean().optional(),
+    example: z.unknown().optional(),
     minLength: z.number().int().positive()
       .optional()
       .superRefine((val, ctx) => {
@@ -194,6 +195,18 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           });
         }
       }),
+    multipleOf: z.number().positive()
+      .optional()
+      .superRefine((val, ctx) => {
+        const type = getRootType(ctx);
+        if (type && !['number', 'integer'].includes(type)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'multipleOf can only be used with numeric types (number, integer)',
+            path: ['multipleOf']
+          });
+        }
+      }),
     enum: z.array(z.unknown()).optional(),
     required: z.array(z.string())
       .optional()
@@ -252,25 +265,41 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
   return z.preprocess((raw) => {
     if (raw && typeof raw === 'object' && 'type' in raw) {
       const typeVal = (raw as any).type;
-      if (typeVal === 'number' || typeVal === 'integer') {
-        const allowedNumeric = new Set([
-          'type',
-          'format',
-          'default',
-          'nullable',
-          'deprecated',
-          'minimum',
-          'maximum',
-          'exclusiveMinimum',
-          'exclusiveMaximum',
-          'multipleOf',
-          'enum',
-          'example',
-          'title',
-          'description'
-        ]);
-        return Object.fromEntries(Object.entries(raw).filter(([key]) => allowedNumeric.has(key)));
+      const commonProps = new Set([
+        'type',
+        'format',
+        'default',
+        'nullable',
+        'deprecated',
+        'example',
+        'enum',
+        'title',
+        'description'
+      ]);
+      
+      // Type-specific properties
+      const stringProps = new Set(['minLength', 'maxLength', 'pattern']);
+      const numericProps = new Set(['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf']);
+      const arrayProps = new Set(['items']);
+      const objectProps = new Set(['properties', 'additionalProperties', 'required']);
+      
+      const allowedProps = new Set([...commonProps]);
+      
+      // Add type-specific properties
+      if (typeVal === 'string') {
+        stringProps.forEach(prop => allowedProps.add(prop));
+      } else if (typeVal === 'number' || typeVal === 'integer') {
+        numericProps.forEach(prop => allowedProps.add(prop));
+      } else if (typeVal === 'array') {
+        arrayProps.forEach(prop => allowedProps.add(prop));
+      } else if (typeVal === 'object') {
+        objectProps.forEach(prop => allowedProps.add(prop));
       }
+      
+      // Return only the allowed properties for this type
+      return Object.fromEntries(Object.entries(raw).filter(([key]) => 
+        allowedProps.has(key) || key.startsWith('x-')
+      ));
     }
     return raw;
   }, baseSchema).superRefine((schema, ctx) => {
@@ -343,6 +372,51 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
         }
       }
     }
+    
+    // Validate string examples
+    if (schema.example !== undefined && schema.type === 'string') {
+      if (typeof schema.example !== 'string') {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Example value must be a string for string type schemas`,
+          path: ['example']
+        });
+      } else {
+        // Validate minLength constraint if provided
+        if (typeof schema.minLength === 'number' && schema.example.length < schema.minLength) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Example string length ${schema.example.length} is less than minLength ${schema.minLength}`,
+            path: ['example']
+          });
+        }
+        
+        // Validate maxLength constraint if provided
+        if (typeof schema.maxLength === 'number' && schema.example.length > schema.maxLength) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Example string length ${schema.example.length} is greater than maxLength ${schema.maxLength}`,
+            path: ['example']
+          });
+        }
+        
+        // Validate pattern constraint if provided
+        if (schema.pattern) {
+          try {
+            const regex = new RegExp(schema.pattern);
+            if (!regex.test(schema.example)) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `Example string "${schema.example}" does not match pattern "${schema.pattern}"`,
+                path: ['example']
+              });
+            }
+          } catch (e) {
+            // Pattern validation is handled separately
+          }
+        }
+      }
+    }
   }).refine((schema: any) => {
     if (schema.example === undefined || (schema.type !== 'number' && schema.type !== 'integer')) return true;
     if (typeof schema.example !== 'number') return false;
@@ -368,7 +442,36 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
       return Math.abs(quotient - Math.round(quotient)) <= tolerance;
     }
     return true;
-  }, { message: "Example value is not a multiple of the specified factor", path: ['example'] });
+  }, { message: "Example value is not a multiple of the specified factor", path: ['example'] })
+  .refine((schema: any) => {
+    if (schema.example === undefined || schema.type !== 'string') return true;
+    if (typeof schema.example !== 'string') return false;
+    if (typeof schema.minLength === 'number') {
+      return schema.example.length >= schema.minLength;
+    }
+    return true;
+  }, { message: "Example string does not satisfy the minLength constraint", path: ['example'] })
+  .refine((schema: any) => {
+    if (schema.example === undefined || schema.type !== 'string') return true;
+    if (typeof schema.example !== 'string') return false;
+    if (typeof schema.maxLength === 'number') {
+      return schema.example.length <= schema.maxLength;
+    }
+    return true;
+  }, { message: "Example string does not satisfy the maxLength constraint", path: ['example'] })
+  .refine((schema: any) => {
+    if (schema.example === undefined || schema.type !== 'string') return true;
+    if (typeof schema.example !== 'string') return false;
+    if (schema.pattern) {
+      try {
+        const regex = new RegExp(schema.pattern);
+        return regex.test(schema.example);
+      } catch (e) {
+        return false;
+      }
+    }
+    return true;
+  }, { message: "Example string does not match the specified pattern", path: ['example'] });
 });
 
 // Basic extensible object that allows any additional properties

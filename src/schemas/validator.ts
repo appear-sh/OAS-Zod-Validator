@@ -4,35 +4,83 @@ import { OpenAPIObject31 } from './openapi31.js';
 import { verifyRefTargets } from '../utils/verifyRefTargets.js';
 import { OpenAPISpec, PathItem, Operation } from './types.js';
 import { BulkRequestSchema, BulkResponseSchema, PaginationHeadersSchema, PaginationParamsSchema } from './api_patterns.js';
+import { 
+  ErrorCode, 
+  SchemaValidationError, 
+  StrictValidationError, 
+  VersionError 
+} from '../errors/index.js';
+import { 
+  OpenAPIVersion, 
+  createOpenAPIVersion 
+} from '../types/index.js';
 
+/**
+ * Options for validating OpenAPI specifications
+ */
 export interface ValidationOptions {
+  /** Enable strict validation mode with additional checks */
   strict?: boolean;
+  
+  /** Allow future OpenAPI versions (beyond those fully supported) */
   allowFutureOASVersions?: boolean;
+  
+  /** Strict validation rule configurations */
   strictRules?: {
+    /** Require rate limit headers in responses */
     requireRateLimitHeaders?: boolean;
   };
 }
 
+/**
+ * Result of OpenAPI validation
+ */
 export interface ValidationResult {
+  /** Whether the validation passed */
   valid: boolean;
+  
+  /** Validation errors, if any */
   errors?: z.ZodError;
+  
+  /** References that were resolved successfully */
   resolvedRefs: string[];
 }
 
-function detectOpenAPIVersion(doc: Record<string, unknown>): '3.0' | '3.1' {
+/**
+ * Detects the OpenAPI version from a document
+ * 
+ * @param doc - The document to check
+ * @returns The OpenAPI version as a branded type
+ * @throws {VersionError} If the version is missing or unsupported
+ */
+function detectOpenAPIVersion(doc: Record<string, unknown>): OpenAPIVersion {
   if (!doc || typeof doc.openapi !== 'string') {
-    throw new Error('Invalid OpenAPI document: missing or invalid openapi version');
+    throw new VersionError('unknown', 'Invalid OpenAPI document: missing or invalid openapi version');
   }
   
-  if (doc.openapi.startsWith('3.1.')) {
-    return '3.1';
+  try {
+    if (doc.openapi.startsWith('3.1.')) {
+      return createOpenAPIVersion(doc.openapi);
+    }
+    if (doc.openapi.startsWith('3.0.')) {
+      return createOpenAPIVersion(doc.openapi);
+    }
+    throw new VersionError(doc.openapi);
+  } catch (error) {
+    if (error instanceof VersionError) {
+      throw error;
+    }
+    throw new VersionError(typeof doc.openapi === 'string' ? doc.openapi : 'unknown');
   }
-  if (doc.openapi.startsWith('3.0.')) {
-    return '3.0';
-  }
-  throw new Error(`Unsupported OpenAPI version: ${doc.openapi}`);
 }
 
+/**
+ * Validates that rate limit headers are present in responses when required
+ * 
+ * @param doc - The OpenAPI document to validate
+ * @param options - Validation options
+ * @returns ZodError if validation fails, otherwise undefined
+ */
 function validateRateLimitHeaders(doc: OpenAPISpec, options: ValidationOptions): z.ZodError | undefined {
   if (!options.strict || !options.strictRules?.requireRateLimitHeaders) {
     return undefined;
@@ -68,6 +116,12 @@ function validateRateLimitHeaders(doc: OpenAPISpec, options: ValidationOptions):
   return issues.length ? new z.ZodError(issues) : undefined;
 }
 
+/**
+ * Creates a customized Zod error map based on validation options
+ * 
+ * @param options - Validation options
+ * @returns A Zod error map function
+ */
 const createErrorMap = (options: ValidationOptions): z.ZodErrorMap => {
   return (issue, ctx) => {
     if (issue.code === z.ZodIssueCode.custom) {
@@ -85,6 +139,12 @@ const createErrorMap = (options: ValidationOptions): z.ZodErrorMap => {
   };
 };
 
+/**
+ * Validates API patterns like bulk operations and pagination
+ * 
+ * @param doc - The OpenAPI document to validate
+ * @returns ZodError if validation fails, otherwise undefined
+ */
 function validateAPIPatterns(doc: OpenAPISpec): z.ZodError | undefined {
   const issues: z.ZodIssue[] = [];
   
@@ -138,6 +198,13 @@ function validateAPIPatterns(doc: OpenAPISpec): z.ZodError | undefined {
   return issues.length ? new z.ZodError(issues) : undefined;
 }
 
+/**
+ * Validates an OpenAPI specification document
+ * 
+ * @param document - The OpenAPI document to validate
+ * @param options - Validation options
+ * @returns Validation result
+ */
 export function validateOpenAPI(
   document: unknown,
   options: ValidationOptions = {}
@@ -161,7 +228,7 @@ export function validateOpenAPI(
       parsed = OpenAPIObject31.parse(docAsObject, parseParams);
     } else {
       const version = detectOpenAPIVersion(docAsObject);
-      if (version === '3.1') {
+      if (version.startsWith('3.1')) {
         parsed = OpenAPIObject31.parse(docAsObject, parseParams);
       } else {
         parsed = OpenAPIObject.parse(docAsObject, parseParams);
@@ -173,13 +240,23 @@ export function validateOpenAPI(
       
       const apiPatternsError = validateAPIPatterns(parsed);
       if (apiPatternsError) {
-        return { valid: false, errors: apiPatternsError, resolvedRefs };
+        throw new SchemaValidationError(
+          'API pattern validation failed', 
+          apiPatternsError,
+          { context: { strict: true } }
+        );
       }
 
       if (options.strictRules?.requireRateLimitHeaders) {
         const rateLimitError = validateRateLimitHeaders(parsed, options);
         if (rateLimitError) {
-          return { valid: false, errors: rateLimitError, resolvedRefs };
+          throw new StrictValidationError(
+            'Rate limiting headers are required in strict mode', 
+            { 
+              code: ErrorCode.RATE_LIMIT_REQUIRED,
+              context: { strict: true }
+            }
+          );
         }
       }
     }
@@ -187,12 +264,41 @@ export function validateOpenAPI(
     return { valid: true, resolvedRefs };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { valid: false, errors: error, resolvedRefs };
+      return { 
+        valid: false, 
+        errors: error, 
+        resolvedRefs 
+      };
     }
-    return { valid: false, errors: new z.ZodError([{ 
-      code: z.ZodIssueCode.custom,
-      path: [],
-      message: error instanceof Error ? error.message : 'Unknown error'
-    }]), resolvedRefs };
+    
+    if (error instanceof SchemaValidationError) {
+      return { 
+        valid: false, 
+        errors: error.zodError, 
+        resolvedRefs 
+      };
+    }
+    
+    if (error instanceof StrictValidationError) {
+      return {
+        valid: false,
+        errors: new z.ZodError([{
+          code: z.ZodIssueCode.custom,
+          path: [],
+          message: error.message
+        }]),
+        resolvedRefs
+      };
+    }
+    
+    return { 
+      valid: false, 
+      errors: new z.ZodError([{ 
+        code: z.ZodIssueCode.custom,
+        path: [],
+        message: error instanceof Error ? error.message : 'Unknown error'
+      }]), 
+      resolvedRefs 
+    };
   }
 }
