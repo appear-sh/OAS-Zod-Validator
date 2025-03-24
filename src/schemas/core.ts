@@ -29,13 +29,13 @@ const NumericFormats = z.enum([
 });
 
 // Helper function to get parent type from context
-function getParentType(ctx: z.RefinementCtx): string | undefined {
+export function getParentType(ctx: z.RefinementCtx): string | undefined {
   const parent = (ctx as any).parent;
   return parent ? parent.type : undefined;
 }
 
 // Helper to retrieve the root schema type from the refinement context
-function getRootType(ctx: any): string | undefined {
+export function getRootType(ctx: any): string | undefined {
   if (ctx.parent && typeof ctx.parent === 'object' && ctx.parent.type) {
     return ctx.parent.type;
   }
