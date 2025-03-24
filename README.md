@@ -9,10 +9,14 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 
 - Full OpenAPI 3.0.x and 3.1 support
 - Type-safe validation using Zod
-- Detailed error messages
+- Detailed error messages with path information
 - Zero external runtime dependencies
 - Enterprise-ready with strict mode validation
 - Supports both YAML and JSON formats
+- Interactive CLI with rich reporting
+- Comprehensive numeric format validations
+- Rate limit header enforcement options
+- Custom format validators
 
 ## Installation
 
@@ -61,8 +65,60 @@ npm install -g oas-zod-validator
 # Validate a spec file
 oas-validate api.yaml
 
-# With options
+# With strict validation options
 oas-validate --strict --rate-limits api.json
+
+# Interactive mode with guidance
+oas-validate --interactive
+
+# JSON output for CI/CD pipelines
+oas-validate --json api.yaml
+```
+
+## Advanced Usage
+
+### Custom Format Validation
+
+```typescript
+// Define custom format validators
+const phoneValidator = (value: string) => {
+  return /^\+[1-9]\d{1,14}$/.test(value);
+};
+
+// Use in validation
+const result = validateOpenAPI(spec, {
+  customFormats: {
+    phone: phoneValidator,
+  },
+});
+```
+
+### Combining Multiple Options
+
+```typescript
+const result = validateOpenAPI(spec, {
+  strict: true,
+  allowFutureOASVersions: true,
+  strictRules: {
+    requireRateLimitHeaders: true,
+  },
+  customFormats: {
+    phone: phoneValidator,
+  },
+});
+```
+
+### Configuration File
+
+Create `.oas-validate.json` for persistent options:
+
+```json
+{
+  "strict": true,
+  "allowFutureOASVersions": false,
+  "requireRateLimitHeaders": true,
+  "format": "pretty"
+}
 ```
 
 ## Documentation
@@ -72,10 +128,6 @@ oas-validate --strict --rate-limits api.json
 - [Validation Options](./docs/validation.md)
 - [Error Reference](./docs/errors.md)
 - [Examples](./docs/examples/)
-
-## Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](./CONTRIBUTING.md) for details.
 
 ## Development
 
@@ -93,6 +145,9 @@ npm run build
 ## License
 
 - MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh
-- X: https://x.com/AppearAPI
+
+## Core maintainers
+
 - X: https://x.com/Tom_MkV
 - X: https://x.com/jakubriedl
+- X: https://x.com/AppearAPI
