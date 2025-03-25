@@ -40,14 +40,16 @@ async function runBenchmark() {
   // Load test files
   const trainTravelPath = path.join(examplesDir, '3.1/json/train-travel.json');
   const discriminatorsPath = path.join(examplesDir, '3.0/json/discriminators.json');
+  const circularRefsPath = path.join(examplesDir, '3.0/json/circular-paths.json');
   
-  if (!fs.existsSync(trainTravelPath) || !fs.existsSync(discriminatorsPath)) {
+  if (!fs.existsSync(trainTravelPath) || !fs.existsSync(discriminatorsPath) || !fs.existsSync(circularRefsPath)) {
     console.error('Example files not found. Please ensure the oas-examples directory exists.');
     process.exit(1);
   }
   
   const trainTravel = JSON.parse(fs.readFileSync(trainTravelPath, 'utf8'));
   const discriminators = JSON.parse(fs.readFileSync(discriminatorsPath, 'utf8'));
+  const circularRefs = JSON.parse(fs.readFileSync(circularRefsPath, 'utf8'));
   
   console.log('📊 Test 1: Train Travel API (large spec with many references)');
   console.log('──────────────────────────────────────────────────────────');
@@ -168,10 +170,62 @@ async function runBenchmark() {
     validateOpenAPI(repeatedTypesSpec, { strict: true });
   });
   
+  console.log('\n📊 Test 5: Reference Resolution Performance');
+  console.log('─────────────────────────────────────────');
+  
+  // First test with circular references
+  resetCache();
+  benchmark('Circular references validation - first run', () => {
+    validateOpenAPI(circularRefs, { strict: true });
+  });
+  
+  benchmark('Circular references validation - cached run', () => {
+    validateOpenAPI(circularRefs, { strict: true });
+  });
+  
+  // Create spec with deep nested references for testing
+  const deepNestedRefsSpec = {
+    openapi: '3.0.0',
+    info: { title: 'Deep References Test API', version: '1.0.0' },
+    components: {
+      schemas: {} as Record<string, any>
+    }
+  };
+  
+  // Add first level schema
+  deepNestedRefsSpec.components.schemas.Level1 = {
+    type: 'object',
+    properties: {
+      next: { $ref: '#/components/schemas/Level2' }
+    }
+  };
+  
+  // Create deeply nested references - 50 levels
+  let currentLevel = deepNestedRefsSpec.components.schemas;
+  for (let i = 2; i <= 50; i++) {
+    currentLevel[`Level${i}`] = {
+      type: 'object',
+      properties: {}
+    };
+    
+    if (i < 50) {
+      currentLevel[`Level${i}`].properties.next = { $ref: `#/components/schemas/Level${i+1}` };
+    }
+  }
+  
+  resetCache();
+  benchmark('Deep nested references validation - first run', () => {
+    validateOpenAPI(deepNestedRefsSpec, { strict: true });
+  });
+  
+  benchmark('Deep nested references validation - cached run', () => {
+    validateOpenAPI(deepNestedRefsSpec, { strict: true });
+  });
+  
   console.log('\n✅ Benchmark complete.');
 }
 
-runBenchmark().catch(err => {
-  console.error('Benchmark failed:', err);
-  process.exit(1);
-}); 
+// Run benchmark if called directly
+runBenchmark().catch(console.error);
+
+export { benchmark, runBenchmark }; 

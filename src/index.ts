@@ -1,11 +1,13 @@
 import { validateOpenAPI, ValidationOptions, ValidationResult } from './schemas/validator.js';
 import { validateFromYaml } from './utils/validateFromYaml.js';
 import { getValidationCache, CacheOptions, ValidationCache } from './utils/cache.js';
+import { verifyRefTargets } from './utils/refResolver.js';
 
 // Core validation functions
 export {
   validateOpenAPI,
-  validateFromYaml
+  validateFromYaml,
+  verifyRefTargets
 };
 
 // Cache functionality

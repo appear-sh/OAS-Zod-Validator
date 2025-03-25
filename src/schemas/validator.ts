@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { OpenAPIObject } from './openapi.js';
 import { OpenAPIObject31 } from './openapi31.js';
-import { verifyRefTargets } from '../utils/verifyRefTargets.js';
+import { verifyRefTargets } from '../utils/refResolver.js';
 import { OpenAPISpec, PathItem, Operation } from './types.js';
 import { BulkRequestSchema, BulkResponseSchema, PaginationHeadersSchema, PaginationParamsSchema } from './api_patterns.js';
 import { 
