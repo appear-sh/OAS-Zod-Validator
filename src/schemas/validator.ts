@@ -15,6 +15,7 @@ import {
   createOpenAPIVersion 
 } from '../types/index.js';
 import { getValidationCache, CacheOptions } from '../utils/cache.js';
+import { memoize } from '../utils/memoize.js';
 
 /**
  * Options for validating OpenAPI specifications
@@ -57,7 +58,7 @@ export interface ValidationResult {
  * @returns The OpenAPI version as a branded type
  * @throws {VersionError} If the version is missing or unsupported
  */
-function detectOpenAPIVersion(doc: Record<string, unknown>): OpenAPIVersion {
+function _detectOpenAPIVersion(doc: Record<string, unknown>): OpenAPIVersion {
   if (!doc || typeof doc.openapi !== 'string') {
     throw new VersionError('unknown', 'Invalid OpenAPI document: missing or invalid openapi version');
   }
@@ -77,6 +78,17 @@ function detectOpenAPIVersion(doc: Record<string, unknown>): OpenAPIVersion {
     throw new VersionError(typeof doc.openapi === 'string' ? doc.openapi : 'unknown');
   }
 }
+
+/**
+ * Memoized version of detectOpenAPIVersion
+ * For caching, the function uses a custom key function that extracts just the openapi version
+ */
+const detectOpenAPIVersion = memoize(_detectOpenAPIVersion, {
+  maxSize: 50,
+  keyFn: (doc) => {
+    return doc && typeof doc.openapi === 'string' ? doc.openapi : 'unknown';
+  }
+});
 
 /**
  * Validates that rate limit headers are present in responses when required

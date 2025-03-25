@@ -13,12 +13,22 @@ const examplesDir = path.join(__dirname, '../../oas-examples');
 
 /**
  * Simple benchmark utility
+ * @returns The execution time in milliseconds
  */
-function benchmark<T>(name: string, fn: () => T): T {
-  console.time(name);
-  const result = fn();
-  console.timeEnd(name);
-  return result;
+function benchmark<T>(name: string, fn: () => T, iterations: number = 1): { result: T, timeMs: number } {
+  const start = process.hrtime.bigint();
+  
+  let result: T;
+  for (let i = 0; i < iterations; i++) {
+    result = fn();
+  }
+  
+  const end = process.hrtime.bigint();
+  const timeMs = Number(end - start) / 1_000_000;
+  
+  console.log(`${name}: ${timeMs.toFixed(2)}ms`);
+  
+  return { result: result!, timeMs };
 }
 
 /**
@@ -107,6 +117,55 @@ async function runBenchmark() {
     for (let i = 0; i < 50; i++) {
       validateOpenAPI(discriminators, { strict: true });
     }
+  });
+  
+  console.log('\n📊 Test 4: Function Memoization Impact');
+  console.log('──────────────────────────────────────');
+  
+  // Create a spec with many repeated types to test memoization
+  const repeatedTypesSpec: {
+    openapi: string;
+    info: { title: string; version: string };
+    paths: Record<string, any>;
+  } = {
+    openapi: '3.0.0',
+    info: { title: 'Memoization Test API', version: '1.0.0' },
+    paths: {}
+  };
+  
+  // Add a large number of paths with similar schema structures
+  for (let i = 0; i < 200; i++) {
+    repeatedTypesSpec.paths[`/test${i}`] = {
+      get: {
+        parameters: [
+          { name: 'id', in: 'query', schema: { type: 'integer', format: 'int32' } },
+          { name: 'limit', in: 'query', schema: { type: 'integer', format: 'int32' } }
+        ],
+        responses: {
+          '200': {
+            description: 'Success',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer', format: 'int32' },
+                    name: { type: 'string' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+  }
+  
+  resetCache();
+  
+  // Test memoized functions with extensive repetition
+  benchmark('Validation with schema repetition - should benefit from memoization', () => {
+    validateOpenAPI(repeatedTypesSpec, { strict: true });
   });
   
   console.log('\n✅ Benchmark complete.');

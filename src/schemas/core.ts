@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { validateNumericFormat } from './numeric-formats.js';
+import { memoize } from '../utils/memoize.js';
 
 // Enhanced error messages and stricter validation
 export const ReferenceObject = z.object({
@@ -35,7 +36,7 @@ export function getParentType(ctx: z.RefinementCtx): string | undefined {
 }
 
 // Helper to retrieve the root schema type from the refinement context
-export function getRootType(ctx: any): string | undefined {
+export function _getRootType(ctx: any): string | undefined {
   if (ctx.parent && typeof ctx.parent === 'object' && ctx.parent.type) {
     return ctx.parent.type;
   }
@@ -47,6 +48,26 @@ export function getRootType(ctx: any): string | undefined {
   }
   return undefined;
 }
+
+/**
+ * Memoized version of getRootType
+ * Uses a custom key function that extracts relevant properties for caching
+ */
+export const getRootType = memoize(_getRootType, {
+  maxSize: 200,
+  keyFn: (ctx) => {
+    // Extract only the properties needed to determine the type
+    const parentType = ctx.parent?.type;
+    const dataType = ctx.data?.type;
+    const optionsType = ctx.options?.data?.type;
+    
+    return JSON.stringify({
+      parentType,
+      dataType, 
+      optionsType
+    });
+  }
+});
 
 // Improved schema object with more specific types and better error messages
 export const SchemaObject: z.ZodType = z.lazy(() => {
