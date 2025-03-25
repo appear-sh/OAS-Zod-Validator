@@ -29,6 +29,8 @@ export interface CLIOptions {
   format?: 'json' | 'pretty';
   config?: string;
   interactive?: boolean;
+  cacheEnabled?: boolean;
+  cacheSize?: number;
 }
 
 /**
@@ -39,6 +41,10 @@ export interface ConfigFile {
   allowFutureOASVersions?: boolean;
   requireRateLimitHeaders?: boolean;
   format?: 'json' | 'pretty';
+  cache?: {
+    enabled?: boolean;
+    maxSize?: number;
+  };
 }
 
 // ASCII art banner with modern gradient
@@ -88,6 +94,20 @@ async function loadConfig(configPath: string): Promise<ConfigFile> {
 
   try {
     const config = JSON.parse(await fs.promises.readFile(configPath, 'utf8')) as ConfigFile;
+    
+    // Validate cache configuration
+    if (config.cache) {
+      if (typeof config.cache.enabled !== 'undefined' && typeof config.cache.enabled !== 'boolean') {
+        throw new Error('Configuration error: cache.enabled must be a boolean');
+      }
+      
+      if (typeof config.cache.maxSize !== 'undefined') {
+        if (typeof config.cache.maxSize !== 'number' || config.cache.maxSize < 1) {
+          throw new Error('Configuration error: cache.maxSize must be a positive number');
+        }
+      }
+    }
+    
     spinner.succeed('Configuration loaded successfully');
     return config;
   } catch (err) {
@@ -120,6 +140,10 @@ async function validateSpec(
       allowFutureOASVersions: cliOptions.allowFutureOASVersions,
       strictRules: {
         requireRateLimitHeaders: cliOptions.requireRateLimitHeaders
+      },
+      cache: {
+        enabled: cliOptions.cacheEnabled !== false,
+        maxSize: cliOptions.cacheSize
       }
     };
 
@@ -216,6 +240,24 @@ async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOpt
       name: 'saveConfig',
       message: '💾 Save these settings as default?',
       default: false
+    },
+    {
+      type: 'confirm',
+      name: 'cacheEnabled',
+      message: '💾 Enable validation caching?',
+      default: true
+    },
+    {
+      type: 'number',
+      name: 'cacheSize',
+      message: '💾 Set maximum cache size:',
+      default: 100,
+      validate: (input: number) => {
+        if (input < 1 || input > 1000) {
+          return 'Cache size must be between 1 and 1000';
+        }
+        return true;
+      }
     }
   ]);
 
@@ -224,7 +266,11 @@ async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOpt
       strict: answers.strict,
       allowFutureOASVersions: answers.allowFutureOASVersions,
       requireRateLimitHeaders: answers.requireRateLimitHeaders,
-      format: answers.format
+      format: answers.format,
+      cache: {
+        enabled: answers.cacheEnabled,
+        maxSize: answers.cacheSize
+      }
     };
     
     await fs.promises.writeFile(
@@ -240,7 +286,9 @@ async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOpt
       strict: answers.strict,
       allowFutureOASVersions: answers.allowFutureOASVersions,
       requireRateLimitHeaders: answers.requireRateLimitHeaders,
-      format: answers.format
+      format: answers.format,
+      cacheEnabled: answers.cacheEnabled,
+      cacheSize: answers.cacheSize
     }
   };
 }
@@ -262,7 +310,9 @@ export async function runCLI(args: string[]): Promise<void> {
     .option('-r, --rate-limits', 'Require rate limiting headers')
     .option('-j, --json', 'Output results in JSON format')
     .option('-i, --interactive', 'Run in interactive mode')
-    .option('-c, --config <path>', 'Path to config file');
+    .option('-c, --config <path>', 'Path to config file')
+    .option('--no-cache', 'Disable validation caching')
+    .option('--cache-size <size>', 'Set maximum cache size', parseInt);
 
   program.parse(args);
 
@@ -274,7 +324,9 @@ export async function runCLI(args: string[]): Promise<void> {
       strict: false,
       allowFutureOASVersions: false,
       requireRateLimitHeaders: false,
-      format: 'pretty'
+      format: 'pretty',
+      cacheEnabled: true,
+      cacheSize: 100
     };
 
     // Load config file if specified
@@ -289,7 +341,9 @@ export async function runCLI(args: string[]): Promise<void> {
       strict: opts.strict ?? options.strict,
       allowFutureOASVersions: opts.future ?? options.allowFutureOASVersions,
       requireRateLimitHeaders: opts.rateLimits ?? options.requireRateLimitHeaders,
-      format: opts.json ? 'json' : options.format
+      format: opts.json ? 'json' : options.format,
+      cacheEnabled: opts.noCache !== true,
+      cacheSize: opts.cacheSize
     };
 
     if (opts.interactive || !file) {

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { memoize } from '../utils/memoize.js';
 
 // Constants for numeric format validation
 const INT32_MIN = -2147483648;
@@ -53,7 +54,7 @@ export const validateNumericFormat = (format: string | undefined, value: number)
 };
 
 // Zod schema for numeric format validation
-export const createNumericSchema = (format: string | undefined) => {
+export const _createNumericSchema = (format: string | undefined) => {
   let schema;
   
   // Create a base preprocessor that safely converts values to numbers
@@ -112,6 +113,15 @@ export const createNumericSchema = (format: string | undefined) => {
     createNumericValidator(format)(ctx, value);
   });
 };
+
+/**
+ * Creates a Zod schema for numeric validation based on the format
+ * This function is memoized for performance
+ */
+export const createNumericSchema = memoize(_createNumericSchema, {
+  maxSize: 10, // Only a few formats exist
+  keyFn: (format) => String(format)
+});
 
 // Type-safe numeric format validator
 export const createNumericValidator = (format: string | undefined) => {
@@ -251,13 +261,35 @@ export const isValidNumericLiteral = (value: string): boolean => {
 
 // Utility function to safely parse numeric values
 // Returns a number if valid, or null to force type validation failure
-export const safeParseNumeric = (value: unknown): number | null => {
+export const _safeParseNumeric = (value: unknown): number | null => {
   // Only accept actual number values that are finite
   if (typeof value === 'number' && Number.isFinite(value)) {
+    // For -0, we want to preserve it exactly as -0 (not convert to 0)
+    if (Object.is(value, -0)) {
+      return -0;
+    }
     return value;
   }
   
   // Strings are not automatically converted to handle type safety requirements
   // This ensures strict validation of types in OpenAPI schemas
   return null;
-}; 
+};
+
+/**
+ * Memoized version of safeParseNumeric
+ * Performance optimization for numeric parsing
+ */
+export const safeParseNumeric = memoize(_safeParseNumeric, {
+  maxSize: 200,
+  // Use a custom key function that handles primitives and complex objects
+  keyFn: (value) => {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    if (typeof value === 'number') return `num:${value}`;
+    if (typeof value === 'string') return `str:${value}`;
+    if (typeof value === 'boolean') return `bool:${value}`;
+    // For objects, we can just use stringified version (less common case)
+    return JSON.stringify(value);
+  }
+}); 

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { OpenAPIObject } from './openapi.js';
 import { OpenAPIObject31 } from './openapi31.js';
-import { verifyRefTargets } from '../utils/verifyRefTargets.js';
+import { verifyRefTargets } from '../utils/refResolver.js';
 import { OpenAPISpec, PathItem, Operation } from './types.js';
 import { BulkRequestSchema, BulkResponseSchema, PaginationHeadersSchema, PaginationParamsSchema } from './api_patterns.js';
 import { 
@@ -14,6 +14,8 @@ import {
   OpenAPIVersion, 
   createOpenAPIVersion 
 } from '../types/index.js';
+import { getValidationCache, CacheOptions, MemoryOptions } from '../utils/cache.js';
+import { memoize } from '../utils/memoize.js';
 
 /**
  * Options for validating OpenAPI specifications
@@ -30,6 +32,12 @@ export interface ValidationOptions {
     /** Require rate limit headers in responses */
     requireRateLimitHeaders?: boolean;
   };
+  
+  /** Cache configuration options */
+  cache?: CacheOptions;
+  
+  /** Memory optimization options - shorthand for cache.memory */
+  memory?: MemoryOptions;
 }
 
 /**
@@ -53,7 +61,7 @@ export interface ValidationResult {
  * @returns The OpenAPI version as a branded type
  * @throws {VersionError} If the version is missing or unsupported
  */
-function detectOpenAPIVersion(doc: Record<string, unknown>): OpenAPIVersion {
+function _detectOpenAPIVersion(doc: Record<string, unknown>): OpenAPIVersion {
   if (!doc || typeof doc.openapi !== 'string') {
     throw new VersionError('unknown', 'Invalid OpenAPI document: missing or invalid openapi version');
   }
@@ -73,6 +81,17 @@ function detectOpenAPIVersion(doc: Record<string, unknown>): OpenAPIVersion {
     throw new VersionError(typeof doc.openapi === 'string' ? doc.openapi : 'unknown');
   }
 }
+
+/**
+ * Memoized version of detectOpenAPIVersion
+ * For caching, the function uses a custom key function that extracts just the openapi version
+ */
+const detectOpenAPIVersion = memoize(_detectOpenAPIVersion, {
+  maxSize: 50,
+  keyFn: (doc) => {
+    return doc && typeof doc.openapi === 'string' ? doc.openapi : 'unknown';
+  }
+});
 
 /**
  * Validates that rate limit headers are present in responses when required
@@ -209,6 +228,32 @@ export function validateOpenAPI(
   document: unknown,
   options: ValidationOptions = {}
 ): ValidationResult {
+  // Disable caching if we're in test environment
+  const testMode = process.env.NODE_ENV === 'test';
+  
+  // Merge memory options into cache options if both are provided
+  let cacheOptions = options.cache || {};
+  if (options.memory) {
+    cacheOptions = {
+      ...cacheOptions,
+      memory: options.memory
+    };
+  }
+  
+  // Apply test mode settings
+  if (testMode) {
+    cacheOptions = { ...cacheOptions, enabled: false };
+  }
+  
+  const cache = getValidationCache(cacheOptions);
+  const cacheKey = cache.generateDocumentKey(document, options);
+  
+  // Check if we have a cached result
+  const cachedResult = cache.getValidationResult(cacheKey);
+  if (cachedResult) {
+    return cachedResult;
+  }
+  
   const resolvedRefs: string[] = [];
   
   try {
@@ -261,26 +306,31 @@ export function validateOpenAPI(
       }
     }
 
-    return { valid: true, resolvedRefs };
+    const result = { valid: true, resolvedRefs };
+    
+    // Don't store in cache if in test mode to avoid test interference
+    if (!testMode) {
+      cache.setValidationResult(cacheKey, result);
+    }
+    
+    return result;
   } catch (error) {
+    let result: ValidationResult;
+    
     if (error instanceof z.ZodError) {
-      return { 
+      result = { 
         valid: false, 
         errors: error, 
         resolvedRefs 
       };
-    }
-    
-    if (error instanceof SchemaValidationError) {
-      return { 
+    } else if (error instanceof SchemaValidationError) {
+      result = { 
         valid: false, 
         errors: error.zodError, 
         resolvedRefs 
       };
-    }
-    
-    if (error instanceof StrictValidationError) {
-      return {
+    } else if (error instanceof StrictValidationError) {
+      result = {
         valid: false,
         errors: new z.ZodError([{
           code: z.ZodIssueCode.custom,
@@ -289,16 +339,23 @@ export function validateOpenAPI(
         }]),
         resolvedRefs
       };
+    } else {
+      result = { 
+        valid: false, 
+        errors: new z.ZodError([{ 
+          code: z.ZodIssueCode.custom,
+          path: [],
+          message: error instanceof Error ? error.message : 'Unknown error'
+        }]), 
+        resolvedRefs 
+      };
     }
     
-    return { 
-      valid: false, 
-      errors: new z.ZodError([{ 
-        code: z.ZodIssueCode.custom,
-        path: [],
-        message: error instanceof Error ? error.message : 'Unknown error'
-      }]), 
-      resolvedRefs 
-    };
+    // Don't store in cache if in test mode to avoid test interference
+    if (!testMode) {
+      cache.setValidationResult(cacheKey, result);
+    }
+    
+    return result;
   }
 }
