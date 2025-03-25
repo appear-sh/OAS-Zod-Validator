@@ -114,4 +114,47 @@ describe('Validation Cache', () => {
     // Verify cache is empty
     expect(cache.getValidationResult('test-key')).toBeUndefined();
   });
+
+  test('should configure memory options', () => {
+    // Create a direct instance with custom memory options
+    const cache = new ValidationCache({
+      memory: {
+        trackMemory: true,
+        adaptiveCaching: true,
+        maxMemoryTargetMB: 100
+      }
+    });
+    
+    // Configure with new memory options
+    cache.configure({
+      memory: {
+        trackMemory: false,
+        maxMemoryTargetMB: 200
+      }
+    });
+    
+    // Get memory usage stats
+    const stats = cache.getMemoryUsage();
+    expect(stats).toHaveProperty('cacheSize');
+    expect(stats).toHaveProperty('memoryUsageMB');
+    expect(typeof stats.memoryUsageMB).toBe('number');
+  });
+  
+  test('should respect cache eviction with adaptive caching', () => {
+    // This test depends on memory usage, which may vary by environment
+    // So we're just testing the basic functionality without asserting specific values
+    
+    // Create a small cache with low memory target
+    const cache = new ValidationCache({
+      maxSize: 20,
+      memory: {
+        adaptiveCaching: true,
+        maxMemoryTargetMB: 1 // Artificially low to force adaptation
+      }
+    });
+    
+    // Should still work normally
+    cache.setValidationResult('key1', testResult);
+    expect(cache.getValidationResult('key1')).toBeDefined();
+  });
 }); 

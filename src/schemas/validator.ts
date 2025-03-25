@@ -14,7 +14,7 @@ import {
   OpenAPIVersion, 
   createOpenAPIVersion 
 } from '../types/index.js';
-import { getValidationCache, CacheOptions } from '../utils/cache.js';
+import { getValidationCache, CacheOptions, MemoryOptions } from '../utils/cache.js';
 import { memoize } from '../utils/memoize.js';
 
 /**
@@ -35,6 +35,9 @@ export interface ValidationOptions {
   
   /** Cache configuration options */
   cache?: CacheOptions;
+  
+  /** Memory optimization options - shorthand for cache.memory */
+  memory?: MemoryOptions;
 }
 
 /**
@@ -227,10 +230,21 @@ export function validateOpenAPI(
 ): ValidationResult {
   // Disable caching if we're in test environment
   const testMode = process.env.NODE_ENV === 'test';
-  const cacheOptions = testMode 
-    ? { ...options.cache, enabled: false }
-    : options.cache;
-    
+  
+  // Merge memory options into cache options if both are provided
+  let cacheOptions = options.cache || {};
+  if (options.memory) {
+    cacheOptions = {
+      ...cacheOptions,
+      memory: options.memory
+    };
+  }
+  
+  // Apply test mode settings
+  if (testMode) {
+    cacheOptions = { ...cacheOptions, enabled: false };
+  }
+  
   const cache = getValidationCache(cacheOptions);
   const cacheKey = cache.generateDocumentKey(document, options);
   

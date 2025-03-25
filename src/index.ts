@@ -26,6 +26,14 @@ export type {
 export type { OpenAPIObject } from './schemas/openapi.js';
 export type { OpenAPIObject31 } from './schemas/openapi31.js';
 
+// Export memory utilities
+export { 
+  getMemoryUsageMB, 
+  trackMemoryUsage, 
+  MemoryOptions, 
+  DEFAULT_MEMORY_OPTIONS 
+} from './utils/memoryUtils.js';
+
 /**
  * Configure the global validation cache
  * 

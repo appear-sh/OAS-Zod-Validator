@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ValidationOptions, ValidationResult } from '../schemas/validator.js';
 import { JSONPointer } from '../types/index.js';
 import { OpenAPISpec } from '../schemas/types.js';
+import { MemoryOptions, DEFAULT_MEMORY_OPTIONS, getMemoryUsageMB, getAdaptiveCacheSize } from './memoryUtils.js';
 
 /**
  * Cache options for schema validation
@@ -16,6 +17,11 @@ export interface CacheOptions {
    * Maximum size of the cache (number of entries)
    */
   maxSize?: number;
+  
+  /**
+   * Memory optimization options
+   */
+  memory?: MemoryOptions;
 }
 
 /**
@@ -23,7 +29,8 @@ export interface CacheOptions {
  */
 const DEFAULT_CACHE_OPTIONS: Required<CacheOptions> = {
   enabled: true,
-  maxSize: 500
+  maxSize: 500,
+  memory: DEFAULT_MEMORY_OPTIONS
 };
 
 /**
@@ -33,6 +40,7 @@ export class LRUCache<K, V> {
   private map = new Map<K, V>();
   private keys: K[] = [];
   private maxSize: number;
+  private currentMemoryUsage = 0;
 
   constructor(maxSize: number) {
     this.maxSize = maxSize;
@@ -92,6 +100,22 @@ export class LRUCache<K, V> {
   get size(): number {
     return this.map.size;
   }
+  
+  /**
+   * Update the maximum size of the cache
+   */
+  updateMaxSize(newMaxSize: number): void {
+    this.maxSize = newMaxSize;
+    
+    // If the new max size is smaller than the current size,
+    // remove oldest entries until we're at the new max size
+    while (this.keys.length > this.maxSize) {
+      const oldestKey = this.keys.shift();
+      if (oldestKey !== undefined) {
+        this.map.delete(oldestKey);
+      }
+    }
+  }
 }
 
 /**
@@ -108,6 +132,9 @@ export class ValidationCache {
    */
   constructor(options: CacheOptions = {}) {
     this.options = { ...DEFAULT_CACHE_OPTIONS, ...options };
+    // Set memory options with defaults
+    this.options.memory = { ...DEFAULT_MEMORY_OPTIONS, ...options.memory };
+    
     this.validationCache = new LRUCache<string, ValidationResult>(this.options.maxSize);
     this.schemaCache = new LRUCache<string, z.ZodType>(this.options.maxSize);
     this.refCache = new LRUCache<string, unknown>(this.options.maxSize);
@@ -127,17 +154,57 @@ export class ValidationCache {
    */
   public configure(options: CacheOptions): void {
     const oldMaxSize = this.options.maxSize;
+    const oldMemoryOptions = this.options.memory;
     
     this.options = { 
       ...this.options, 
       ...options 
     };
     
-    // Recreate caches if max size changed
-    if (this.options.maxSize !== oldMaxSize) {
+    // Merge memory options
+    this.options.memory = {
+      ...oldMemoryOptions,
+      ...options.memory
+    };
+    
+    // Update cache sizes based on memory usage if adaptive caching is enabled
+    this.updateCacheSizesBasedOnMemory();
+    
+    // If max size changed and adaptive caching is not updating it,
+    // recreate caches with the new size
+    if (this.options.maxSize !== oldMaxSize && !this.options.memory.adaptiveCaching) {
       this.validationCache = new LRUCache<string, ValidationResult>(this.options.maxSize);
       this.schemaCache = new LRUCache<string, z.ZodType>(this.options.maxSize);
       this.refCache = new LRUCache<string, unknown>(this.options.maxSize);
+    }
+  }
+  
+  /**
+   * Update cache sizes based on memory usage
+   */
+  private updateCacheSizesBasedOnMemory(): void {
+    if (!this.options.memory.adaptiveCaching) {
+      return;
+    }
+    
+    const memoryUsage = getMemoryUsageMB();
+    const maxMemoryTargetMB = this.options.memory.maxMemoryTargetMB || 0;
+    
+    // Adjust cache sizes if needed
+    if (maxMemoryTargetMB > 0) {
+      const newSize = getAdaptiveCacheSize(
+        this.options.maxSize, 
+        memoryUsage, 
+        maxMemoryTargetMB
+      );
+      
+      // Only update if the size has changed
+      if (newSize !== this.options.maxSize) {
+        this.options.maxSize = newSize;
+        this.validationCache.updateMaxSize(newSize);
+        this.schemaCache.updateMaxSize(newSize);
+        this.refCache.updateMaxSize(newSize);
+      }
     }
   }
   
@@ -168,6 +235,12 @@ export class ValidationCache {
    */
   public getValidationResult(key: string): ValidationResult | undefined {
     if (!this.options.enabled) return undefined;
+    
+    // Check memory usage and adjust if needed before accessing cache
+    if (this.options.memory.adaptiveCaching) {
+      this.updateCacheSizesBasedOnMemory();
+    }
+    
     return this.validationCache.get(key);
   }
   
@@ -176,6 +249,12 @@ export class ValidationCache {
    */
   public setValidationResult(key: string, result: ValidationResult): void {
     if (!this.options.enabled) return;
+    
+    // Check memory usage and adjust if needed before adding to cache
+    if (this.options.memory.adaptiveCaching) {
+      this.updateCacheSizesBasedOnMemory();
+    }
+    
     this.validationCache.set(key, result);
   }
   
@@ -184,6 +263,12 @@ export class ValidationCache {
    */
   public getSchema(key: string): z.ZodType | undefined {
     if (!this.options.enabled) return undefined;
+    
+    // Check memory usage and adjust if needed before accessing cache
+    if (this.options.memory.adaptiveCaching) {
+      this.updateCacheSizesBasedOnMemory();
+    }
+    
     return this.schemaCache.get(key);
   }
   
@@ -192,6 +277,12 @@ export class ValidationCache {
    */
   public setSchema(key: string, schema: z.ZodType): void {
     if (!this.options.enabled) return;
+    
+    // Check memory usage and adjust if needed before adding to cache
+    if (this.options.memory.adaptiveCaching) {
+      this.updateCacheSizesBasedOnMemory();
+    }
+    
     this.schemaCache.set(key, schema);
   }
   
@@ -213,6 +304,12 @@ export class ValidationCache {
    */
   public getRefTarget(refPointer: JSONPointer, doc: Record<string, unknown>): unknown | undefined {
     if (!this.options.enabled) return undefined;
+    
+    // Check memory usage and adjust if needed before accessing cache
+    if (this.options.memory.adaptiveCaching) {
+      this.updateCacheSizesBasedOnMemory();
+    }
+    
     const key = this.generateRefKey(refPointer, doc);
     return this.refCache.get(key);
   }
@@ -222,8 +319,26 @@ export class ValidationCache {
    */
   public setRefTarget(refPointer: JSONPointer, doc: Record<string, unknown>, target: unknown): void {
     if (!this.options.enabled) return;
+    
+    // Check memory usage and adjust if needed before adding to cache
+    if (this.options.memory.adaptiveCaching) {
+      this.updateCacheSizesBasedOnMemory();
+    }
+    
     const key = this.generateRefKey(refPointer, doc);
     this.refCache.set(key, target);
+  }
+  
+  /**
+   * Get current memory usage statistics
+   */
+  public getMemoryUsage(): { cacheSize: number, memoryUsageMB: number } {
+    const memoryUsageMB = getMemoryUsageMB();
+    
+    return {
+      cacheSize: this.options.maxSize,
+      memoryUsageMB
+    };
   }
 }
 
@@ -236,9 +351,21 @@ let validationCacheInstance: ValidationCache | null = null;
 export function getValidationCache(options: CacheOptions = {}): ValidationCache {
   if (!validationCacheInstance) {
     validationCacheInstance = new ValidationCache(options);
-  } else if (options.enabled !== undefined || options.maxSize !== undefined) {
+  } else if (options.enabled !== undefined || options.maxSize !== undefined || options.memory !== undefined) {
     // If new options are provided, update the existing instance
     validationCacheInstance.configure(options);
   }
   return validationCacheInstance;
-} 
+}
+
+/**
+ * Reset the global validation cache
+ */
+export function resetCache(): void {
+  if (validationCacheInstance) {
+    validationCacheInstance.reset();
+  }
+}
+
+// Export memory options for external use
+export { MemoryOptions } from './memoryUtils.js'; 

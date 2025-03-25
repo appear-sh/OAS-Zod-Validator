@@ -32,7 +32,8 @@
     "lint": "eslint . --ext .ts",
     "test:clean": "rimraf coverage && NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "clean": "rimraf coverage && rimraf dist",
-    "benchmark": "npm run build && node dist/utils/performance-benchmark.js"
+    "benchmark": "npm run build && node dist/utils/performance-benchmark.js",
+    "benchmark:memory": "npm run build && node --expose-gc dist/utils/memory-benchmark.js"
   },
   "keywords": [
     "openapi",
