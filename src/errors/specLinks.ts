@@ -86,11 +86,24 @@ export function getOASSpecLink(issue: ZodIssue): string | undefined {
     // Very basic heuristic, could be improved
     const parts = pathString.split('.');
     if (parts.length >= 3 && parts[0] === 'paths') {
+      // Check for path segments *after* the path template (parts[1])
+      
+      // Is it within the responses part of an operation?
+      const responsesIndex = parts.indexOf('responses');
+      if (responsesIndex !== -1 && responsesIndex > 1) { // Ensure 'responses' appears after the path template
+        // If the error path goes deeper than just 'responses' (e.g., into a specific code like '204')
+        if (parts.length > responsesIndex + 1) {
+           return OAS_SPEC_BASE_URL + 'response-object'; // Error within a specific Response Object
+        }
+        return OAS_SPEC_BASE_URL + 'responses-object'; // Error at the Responses Object level
+      }
+      
       if(parts[parts.length -1] === 'schema') return OAS_SPEC_BASE_URL + 'schema-object';
       if(parts[parts.length -1] === 'parameters') return OAS_SPEC_BASE_URL + 'parameter-object';
       if(parts[parts.length -1] === 'requestBody') return OAS_SPEC_BASE_URL + 'request-body-object';
-      if(parts[parts.length -1] === 'responses') return OAS_SPEC_BASE_URL + 'responses-object';
-      // check if it looks like an operation
+      // Don't link to responses-object here anymore, handled above
+      
+      // Check if it looks like an operation (and not handled by responses check above)
       if (['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'].includes(parts[2])){
          return OAS_SPEC_BASE_URL + 'operation-object';
       }

@@ -38,7 +38,7 @@ const WARNING_PATTERNS: WarningPattern[] = [
 export function getIssueSeverity(issue: ZodIssue): Severity {
   const pathString = issue.path.join('.');
 
-  // Check if the issue matches any defined warning pattern.
+  // Check if the issue matches any defined generic warning pattern.
   for (const pattern of WARNING_PATTERNS) {
     if (pathString.endsWith(pattern.pathSuffix) && issue.code === pattern.code) {
        // Add more checks here if necessary, e.g. checking `issue.expected`
