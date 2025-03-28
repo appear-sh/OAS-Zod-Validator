@@ -2,7 +2,7 @@
 'use strict';
 
 import { validateFromYaml } from './utils/validateFromYaml.js';
-import { ValidationOptions } from './schemas/validator.js';
+import { ValidationOptions, ValidationResult } from './schemas/validator.js';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
@@ -11,6 +11,7 @@ import path from 'node:path';
 import ora from 'ora';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
+import { getOASSpecLink } from './errors/specLinks.js';
 
 // Get package version for CLI
 const __filename = fileURLToPath(import.meta.url);
@@ -133,8 +134,28 @@ async function validateSpec(
     color: 'cyan'
   }).start();
 
+  let parsedContent: any = null; // Variable to hold the parsed spec
+
   try {
     const fileContent = await fs.promises.readFile(filePath, 'utf8');
+    
+    // Parse the content once for context retrieval
+    try {
+      if (path.extname(filePath).toLowerCase().startsWith('.y')) {
+        parsedContent = yaml.load(fileContent);
+      } else {
+        parsedContent = JSON.parse(fileContent);
+      }
+    } catch (parseErr) {
+      spinner.fail('Failed to parse input file');
+      if (parseErr instanceof Error) {
+        console.error(chalk.red('\n❌ Parse Error:'), parseErr.message);
+      } else {
+        console.error(chalk.red('\n❌ An unexpected parsing error occurred'));
+      }
+      process.exit(1);
+    }
+
     const validationOptions: ValidationOptions = {
       strict: cliOptions.strict,
       allowFutureOASVersions: cliOptions.allowFutureOASVersions,
@@ -147,6 +168,8 @@ async function validateSpec(
       }
     };
 
+    // Assuming validateFromYaml internally uses parsedContent or similar logic might be needed
+    // For now, we'll assume it works with the string, but we have parsedContent for context.
     const result = validateFromYaml(fileContent, validationOptions);
 
     if (result.valid) {
@@ -156,21 +179,33 @@ async function validateSpec(
         console.log(JSON.stringify(result, null, 2));
       } else {
         console.log('\n', chalk.green('✓'), 'Schema is valid');
-        // Note: warnings are handled through Zod custom errors in strict mode
+        // Handle warnings if they become distinct later
       }
     } else {
       spinner.fail('Validation failed');
       
       if (cliOptions.format === 'json') {
-        console.log(JSON.stringify(result.errors, null, 2));
+        // Output errors only in JSON format
+        console.log(JSON.stringify({ errors: result.errors?.issues || [] }, null, 2));
       } else {
         console.log('\n', chalk.red('✗'), 'Schema validation errors:');
         result.errors?.issues.forEach(issue => {
-          console.log('\n', chalk.red('•'), `${issue.path.join('.')}`);
-          console.log('  ', chalk.dim(issue.message));
+          const pathString = issue.path.join('.');
+          const specLink = getOASSpecLink(issue);
+
+          console.log('\n', chalk.red('•'), chalk.yellow(pathString));
+          console.log('  ', chalk.white(issue.message));
+          
+          if (specLink) {
+            console.log('   ', chalk.blue.underline(specLink));
+          }
+
+          // Add expected/received if present (existing logic)
           if ('expected' in issue) {
-            console.log('   Expected:', chalk.cyan(issue.expected));
-            console.log('   Received:', chalk.yellow(issue.received));
+            console.log('   Expected:', chalk.cyan(String(issue.expected))); // Ensure string conversion
+          }
+          if ('received' in issue) {
+             console.log('   Received:', chalk.magenta(String(issue.received))); // Ensure string conversion
           }
         });
       }
