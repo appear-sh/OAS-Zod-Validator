@@ -316,6 +316,8 @@ async function validateSpec(
           console.log('\n', severitySymbol, pathColor(pathString));
           
           // Print Details with aligned labels
+          // DEBUG: Log message before printing
+          console.log(`DEBUG: Printing message for path ${pathString}:`, displayMessage);
           console.log(`  Message:  ${chalk.white(displayMessage)}`); // Use potentially updated message
           
           if (specLink) {
