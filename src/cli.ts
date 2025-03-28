@@ -12,6 +12,7 @@ import ora from 'ora';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
+import { getIssueSeverity, Severity } from './errors/severity.js';
 
 // Get package version for CLI
 const __filename = fileURLToPath(import.meta.url);
@@ -259,18 +260,40 @@ async function validateSpec(
     } else {
       spinner.fail('Validation failed');
       
+      let errorCount = 0;
+      let warningCount = 0;
+
+      const issues = result.errors?.issues || [];
+      issues.forEach(issue => {
+        const severity = getIssueSeverity(issue);
+        if (severity === 'error') {
+          errorCount++;
+        } else {
+          warningCount++;
+        }
+      });
+
       if (cliOptions.format === 'json') {
-        // Output errors only in JSON format
-        console.log(JSON.stringify({ errors: result.errors?.issues || [] }, null, 2));
+        // Include severity in JSON output
+        const outputIssues = issues.map(issue => ({
+          ...issue,
+          severity: getIssueSeverity(issue)
+        }));
+        console.log(JSON.stringify({ errors: outputIssues }, null, 2));
       } else {
-        console.log('\n', chalk.red('✗'), 'Schema validation errors:');
-        result.errors?.issues.forEach(issue => {
+        console.log('\n', chalk.red('✗'), `Validation found ${errorCount} error(s) and ${warningCount} warning(s):`);
+        
+        issues.forEach(issue => {
           const pathString = issue.path.join('.');
           const specLink = getOASSpecLink(issue);
           const valueContext = getValueFromPath(parsedContent, issue.path);
           const formattedValue = formatValueForCli(valueContext);
+          const severity = getIssueSeverity(issue);
 
-          console.log('\n', chalk.red('•'), chalk.yellow(pathString));
+          const severitySymbol = severity === 'error' ? chalk.red('• Error') : chalk.yellow('▲ Warning');
+          const pathColor = severity === 'error' ? chalk.redBright : chalk.yellowBright;
+
+          console.log('\n', severitySymbol, pathColor(pathString));
           console.log(`  Message: ${chalk.white(issue.message)}`);
           
           if (specLink) {
@@ -289,7 +312,15 @@ async function validateSpec(
           }
         });
       }
-      process.exit(1);
+      
+      // Exit with error code 1 only if there are actual errors
+      // If only warnings, exit code could be 0 (configurable later?)
+      if (errorCount > 0) {
+         process.exit(1);
+      } else {
+         // Decide on exit code for warnings only. For now, let's keep 0 for simplicity.
+         // process.exit(0); 
+      }
     }
   } catch (err) {
     spinner.fail('Validation failed');
