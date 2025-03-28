@@ -244,7 +244,6 @@ async function validateSpec(
       }
     };
 
-    // Assuming validateFromYaml internally uses parsedContent or similar logic might be needed
     // For now, we'll assume it works with the string, but we have parsedContent for context.
     const result = validateFromYaml(fileContent, validationOptions);
 
@@ -284,11 +283,31 @@ async function validateSpec(
         console.log('\n', chalk.red('✗'), `Validation found ${errorCount} error(s) and ${warningCount} warning(s):`);
         
         issues.forEach(issue => {
-          const pathString = issue.path.join('.');
-          const specLink = getOASSpecLink(issue);
-          const valueContext = getValueFromPath(parsedContent, issue.path);
+          let displayPath = issue.path; // Path to display
+          let displayMessage = issue.message; // Message to display
+
+          // Check for invalid_union and try to get a more specific message
+          if (issue.code === 'invalid_union' && issue.unionErrors && issue.unionErrors.length > 0) {
+            // Prefer the first error from the first union branch
+            const firstBranchErrors = issue.unionErrors[0]?.issues;
+            if (firstBranchErrors && firstBranchErrors.length > 0) {
+              const specificIssue = firstBranchErrors[0];
+              
+              // If the specific nested issue path is longer (more specific) than the union's path,
+              // assume it already contains the full path information needed. Otherwise, stick to the union path.
+              if (specificIssue.path.length > issue.path.length) {
+                 displayPath = specificIssue.path;
+              } // else: displayPath remains the original issue.path (path to the union)
+              
+              displayMessage = specificIssue.message;
+            }
+          }
+
+          const pathString = displayPath.join('.'); // Use potentially updated path
+          const specLink = getOASSpecLink(issue); // Keep using original issue for link lookup
+          const valueContext = getValueFromPath(parsedContent, displayPath); // Use potentially updated path
           const formattedValue = formatValueForCli(valueContext);
-          const severity = getIssueSeverity(issue);
+          const severity = getIssueSeverity(issue); // Keep using original issue for severity
 
           const severitySymbol = severity === 'error' ? chalk.red('• Error') : chalk.yellow('▲ Warning');
           const pathColor = severity === 'error' ? chalk.redBright : chalk.yellowBright;
@@ -297,14 +316,14 @@ async function validateSpec(
           console.log('\n', severitySymbol, pathColor(pathString));
           
           // Print Details with aligned labels
-          console.log(`  Message:  ${chalk.white(issue.message)}`);
+          console.log(`  Message:  ${chalk.white(displayMessage)}`); // Use potentially updated message
           
           if (specLink) {
             console.log(`  Spec:     ${chalk.blue.underline(specLink)}`);
           }
 
           // Print Value context - potentially multi-line
-          if (valueContext !== undefined || issue.message.toLowerCase().includes('invalid')) {
+          if (valueContext !== undefined || displayMessage.toLowerCase().includes('invalid')) {
              // Check if formattedValue is multi-line
              if (formattedValue.includes('\n')) {
                  console.log(`  Value:`);
