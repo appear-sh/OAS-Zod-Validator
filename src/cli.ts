@@ -120,6 +120,81 @@ async function loadConfig(configPath: string): Promise<ConfigFile> {
   }
 }
 
+// --- Helper function to get value from path ---
+/**
+ * Safely retrieves a value from a nested object using a path array.
+ * @param obj The object to traverse.
+ * @param path An array of keys/indices representing the path.
+ * @returns The value at the specified path, or undefined if not found.
+ */
+function getValueFromPath(obj: any, path: (string | number)[]): any {
+  let current = obj;
+  for (const key of path) {
+    if (current === null || typeof current !== 'object') {
+      return undefined; // Cannot traverse further
+    }
+    // Handle cases where path segments might represent keys with dots
+    // This is a simple check; more robust handling might be needed if keys truly contain dots.
+    if (typeof key === 'string' && key.includes('.') && !(key in current)) {
+        // Attempt splitting if direct key access fails - might be overly simplistic
+        const keys = key.split('.');
+        let tempCurrent = current;
+        for (const subKey of keys) {
+            if (tempCurrent === null || typeof tempCurrent !== 'object' || !(subKey in tempCurrent)) {
+                current = undefined; // Path segment not found
+                break;
+            }
+            tempCurrent = tempCurrent[subKey];
+        }
+        current = tempCurrent;
+    } else if (!(key in current)){
+        current = undefined; // Path segment not found
+    } else {
+       current = current[key];
+    }
+
+    if (current === undefined) {
+      return undefined; // Path does not exist fully
+    }
+  }
+  return current;
+}
+
+// --- Helper function to format value for CLI ---
+/**
+ * Formats a value for readable CLI output, truncating large content.
+ * @param value The value to format.
+ * @returns A formatted string representation.
+ */
+function formatValueForCli(value: any): string {
+  if (value === undefined) {
+    return chalk.dim('[Not Found]');
+  }
+  if (typeof value === 'string') {
+    if (value.length > 100) {
+       // Add quotes for strings
+      return chalk.dim(`"${value.substring(0, 97)}..."`);
+    }
+    return chalk.dim(`"${value}"`);
+  }
+  if (typeof value === 'object' && value !== null) {
+    try {
+      // Use YAML dump for potentially better readability of structures
+      const yamlString = yaml.dump(value, { indent: 2, lineWidth: 80, skipInvalid: true });
+      const lines = yamlString.split('\n');
+      if (lines.length > 10 || yamlString.length > 300) { // Limit output size
+        return chalk.dim('{ /* Large object/array */ }');
+      }
+      // Indent the YAML output slightly
+      return chalk.dim(lines.map(l => `  ${l}`).join('\n'));
+    } catch (e) {
+      return chalk.dim('[Unserializable Value]');
+    }
+  }
+  // Handle numbers, booleans, null
+  return chalk.dim(String(value));
+}
+
 /**
  * Validates an OpenAPI specification file
  * @param filePath - Path to the specification file
@@ -192,20 +267,25 @@ async function validateSpec(
         result.errors?.issues.forEach(issue => {
           const pathString = issue.path.join('.');
           const specLink = getOASSpecLink(issue);
+          const valueContext = getValueFromPath(parsedContent, issue.path);
+          const formattedValue = formatValueForCli(valueContext);
 
           console.log('\n', chalk.red('•'), chalk.yellow(pathString));
-          console.log('  ', chalk.white(issue.message));
+          console.log(`  Message: ${chalk.white(issue.message)}`);
           
           if (specLink) {
-            console.log('   ', chalk.blue.underline(specLink));
+            console.log(`  Spec:    ${chalk.blue.underline(specLink)}`);
           }
 
-          // Add expected/received if present (existing logic)
-          if ('expected' in issue) {
-            console.log('   Expected:', chalk.cyan(String(issue.expected))); // Ensure string conversion
+          if (valueContext !== undefined || issue.message.toLowerCase().includes('invalid')) {
+             console.log(`  Value:   ${formattedValue}`);
           }
-          if ('received' in issue) {
-             console.log('   Received:', chalk.magenta(String(issue.received))); // Ensure string conversion
+
+          if ('expected' in issue) {
+            console.log(`  Expected:${chalk.cyan(String(issue.expected))}`);
+          }
+          if ('received' in issue && issue.received !== undefined) {
+             console.log(`  Received:${chalk.magenta(String(issue.received))}`);
           }
         });
       }
