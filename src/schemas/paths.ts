@@ -49,8 +49,8 @@ export const ParameterObject = z.discriminatedUnion('in', [
   }),
 ]);
 
-// Enhanced Operation Object with better validation
-export const OperationObject = z.object({
+// Base OperationObject structure before refinement
+const BaseOperationObject = z.object({
   tags: z.array(z.string()).optional(),
   summary: z.string().max(120, { 
     message: 'Summary should be concise (max 120 characters)' 
@@ -94,10 +94,20 @@ export const OperationObject = z.object({
     return Object.keys(responses).length > 0;
   }, {
     message: 'At least one response must be defined'
-  }),
+  }).optional(),
   deprecated: z.boolean().optional(),
   security: z.array(z.record(z.string(), z.array(z.string()))).optional(),
 }).and(ExtensibleObject);
+
+// Define the final type after refinement
+type Operation = z.infer<typeof BaseOperationObject>;
+
+// Apply the refinement with explicit typing
+export const OperationObject: z.ZodType<Operation> = BaseOperationObject
+  .refine(op => op.responses !== undefined, {
+    message: "Operation must include a 'responses' object defining potential responses",
+    path: ["responses"], // Specify the path relative to the OperationObject
+  });
 
 // Enhanced Path Item Object
 export const PathItemObject = z.object({

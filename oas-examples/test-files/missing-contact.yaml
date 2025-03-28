@@ -1,0 +1,14 @@
+        openapi: 3.1.0
+        info:
+          title: Test API - Missing Contact
+          version: 1.0.0
+          # Intentionally missing contact object
+          license:
+            name: MIT
+        paths:
+          /hello:
+            get:
+              summary: Says hello
+              responses:
+                '200':
+                  description: OK

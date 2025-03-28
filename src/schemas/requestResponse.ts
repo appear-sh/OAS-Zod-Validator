@@ -25,7 +25,10 @@ export const RequestBodyObject = z.object({
 
 // Response Object
 export const ResponseObject = z.object({
-  description: z.string(),
+  description: z.string({
+    required_error: "Response description is required",
+    invalid_type_error: "Response description must be a string",
+  }),
   headers: z.record(z.string(), z.union([ReferenceObject, z.object({
     description: z.string().optional(),
     required: z.boolean().optional(),
@@ -46,7 +49,7 @@ export const ResponseObject = z.object({
 }).passthrough();
 
 export const ResponsesObject = z.record(
-  z.string(),
+  z.string(), // Status Code or 'default'
   z.union([ResponseObject, ReferenceObject])
 );
 

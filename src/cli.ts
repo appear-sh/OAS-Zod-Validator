@@ -2,7 +2,7 @@
 'use strict';
 
 import { validateFromYaml } from './utils/validateFromYaml.js';
-import { ValidationOptions } from './schemas/validator.js';
+import { ValidationOptions, ValidationResult } from './schemas/validator.js';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
@@ -11,6 +11,8 @@ import path from 'node:path';
 import ora from 'ora';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
+import { getOASSpecLink } from './errors/specLinks.js';
+import { getIssueSeverity, Severity } from './errors/severity.js';
 
 // Get package version for CLI
 const __filename = fileURLToPath(import.meta.url);
@@ -119,6 +121,81 @@ async function loadConfig(configPath: string): Promise<ConfigFile> {
   }
 }
 
+// --- Helper function to get value from path ---
+/**
+ * Safely retrieves a value from a nested object using a path array.
+ * @param obj The object to traverse.
+ * @param path An array of keys/indices representing the path.
+ * @returns The value at the specified path, or undefined if not found.
+ */
+function getValueFromPath(obj: any, path: (string | number)[]): any {
+  let current = obj;
+  for (const key of path) {
+    if (current === null || typeof current !== 'object') {
+      return undefined; // Cannot traverse further
+    }
+    // Handle cases where path segments might represent keys with dots
+    // This is a simple check; more robust handling might be needed if keys truly contain dots.
+    if (typeof key === 'string' && key.includes('.') && !(key in current)) {
+        // Attempt splitting if direct key access fails - might be overly simplistic
+        const keys = key.split('.');
+        let tempCurrent = current;
+        for (const subKey of keys) {
+            if (tempCurrent === null || typeof tempCurrent !== 'object' || !(subKey in tempCurrent)) {
+                current = undefined; // Path segment not found
+                break;
+            }
+            tempCurrent = tempCurrent[subKey];
+        }
+        current = tempCurrent;
+    } else if (!(key in current)){
+        current = undefined; // Path segment not found
+    } else {
+       current = current[key];
+    }
+
+    if (current === undefined) {
+      return undefined; // Path does not exist fully
+    }
+  }
+  return current;
+}
+
+// --- Helper function to format value for CLI ---
+/**
+ * Formats a value for readable CLI output, truncating large content.
+ * @param value The value to format.
+ * @returns A formatted string representation.
+ */
+function formatValueForCli(value: any): string {
+  if (value === undefined) {
+    return chalk.dim('[Not Found]');
+  }
+  if (typeof value === 'string') {
+    if (value.length > 100) {
+       // Add quotes for strings
+      return chalk.dim(`"${value.substring(0, 97)}..."`);
+    }
+    return chalk.dim(`"${value}"`);
+  }
+  if (typeof value === 'object' && value !== null) {
+    try {
+      // Use YAML dump for potentially better readability of structures
+      const yamlString = yaml.dump(value, { indent: 2, lineWidth: 80, skipInvalid: true });
+      const lines = yamlString.split('\n');
+      if (lines.length > 10 || yamlString.length > 300) { // Limit output size
+        return chalk.dim('{ /* Large object/array */ }');
+      }
+      // Indent the YAML output slightly
+      return chalk.dim(lines.map(l => `  ${l}`).join('\n'));
+    } catch (e) {
+      return chalk.dim('[Unserializable Value]');
+    }
+  }
+  // Handle numbers, booleans, null
+  return chalk.dim(String(value));
+}
+
 /**
  * Validates an OpenAPI specification file
  * @param filePath - Path to the specification file
@@ -133,8 +210,28 @@ async function validateSpec(
     color: 'cyan'
   }).start();
 
+  let parsedContent: any = null; // Variable to hold the parsed spec
+
   try {
     const fileContent = await fs.promises.readFile(filePath, 'utf8');
+    
+    // Parse the content once for context retrieval
+    try {
+      if (path.extname(filePath).toLowerCase().startsWith('.y')) {
+        parsedContent = yaml.load(fileContent);
+      } else {
+        parsedContent = JSON.parse(fileContent);
+      }
+    } catch (parseErr) {
+      spinner.fail('Failed to parse input file');
+      if (parseErr instanceof Error) {
+        console.error(chalk.red('\n❌ Parse Error:'), parseErr.message);
+      } else {
+        console.error(chalk.red('\n❌ An unexpected parsing error occurred'));
+      }
+      process.exit(1);
+    }
+
     const validationOptions: ValidationOptions = {
       strict: cliOptions.strict,
       allowFutureOASVersions: cliOptions.allowFutureOASVersions,
@@ -147,6 +244,7 @@ async function validateSpec(
       }
     };
 
+    // For now, we'll assume it works with the string, but we have parsedContent for context.
     const result = validateFromYaml(fileContent, validationOptions);
 
     if (result.valid) {
@@ -156,25 +254,103 @@ async function validateSpec(
         console.log(JSON.stringify(result, null, 2));
       } else {
         console.log('\n', chalk.green('✓'), 'Schema is valid');
-        // Note: warnings are handled through Zod custom errors in strict mode
+        // Handle warnings if they become distinct later
       }
     } else {
       spinner.fail('Validation failed');
       
+      let errorCount = 0;
+      let warningCount = 0;
+
+      const issues = result.errors?.issues || [];
+      issues.forEach(issue => {
+        const severity = getIssueSeverity(issue);
+        if (severity === 'error') {
+          errorCount++;
+        } else {
+          warningCount++;
+        }
+      });
+
       if (cliOptions.format === 'json') {
-        console.log(JSON.stringify(result.errors, null, 2));
+        // Include severity in JSON output
+        const outputIssues = issues.map(issue => ({
+          ...issue,
+          severity: getIssueSeverity(issue)
+        }));
+        console.log(JSON.stringify({ errors: outputIssues }, null, 2));
       } else {
-        console.log('\n', chalk.red('✗'), 'Schema validation errors:');
-        result.errors?.issues.forEach(issue => {
-          console.log('\n', chalk.red('•'), `${issue.path.join('.')}`);
-          console.log('  ', chalk.dim(issue.message));
-          if ('expected' in issue) {
-            console.log('   Expected:', chalk.cyan(issue.expected));
-            console.log('   Received:', chalk.yellow(issue.received));
+        console.log('\n', chalk.red('✗'), `Validation found ${errorCount} error(s) and ${warningCount} warning(s):`);
+        
+        issues.forEach(issue => {
+          let displayPath = issue.path; // Path to display
+          let displayMessage = issue.message; // Message to display
+
+          // Check for invalid_union and try to get a more specific message
+          if (issue.code === 'invalid_union' && issue.unionErrors && issue.unionErrors.length > 0) {
+            // Prefer the first error from the first union branch
+            const firstBranchErrors = issue.unionErrors[0]?.issues;
+            if (firstBranchErrors && firstBranchErrors.length > 0) {
+              const specificIssue = firstBranchErrors[0];
+              
+              // If the specific nested issue path is longer (more specific) than the union's path,
+              // assume it already contains the full path information needed. Otherwise, stick to the union path.
+              if (specificIssue.path.length > issue.path.length) {
+                 displayPath = specificIssue.path;
+              } // else: displayPath remains the original issue.path (path to the union)
+              
+              displayMessage = specificIssue.message;
+            }
           }
+
+          const pathString = displayPath.join('.'); // Use potentially updated path
+          const specLink = getOASSpecLink(issue); // Keep using original issue for link lookup
+          const valueContext = getValueFromPath(parsedContent, displayPath); // Use potentially updated path
+          const formattedValue = formatValueForCli(valueContext);
+          const severity = getIssueSeverity(issue); // Keep using original issue for severity
+
+          const severitySymbol = severity === 'error' ? chalk.red('• Error') : chalk.yellow('▲ Warning');
+          const pathColor = severity === 'error' ? chalk.redBright : chalk.yellowBright;
+
+          // --- Build Output String --- 
+          let outputLines = [];
+          // Severity and Path
+          outputLines.push(`\n${severitySymbol} ${pathColor(pathString)}`);
+          // Message
+          outputLines.push(`  Message:  ${chalk.white(displayMessage)}`);
+          // Spec Link
+          if (specLink) {
+            outputLines.push(`  Spec:     ${chalk.blue.underline(specLink)}`);
+          }
+          // Value context
+          if (valueContext !== undefined || displayMessage.toLowerCase().includes('invalid')) {
+             if (formattedValue.includes('\n')) {
+                 outputLines.push(`  Value:`);
+                 outputLines.push(formattedValue.startsWith('  ') ? formattedValue : `  ${formattedValue}`); 
+             } else {
+                 outputLines.push(`  Value:    ${formattedValue}`);
+             }
+          }
+          // Expected/Received
+          if ('expected' in issue) {
+            outputLines.push(`  Expected: ${chalk.cyan(String(issue.expected))}`);
+          }
+          if ('received' in issue && issue.received !== undefined) {
+             outputLines.push(`  Received: ${chalk.magenta(String(issue.received))}`);
+          }
+          // --- Print Combined Output --- 
+          console.log(outputLines.join('\n'));
         });
       }
-      process.exit(1);
+      
+      // Exit with error code 1 only if there are actual errors
+      // If only warnings, exit code could be 0 (configurable later?)
+      if (errorCount > 0) {
+         process.exit(1);
+      } else {
+         // Decide on exit code for warnings only. For now, let's keep 0 for simplicity.
+         // process.exit(0); 
+      }
     }
   } catch (err) {
     spinner.fail('Validation failed');
