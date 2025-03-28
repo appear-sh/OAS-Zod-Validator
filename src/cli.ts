@@ -312,37 +312,34 @@ async function validateSpec(
           const severitySymbol = severity === 'error' ? chalk.red('• Error') : chalk.yellow('▲ Warning');
           const pathColor = severity === 'error' ? chalk.redBright : chalk.yellowBright;
 
-          // Print Severity and Path
-          console.log('\n', severitySymbol, pathColor(pathString));
-          
-          // Print Details with aligned labels
-          // DEBUG: Log message before printing
-          console.log(`DEBUG: Printing message for path ${pathString}:`, displayMessage);
-          console.log(`  Message:  ${chalk.white(displayMessage)}`); // Use potentially updated message
-          
+          // --- Build Output String --- 
+          let outputLines = [];
+          // Severity and Path
+          outputLines.push(`\n${severitySymbol} ${pathColor(pathString)}`);
+          // Message
+          outputLines.push(`  Message:  ${chalk.white(displayMessage)}`);
+          // Spec Link
           if (specLink) {
-            console.log(`  Spec:     ${chalk.blue.underline(specLink)}`);
+            outputLines.push(`  Spec:     ${chalk.blue.underline(specLink)}`);
           }
-
-          // Print Value context - potentially multi-line
+          // Value context
           if (valueContext !== undefined || displayMessage.toLowerCase().includes('invalid')) {
-             // Check if formattedValue is multi-line
              if (formattedValue.includes('\n')) {
-                 console.log(`  Value:`);
-                 // Already indented by formatValueForCli, ensure it starts on new line
-                 console.log(formattedValue.startsWith('  ') ? formattedValue : `  ${formattedValue}`); 
+                 outputLines.push(`  Value:`);
+                 outputLines.push(formattedValue.startsWith('  ') ? formattedValue : `  ${formattedValue}`); 
              } else {
-                 console.log(`  Value:    ${formattedValue}`);
+                 outputLines.push(`  Value:    ${formattedValue}`);
              }
           }
-
-          // Print Expected/Received if present
+          // Expected/Received
           if ('expected' in issue) {
-            console.log(`  Expected: ${chalk.cyan(String(issue.expected))}`);
+            outputLines.push(`  Expected: ${chalk.cyan(String(issue.expected))}`);
           }
           if ('received' in issue && issue.received !== undefined) {
-             console.log(`  Received: ${chalk.magenta(String(issue.received))}`);
+             outputLines.push(`  Received: ${chalk.magenta(String(issue.received))}`);
           }
+          // --- Print Combined Output --- 
+          console.log(outputLines.join('\n'));
         });
       }
       
