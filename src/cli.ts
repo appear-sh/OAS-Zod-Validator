@@ -293,22 +293,34 @@ async function validateSpec(
           const severitySymbol = severity === 'error' ? chalk.red('• Error') : chalk.yellow('▲ Warning');
           const pathColor = severity === 'error' ? chalk.redBright : chalk.yellowBright;
 
+          // Print Severity and Path
           console.log('\n', severitySymbol, pathColor(pathString));
-          console.log(`  Message: ${chalk.white(issue.message)}`);
+          
+          // Print Details with aligned labels
+          console.log(`  Message:  ${chalk.white(issue.message)}`);
           
           if (specLink) {
-            console.log(`  Spec:    ${chalk.blue.underline(specLink)}`);
+            console.log(`  Spec:     ${chalk.blue.underline(specLink)}`);
           }
 
+          // Print Value context - potentially multi-line
           if (valueContext !== undefined || issue.message.toLowerCase().includes('invalid')) {
-             console.log(`  Value:   ${formattedValue}`);
+             // Check if formattedValue is multi-line
+             if (formattedValue.includes('\n')) {
+                 console.log(`  Value:`);
+                 // Already indented by formatValueForCli, ensure it starts on new line
+                 console.log(formattedValue.startsWith('  ') ? formattedValue : `  ${formattedValue}`); 
+             } else {
+                 console.log(`  Value:    ${formattedValue}`);
+             }
           }
 
+          // Print Expected/Received if present
           if ('expected' in issue) {
-            console.log(`  Expected:${chalk.cyan(String(issue.expected))}`);
+            console.log(`  Expected: ${chalk.cyan(String(issue.expected))}`);
           }
           if ('received' in issue && issue.received !== undefined) {
-             console.log(`  Received:${chalk.magenta(String(issue.received))}`);
+             console.log(`  Received: ${chalk.magenta(String(issue.received))}`);
           }
         });
       }
