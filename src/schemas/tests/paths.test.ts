@@ -1,5 +1,5 @@
 import { PathsObject, PathItemObject, OperationObject, ParameterObject } from '../paths.js';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 
 describe('Paths Schema Validation', () => {
   describe('OperationObject', () => {

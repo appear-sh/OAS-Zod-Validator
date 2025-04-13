@@ -60,10 +60,10 @@ export const getRootType = memoize(_getRootType, {
     const parentType = ctx.parent?.type;
     const dataType = ctx.data?.type;
     const optionsType = ctx.options?.data?.type;
-    
+
     return JSON.stringify({
       parentType,
-      dataType, 
+      dataType,
       optionsType
     });
   }
@@ -297,15 +297,15 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
         'title',
         'description'
       ]);
-      
+
       // Type-specific properties
       const stringProps = new Set(['minLength', 'maxLength', 'pattern']);
       const numericProps = new Set(['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum', 'multipleOf']);
       const arrayProps = new Set(['items']);
       const objectProps = new Set(['properties', 'additionalProperties', 'required']);
-      
+
       const allowedProps = new Set([...commonProps]);
-      
+
       // Add type-specific properties
       if (typeVal === 'string') {
         stringProps.forEach(prop => allowedProps.add(prop));
@@ -316,9 +316,9 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
       } else if (typeVal === 'object') {
         objectProps.forEach(prop => allowedProps.add(prop));
       }
-      
+
       // Return only the allowed properties for this type
-      return Object.fromEntries(Object.entries(raw).filter(([key]) => 
+      return Object.fromEntries(Object.entries(raw).filter(([key]) =>
         allowedProps.has(key) || key.startsWith('x-')
       ));
     }
@@ -393,7 +393,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
         }
       }
     }
-    
+
     // Validate string examples
     if (schema.example !== undefined && schema.type === 'string') {
       if (typeof schema.example !== 'string') {
@@ -411,7 +411,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
             path: ['example']
           });
         }
-        
+
         // Validate maxLength constraint if provided
         if (typeof schema.maxLength === 'number' && schema.example.length > schema.maxLength) {
           ctx.addIssue({
@@ -420,7 +420,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
             path: ['example']
           });
         }
-        
+
         // Validate pattern constraint if provided
         if (schema.pattern) {
           try {
@@ -446,53 +446,53 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     }
     return true;
   }, { message: "Example value does not satisfy the minimum constraint", path: ['example'] })
-  .refine((schema: any) => {
-    if (schema.example === undefined || (schema.type !== 'number' && schema.type !== 'integer')) return true;
-    if (typeof schema.example !== 'number') return false;
-    if (typeof schema.maximum === 'number') {
-      return schema.exclusiveMaximum ? (schema.example < schema.maximum) : (schema.example <= schema.maximum);
-    }
-    return true;
-  }, { message: "Example value does not satisfy the maximum constraint", path: ['example'] })
-  .refine((schema: any) => {
-    if (schema.example === undefined || (schema.type !== 'number' && schema.type !== 'integer')) return true;
-    if (typeof schema.example !== 'number') return false;
-    if (typeof schema.multipleOf === 'number') {
-      const quotient = schema.example / schema.multipleOf;
-      const tolerance = 1e-8;
-      return Math.abs(quotient - Math.round(quotient)) <= tolerance;
-    }
-    return true;
-  }, { message: "Example value is not a multiple of the specified factor", path: ['example'] })
-  .refine((schema: any) => {
-    if (schema.example === undefined || schema.type !== 'string') return true;
-    if (typeof schema.example !== 'string') return false;
-    if (typeof schema.minLength === 'number') {
-      return schema.example.length >= schema.minLength;
-    }
-    return true;
-  }, { message: "Example string does not satisfy the minLength constraint", path: ['example'] })
-  .refine((schema: any) => {
-    if (schema.example === undefined || schema.type !== 'string') return true;
-    if (typeof schema.example !== 'string') return false;
-    if (typeof schema.maxLength === 'number') {
-      return schema.example.length <= schema.maxLength;
-    }
-    return true;
-  }, { message: "Example string does not satisfy the maxLength constraint", path: ['example'] })
-  .refine((schema: any) => {
-    if (schema.example === undefined || schema.type !== 'string') return true;
-    if (typeof schema.example !== 'string') return false;
-    if (schema.pattern) {
-      try {
-        const regex = new RegExp(schema.pattern);
-        return regex.test(schema.example);
-      } catch (e) {
-        return false;
+    .refine((schema: any) => {
+      if (schema.example === undefined || (schema.type !== 'number' && schema.type !== 'integer')) return true;
+      if (typeof schema.example !== 'number') return false;
+      if (typeof schema.maximum === 'number') {
+        return schema.exclusiveMaximum ? (schema.example < schema.maximum) : (schema.example <= schema.maximum);
       }
-    }
-    return true;
-  }, { message: "Example string does not match the specified pattern", path: ['example'] });
+      return true;
+    }, { message: "Example value does not satisfy the maximum constraint", path: ['example'] })
+    .refine((schema: any) => {
+      if (schema.example === undefined || (schema.type !== 'number' && schema.type !== 'integer')) return true;
+      if (typeof schema.example !== 'number') return false;
+      if (typeof schema.multipleOf === 'number') {
+        const quotient = schema.example / schema.multipleOf;
+        const tolerance = 1e-8;
+        return Math.abs(quotient - Math.round(quotient)) <= tolerance;
+      }
+      return true;
+    }, { message: "Example value is not a multiple of the specified factor", path: ['example'] })
+    .refine((schema: any) => {
+      if (schema.example === undefined || schema.type !== 'string') return true;
+      if (typeof schema.example !== 'string') return false;
+      if (typeof schema.minLength === 'number') {
+        return schema.example.length >= schema.minLength;
+      }
+      return true;
+    }, { message: "Example string does not satisfy the minLength constraint", path: ['example'] })
+    .refine((schema: any) => {
+      if (schema.example === undefined || schema.type !== 'string') return true;
+      if (typeof schema.example !== 'string') return false;
+      if (typeof schema.maxLength === 'number') {
+        return schema.example.length <= schema.maxLength;
+      }
+      return true;
+    }, { message: "Example string does not satisfy the maxLength constraint", path: ['example'] })
+    .refine((schema: any) => {
+      if (schema.example === undefined || schema.type !== 'string') return true;
+      if (typeof schema.example !== 'string') return false;
+      if (schema.pattern) {
+        try {
+          const regex = new RegExp(schema.pattern);
+          return regex.test(schema.example);
+        } catch (e) {
+          return false;
+        }
+      }
+      return true;
+    }, { message: "Example string does not match the specified pattern", path: ['example'] });
 });
 
 // Basic extensible object that allows any additional properties

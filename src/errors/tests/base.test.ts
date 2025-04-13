@@ -1,4 +1,4 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 import { OpenAPIValidatorError, ErrorCode } from '../base.js';
 
 describe('Base Error Classes', () => {

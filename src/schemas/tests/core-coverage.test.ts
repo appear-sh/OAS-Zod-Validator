@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { SchemaObject, getParentType, getRootType } from '../core.js';
 
+import { describe, test, expect, vi } from 'vitest';
 describe('Core Schema Coverage Improvements', () => {
   // Focus on uncovered lines 75-85, 104-105, 117-118, 130-141, 155, 167, 179, 191, 203, 216-217, 229-230, 242-243, 255-256
   

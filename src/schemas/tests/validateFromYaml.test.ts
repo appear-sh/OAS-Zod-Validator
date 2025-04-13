@@ -1,5 +1,5 @@
 import { validateFromYaml } from '../../utils/validateFromYaml.js';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 import { YAMLParseError, SchemaValidationError } from '../../errors/index.js';
 
 describe('YAML Validation', () => {

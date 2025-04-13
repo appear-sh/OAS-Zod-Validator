@@ -2,6 +2,7 @@ import { validateOpenAPI } from '../../index.js';
 import { z } from 'zod';
 import { getNumericFormatDescription, isValidNumericLiteral, safeParseNumeric, createNumericSchema, validateNumericFormat, createNumericSchemaWithValidations } from '../numeric-formats.js';
 
+import { describe, test, expect, vi } from 'vitest';
 describe('Numeric Format Validation', () => {
   describe('Integer Formats', () => {
     const createIntegerSchema = (format?: string) => ({

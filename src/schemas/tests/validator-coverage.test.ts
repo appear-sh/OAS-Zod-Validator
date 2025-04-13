@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { validateOpenAPI, ValidationOptions, ValidationResult } from '../validator.js';
 import { ErrorCode, VersionError } from '../../errors/index.js';
 
+import { describe, test, expect, vi } from 'vitest';
 describe('Validator Coverage Improvements', () => {
   // Focus on uncovered lines 73, 86, 128-135, 162-163, 177-192
   

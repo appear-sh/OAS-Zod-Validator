@@ -1,5 +1,5 @@
 import { ReferenceObject, isReferenceObject, validateReference } from '../reference.js';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 
 describe('Reference Object Validation', () => {
   test('validates correct reference format', () => {

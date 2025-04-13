@@ -1,5 +1,5 @@
 import { validateOpenAPI } from '../validator.js';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 import yaml from 'js-yaml';
 
 describe('YAML Validation', () => {

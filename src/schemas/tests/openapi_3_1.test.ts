@@ -1,5 +1,5 @@
 import { validateOpenAPI } from '../validator.js';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 
 describe('OpenAPI 3.1 Validation', () => {
   test('validates a basic 3.1 openapi spec with webhooks', () => {

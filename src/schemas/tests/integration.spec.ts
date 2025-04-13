@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 import { validateOpenAPI } from '../validator.js';
-import { describe, test, expect, beforeAll } from '@jest/globals';
+import { describe, test, expect, beforeAll } from 'vitest';
 
 describe('Integration tests for multiple OAS specs', () => {
   const __filename = fileURLToPath(import.meta.url);
