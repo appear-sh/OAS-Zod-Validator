@@ -1,5 +1,6 @@
 import { PathsObject, PathItemObject, OperationObject, ParameterObject } from '../paths.js';
 
+import { describe, test, expect, vi } from 'vitest';
 describe('Paths Coverage Improvements', () => {
   // Focus on branch coverage for line 200
   

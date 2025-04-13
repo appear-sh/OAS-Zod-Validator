@@ -2,6 +2,7 @@ import { validateFromYaml } from '../validateFromYaml.js';
 import { verifyRefTargets } from '../verifyRefTargets.js';
 import { ReferenceError } from '../../errors/validation.js';
 
+import { describe, test, expect, vi } from 'vitest';
 describe('Utils Coverage Improvements', () => {
   describe('validateFromYaml edge cases', () => {
     test('handles empty YAML input', async () => {

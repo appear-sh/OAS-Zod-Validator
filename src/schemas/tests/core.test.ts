@@ -1,5 +1,5 @@
 import { ExtensibleObject, ReferenceObject, SchemaObject, VendorExtensible, getParentType, getRootType } from '../core.js';
-import { describe, test, expect, jest } from '@jest/globals';
+import { describe, test, expect, vi } from 'vitest';
 import { z } from 'zod';
 
 describe('Core Schema Types', () => {
@@ -749,7 +749,7 @@ describe('Utility Functions', () => {
     
     test('handles format validation through superRefine', () => {
       // Directly test the format validation by forcing a context with the right type
-      const mockAddIssue = jest.fn();
+      const mockAddIssue = vi.fn();
       const mockContext = { 
         path: ['format'],
         addIssue: mockAddIssue,
@@ -780,7 +780,7 @@ describe('Utility Functions', () => {
 
     test('handles numeric format validation', () => {
       // Directly test the numeric format validation through superRefine
-      const mockAddIssue = jest.fn();
+      const mockAddIssue = vi.fn();
       const mockContext = { 
         path: ['format'],
         addIssue: mockAddIssue,

@@ -1,5 +1,6 @@
 import { ComponentsObject } from '../components.js';
 
+import { describe, test, expect, vi } from 'vitest';
 describe('Components Object Coverage Improvements', () => {
   // Focus on branch coverage for line 43
   

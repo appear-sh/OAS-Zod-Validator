@@ -1,5 +1,5 @@
 import { ParameterObject } from '../paths.js';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 
 describe('Parameter Object Validation', () => {
   test('validates path parameter', () => {

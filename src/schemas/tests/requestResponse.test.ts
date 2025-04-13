@@ -1,5 +1,5 @@
 import { MediaTypeObject, RequestBodyObject, ResponseObject, ResponsesObject } from '../requestResponse.js';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 import { validateOpenAPI } from '../validator.js';
 
 describe('Request/Response Schema Types', () => {

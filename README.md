@@ -175,12 +175,17 @@ Create `.oas-validate.json` for persistent options:
 # Install dependencies
 npm install
 
-# Run tests
+# Run tests (uses Vitest)
 npm test
+
+# Watch mode for development
+npm run test:watch
 
 # Build
 npm run build
 ```
+
+This project uses TypeScript with ESM modules and Vitest for testing. It follows strict coding practices and maintains high test coverage.
 
 ## License
 

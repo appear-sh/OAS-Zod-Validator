@@ -1,7 +1,8 @@
 import { memoize } from '../memoize.js';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
 
 describe('memoize', () => {
-  // Manual mocking approach instead of jest.fn()
+  // Manual mocking approach instead of vi.fn()
   let callCount: number;
   let mockFn: (a: number, b: number) => number;
   let memoizedFn: (a: number, b: number) => number;

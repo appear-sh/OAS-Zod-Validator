@@ -1,5 +1,5 @@
 import { ComponentsObject } from '../components.js';
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 
 describe('Components Object Validation', () => {
   test('validates a complete components object', () => {

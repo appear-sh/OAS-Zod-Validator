@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { describe, test, expect, jest } from '@jest/globals';
+import { describe, test, expect, vi } from 'vitest';
 import { 
   createNumericValidator, 
   validateNumericFormat, 
@@ -14,7 +14,7 @@ import {
 // Custom implementation of a validator for testing the error path construction
 const createErrorPathValidator = (path: (string | number)[]) => {
   const ctx: z.RefinementCtx = {
-    addIssue: jest.fn(),
+    addIssue: vi.fn(),
     path
   } as unknown as z.RefinementCtx;
   return { ctx };
@@ -58,7 +58,7 @@ describe('Numeric Format Coverage Improvements', () => {
       validator(ctx, 42);
       
       if (ctx.addIssue && typeof ctx.addIssue === 'function') {
-        (ctx.addIssue as jest.Mock).mockImplementationOnce(() => {});
+        (ctx.addIssue as vi.Mock).mockImplementationOnce(() => {});
         validator.call(null, ctx, 42);
         expect(ctx.path).toEqual([]);
       }
@@ -128,7 +128,7 @@ describe('Numeric Format Coverage Improvements', () => {
       const { ctx } = createErrorPathValidator([]);
       
       // Create a mock validator that will return false
-      const mockValidator = jest.fn().mockReturnValue(false);
+      const mockValidator = vi.fn().mockReturnValue(false);
       
       // Create a test function that uses our mock validator
       const testFunc = (ctx: z.RefinementCtx, value: number) => {
