@@ -1,0 +1,49 @@
+# .github/workflows/release.yml
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write # Needed to create release tags/commits
+  pull-requests: write # Needed to create release pull requests (optional, controlled by config)
+  id-token: write # Needed for provenance publishing to npm (optional but recommended)
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    # Prevent concurrent releases
+    concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # Fetch history needed for Changesets to determine changed packages
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          # This command attempts to publish packages with changesets present
+          # It also handles versioning and creating Git tags
+          publish: npm run release # Uses the release script from package.json
+          commit: 'chore(release): version packages' # Commit message for versioning
+          title: 'chore(release): version packages' # PR title for versioning
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # IMPORTANT: Define NPM_TOKEN in your repository secrets
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

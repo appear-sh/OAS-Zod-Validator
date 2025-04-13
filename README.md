@@ -213,6 +213,6 @@ Maintainers will handle the versioning and release process using the changeset f
 
 ## Core maintainers
 
-- X: https://x.com/Tom_MkV
+- X: https://x.com/tom_mkv
 - X: https://x.com/jakubriedl
-- X: https://x.com/AppearAPI
+- X: https://x.com/appearapi

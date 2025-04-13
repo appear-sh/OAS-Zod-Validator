@@ -1,0 +1,36 @@
+# .github/workflows/ci.yml
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch: # Allows manual triggering
+
+jobs:
+  build_and_test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Specify desired Node.js version (e.g., LTS)
+          cache: 'npm' # Enable caching for npm dependencies
+
+      - name: Install dependencies
+        run: npm ci # Use clean install for CI
+
+      - name: Run linter (ESLint + Prettier)
+        run: npm run lint
+
+      - name: Run tests (Vitest)
+        run: npm run test
+
+      - name: Check types and build
+        run: npm run build # Runs tsc, checking types and build output
