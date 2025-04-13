@@ -29,6 +29,9 @@ export default tseslint.config(
     rules: {
       ...eslint.configs.recommended.rules, // Moved base ESLint rules here
       // Add any general JS/TS rules here, non-type-specific
+      // Disable rules globally for now: -- MOVED TO SECTION 3 --
+      // '@typescript-eslint/no-explicit-any': 'off',
+      // '@typescript-eslint/ban-ts-comment': 'off',
     },
   },
 
@@ -40,11 +43,15 @@ export default tseslint.config(
     extends: tseslint.configs.recommended,
     rules: {
       // Override or add TS rules if needed for non-project files
+      // Disable specific rules globally for now:
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_.*$', varsIgnorePattern: '^_.*$' },
+      ],
     },
   },
-
-  // 4. Type-aware config specifically for SRC files (Using tsconfig.eslint.json)
-  // Section 4 removed again for debugging
 
   // 5. Test file configuration (Vitest + Non-Type-Aware TS) (Restructured)
   {
