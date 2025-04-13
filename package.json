@@ -1,5 +1,5 @@
 {
-  "name": "oas-zod-validator",
+  "name": "@appear.sh/oas-zod-validator",
   "version": "1.0.0",
   "description": "OpenAPI Specification validator built with Zod",
   "type": "module",
@@ -49,8 +49,11 @@
     "typescript",
     "cli"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Appear.sh",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^13.1.0",
