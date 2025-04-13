@@ -56,15 +56,15 @@ describe('OpenAPI Validator', () => {
           BearerAuth: {
             type: 'http',
             scheme: 'bearer',
-            bearerFormat: 'JWT'
+            bearerFormat: 'JWT',
           },
           ApiKeyAuth: {
             type: 'apiKey',
             name: 'X-API-KEY',
-            in: 'header'
-          }
-        }
-      }
+            in: 'header',
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithSecurity);
@@ -90,21 +90,21 @@ describe('OpenAPI Validator', () => {
                     type: 'object',
                     properties: {
                       name: { type: 'string' },
-                      email: { type: 'string' }
+                      email: { type: 'string' },
                     },
-                    required: ['name', 'email']
-                  }
-                }
-              }
+                    required: ['name', 'email'],
+                  },
+                },
+              },
             },
             responses: {
               '201': {
-                description: 'Created successfully'
-              }
-            }
-          }
-        }
-      }
+                description: 'Created successfully',
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithRequestBody);
@@ -133,12 +133,12 @@ describe('OpenAPI Validator', () => {
                         type: 'object',
                         properties: {
                           id: { type: 'integer' },
-                          name: { type: 'string' }
-                        }
-                      }
-                    }
-                  }
-                }
+                          name: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
               },
               '400': {
                 description: 'Bad request',
@@ -147,16 +147,16 @@ describe('OpenAPI Validator', () => {
                     schema: {
                       type: 'object',
                       properties: {
-                        error: { type: 'string' }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                        error: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithResponse);
@@ -176,11 +176,11 @@ describe('OpenAPI Validator', () => {
           post: {
             requestBody: {
               // Missing required 'content' field
-              required: true
-            }
-          }
-        }
-      }
+              required: true,
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(invalidRequestBody);
@@ -203,9 +203,9 @@ describe('OpenAPI Validator', () => {
               in: 'path',
               required: true,
               schema: {
-                type: 'string'
-              }
-            }
+                type: 'string',
+              },
+            },
           ],
           get: {
             summary: 'Get user by ID',
@@ -214,18 +214,18 @@ describe('OpenAPI Validator', () => {
                 name: 'fields',
                 in: 'query',
                 schema: {
-                  type: 'string'
-                }
-              }
+                  type: 'string',
+                },
+              },
             ],
             responses: {
               '200': {
-                description: 'Success'
-              }
-            }
-          }
-        }
-      }
+                description: 'Success',
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithPaths);
@@ -247,16 +247,16 @@ describe('OpenAPI Validator', () => {
           variables: {
             port: {
               default: '443',
-              enum: ['443', '8443']
-            }
-          }
+              enum: ['443', '8443'],
+            },
+          },
         },
         {
           url: 'https://staging.example.com/v1',
-          description: 'Staging server'
-        }
+          description: 'Staging server',
+        },
       ],
-      paths: {}
+      paths: {},
     };
 
     const result = validateOpenAPI(specWithServers);
@@ -275,14 +275,14 @@ describe('OpenAPI Validator', () => {
         contact: {
           name: 'API Support',
           url: 'https://example.com/support',
-          email: 'support@example.com'
+          email: 'support@example.com',
         },
         license: {
           name: 'Apache 2.0',
-          url: 'https://www.apache.org/licenses/LICENSE-2.0'
-        }
+          url: 'https://www.apache.org/licenses/LICENSE-2.0',
+        },
       },
-      paths: {}
+      paths: {},
     };
 
     const result = validateOpenAPI(specWithFullInfo);
@@ -300,17 +300,17 @@ describe('OpenAPI Validator', () => {
       paths: {},
       externalDocs: {
         description: 'Find more info here',
-        url: 'https://example.com/docs'
+        url: 'https://example.com/docs',
       },
       tags: [
         {
           name: 'users',
           description: 'User operations',
           externalDocs: {
-            url: 'https://example.com/docs/users'
-          }
-        }
-      ]
+            url: 'https://example.com/docs/users',
+          },
+        },
+      ],
     };
 
     const result = validateOpenAPI(specWithExternalDocs);
@@ -325,7 +325,7 @@ describe('OpenAPI Validator', () => {
         title: 'Test API',
         version: '1.0.0',
       },
-      paths: {}
+      paths: {},
     };
 
     const result = validateOpenAPI(invalidVersionSpec);
@@ -345,11 +345,11 @@ describe('OpenAPI Validator', () => {
           get: {
             responses: {
               '200': {
-                $ref: '#/components/responses/SuccessResponse'
-              }
-            }
-          }
-        }
+                $ref: '#/components/responses/SuccessResponse',
+              },
+            },
+          },
+        },
       },
       components: {
         schemas: {
@@ -357,9 +357,9 @@ describe('OpenAPI Validator', () => {
             type: 'object',
             properties: {
               name: { type: 'string' },
-              email: { type: 'string' }
-            }
-          }
+              email: { type: 'string' },
+            },
+          },
         },
         responses: {
           SuccessResponse: {
@@ -367,20 +367,22 @@ describe('OpenAPI Validator', () => {
             content: {
               'application/json': {
                 schema: {
-                  $ref: '#/components/schemas/User'
-                }
-              }
-            }
-          }
-        }
-      }
+                  $ref: '#/components/schemas/User',
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithRefs, { strict: true });
     expect(result.valid).toBe(true);
     expect(result.resolvedRefs).toBeDefined();
     expect(result.resolvedRefs).toContain('#/components/schemas/User');
-    expect(result.resolvedRefs).toContain('#/components/responses/SuccessResponse');
+    expect(result.resolvedRefs).toContain(
+      '#/components/responses/SuccessResponse'
+    );
   });
 
   test('allows future versions with allowFutureOASVersions flag', () => {
@@ -388,12 +390,14 @@ describe('OpenAPI Validator', () => {
       openapi: '3.2.0',
       info: {
         title: 'Future API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
-      paths: {}
+      paths: {},
     };
 
-    const result = validateOpenAPI(futureSpec, { allowFutureOASVersions: true });
+    const result = validateOpenAPI(futureSpec, {
+      allowFutureOASVersions: true,
+    });
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
   });
@@ -407,16 +411,16 @@ describe('OpenAPI Validator', () => {
           User: {
             type: 'object',
             properties: {
-              profile: { $ref: '#/components/schemas/Profile' }
-            }
+              profile: { $ref: '#/components/schemas/Profile' },
+            },
           },
           Profile: {
             type: 'object',
             properties: {
-              name: { type: 'string' }
-            }
-          }
-        }
+              name: { type: 'string' },
+            },
+          },
+        },
       },
       paths: {
         '/users': {
@@ -426,14 +430,14 @@ describe('OpenAPI Validator', () => {
                 description: 'OK',
                 content: {
                   'application/json': {
-                    schema: { $ref: '#/components/schemas/User' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    schema: { $ref: '#/components/schemas/User' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -448,10 +452,12 @@ describe('OpenAPI Version Detection', () => {
     const futureSpec = {
       openapi: '3.2.0',
       info: { title: 'Future API', version: '1.0.0' },
-      paths: {}
+      paths: {},
     };
 
-    const result = validateOpenAPI(futureSpec, { allowFutureOASVersions: true });
+    const result = validateOpenAPI(futureSpec, {
+      allowFutureOASVersions: true,
+    });
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
   });
@@ -460,7 +466,7 @@ describe('OpenAPI Version Detection', () => {
     const futureSpec = {
       openapi: '3.2.0',
       info: { title: 'Future API', version: '1.0.0' },
-      paths: {}
+      paths: {},
     };
 
     const result = validateOpenAPI(futureSpec);
@@ -480,9 +486,9 @@ describe('OpenAPI Version Detection', () => {
       openapi: 'invalid-version',
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
-      paths: {}
+      paths: {},
     };
 
     const result = validateOpenAPI(specWithInvalidVersion);
@@ -496,23 +502,25 @@ describe('OpenAPI Version Detection', () => {
       openapi: 123, // Number instead of string
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
-      paths: {}
+      paths: {},
     };
 
     const result = validateOpenAPI(specWithInvalidVersion);
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
-    expect(result.errors?.issues[0].message).toContain('missing or invalid openapi version');
+    expect(result.errors?.issues[0].message).toContain(
+      'missing or invalid openapi version'
+    );
   });
 });
 
 describe('Validator Error Handling', () => {
   test('handles non-object inputs gracefully', () => {
     const inputs = [null, undefined, 42, 'string', true, []];
-    
-    inputs.forEach(input => {
+
+    inputs.forEach((input) => {
       const result = validateOpenAPI(input);
       expect(result.valid).toBe(false);
       expect(result.errors).toBeDefined();
@@ -524,10 +532,10 @@ describe('Validator Error Handling', () => {
       openapi: '3.0.0',
       // Missing required 'info' field
       paths: {
-        '/test': 'not-an-object' // Invalid path item
-      }
+        '/test': 'not-an-object', // Invalid path item
+      },
     };
-    
+
     const result = validateOpenAPI(malformed);
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
@@ -542,14 +550,14 @@ describe('Validator Error Handling', () => {
           get: {
             responses: {
               '200': {
-                $ref: '#/components/schemas/NonExistent'
-              }
-            }
-          }
-        }
-      }
+                $ref: '#/components/schemas/NonExistent',
+              },
+            },
+          },
+        },
+      },
     };
-    
+
     const result = validateOpenAPI(specWithBadRef, { strict: true });
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
@@ -558,12 +566,12 @@ describe('Validator Error Handling', () => {
 
 describe('Version Detection', () => {
   test('handles version 3.0.x correctly', () => {
-    ['3.0.0', '3.0.1', '3.0.3'].forEach(version => {
+    ['3.0.0', '3.0.1', '3.0.3'].forEach((version) => {
       const doc = {
         openapi: version,
-        info: { 
-          title: 'Test API', 
-          version: '1.0.0' 
+        info: {
+          title: 'Test API',
+          version: '1.0.0',
         },
         paths: {
           '/test': {
@@ -573,29 +581,29 @@ describe('Version Detection', () => {
                   description: 'OK',
                   content: {
                     'application/json': {
-                      schema: { 
+                      schema: {
                         type: 'object',
                         properties: {
-                          message: { type: 'string' }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
+                          message: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
         components: {
           schemas: {
             Test: {
               type: 'object',
               properties: {
-                id: { type: 'string' }
-              }
-            }
-          }
-        }
+                id: { type: 'string' },
+              },
+            },
+          },
+        },
       };
       const result = validateOpenAPI(doc);
       expect(result.valid).toBe(true);
@@ -603,12 +611,12 @@ describe('Version Detection', () => {
   });
 
   test('handles version 3.1.x correctly', () => {
-    ['3.1.0', '3.1.1'].forEach(version => {
+    ['3.1.0', '3.1.1'].forEach((version) => {
       const doc = {
         openapi: version,
         info: { title: 'Test API', version: '1.0.0' },
         paths: {},
-        jsonSchemaDialect: 'https://spec.openapis.org/oas/3.1/dialect/base'
+        jsonSchemaDialect: 'https://spec.openapis.org/oas/3.1/dialect/base',
       };
       const result = validateOpenAPI(doc);
       expect(result.valid).toBe(true);
@@ -616,11 +624,11 @@ describe('Version Detection', () => {
   });
 
   test('rejects invalid versions', () => {
-    ['2.0', '4.0.0', '3.2.0', 'invalid'].forEach(version => {
+    ['2.0', '4.0.0', '3.2.0', 'invalid'].forEach((version) => {
       const doc = {
         openapi: version,
         info: { title: 'Test API', version: '1.0.0' },
-        paths: {}
+        paths: {},
       };
       const result = validateOpenAPI(doc, { allowFutureOASVersions: false });
       expect(result.valid).toBe(false);
@@ -638,10 +646,10 @@ describe('Rate Limit Header Validation', () => {
         '/test': {
           get: {
             responses: {
-              '200': { $ref: '#/components/responses/StandardResponse' }
-            }
-          }
-        }
+              '200': { $ref: '#/components/responses/StandardResponse' },
+            },
+          },
+        },
       },
       components: {
         responses: {
@@ -650,25 +658,25 @@ describe('Rate Limit Header Validation', () => {
             headers: {
               'X-RateLimit-Limit': {
                 description: 'Rate limit per hour',
-                schema: { type: 'integer' }
+                schema: { type: 'integer' },
               },
               'X-RateLimit-Remaining': {
                 description: 'Remaining requests',
-                schema: { type: 'integer' }
+                schema: { type: 'integer' },
               },
               'X-RateLimit-Reset': {
                 description: 'Time until reset',
-                schema: { type: 'integer' }
-              }
-            }
-          }
-        }
-      }
+                schema: { type: 'integer' },
+              },
+            },
+          },
+        },
+      },
     };
 
-    const result = validateOpenAPI(spec, { 
+    const result = validateOpenAPI(spec, {
       strict: true,
-      strictRules: { requireRateLimitHeaders: true }
+      strictRules: { requireRateLimitHeaders: true },
     });
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
@@ -680,7 +688,7 @@ describe('Rate Limit Header Validation', () => {
       openapi: '3.0.0',
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/test': {
@@ -690,18 +698,18 @@ describe('Rate Limit Header Validation', () => {
                 description: 'OK',
                 headers: {
                   // Missing required rate limit headers
-                }
-              }
-            }
-          }
-        }
-      }
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     // Test with both strict mode and requireRateLimitHeaders
-    const result = validateOpenAPI(spec, { 
-      strict: true, 
-      strictRules: { requireRateLimitHeaders: true } 
+    const result = validateOpenAPI(spec, {
+      strict: true,
+      strictRules: { requireRateLimitHeaders: true },
     });
 
     expect(result.valid).toBe(false);
@@ -715,7 +723,7 @@ describe('Rate Limit Header Validation', () => {
       openapi: '3.0.0',
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/test': {
@@ -725,18 +733,18 @@ describe('Rate Limit Header Validation', () => {
                 description: 'OK',
                 headers: {
                   // Missing required rate limit headers
-                }
-              }
-            }
-          }
-        }
-      }
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     // Test with strict mode off
-    const result = validateOpenAPI(spec, { 
-      strict: false, 
-      strictRules: { requireRateLimitHeaders: true } 
+    const result = validateOpenAPI(spec, {
+      strict: false,
+      strictRules: { requireRateLimitHeaders: true },
     });
 
     expect(result.valid).toBe(true);
@@ -759,11 +767,11 @@ describe('Validator Edge Cases', () => {
             properties: {
               op: { type: 'string', enum: ['create', 'update', 'delete'] },
               path: { type: 'string' },
-              value: { type: 'object', additionalProperties: true }
-            }
-          }
-        }
-      }
+              value: { type: 'object', additionalProperties: true },
+            },
+          },
+        },
+      },
     };
 
     const bulkResponseShape = {
@@ -778,11 +786,11 @@ describe('Validator Edge Cases', () => {
             properties: {
               status: { type: 'integer' },
               path: { type: 'string' },
-              error: { type: 'string' }
-            }
-          }
-        }
-      }
+              error: { type: 'string' },
+            },
+          },
+        },
+      },
     };
 
     const spec = {
@@ -795,28 +803,31 @@ describe('Validator Edge Cases', () => {
               required: true,
               content: {
                 'application/json': {
-                  schema: bulkRequestShape
-                }
-              }
+                  schema: bulkRequestShape,
+                },
+              },
             },
             responses: {
               '200': {
                 description: 'Bulk operation results',
                 content: {
                   'application/json': {
-                    schema: bulkResponseShape
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    schema: bulkResponseShape,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec);
     if (!result.valid) {
-      console.log('Validation errors:', JSON.stringify(result.errors?.issues, null, 2));
+      console.log(
+        'Validation errors:',
+        JSON.stringify(result.errors?.issues, null, 2)
+      );
     }
     expect(result.valid).toBe(true);
   });
@@ -844,19 +855,19 @@ describe('API Pattern Error Handling', () => {
                           type: 'object',
                           // Completely invalid operation object
                           properties: {
-                            op: { 
+                            op: {
                               type: 'string',
-                              enum: ['invalid'] // Invalid enum value
+                              enum: ['invalid'], // Invalid enum value
                             },
                             // Missing required path property
-                            value: 'not-an-object' // Invalid value type
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+                            value: 'not-an-object', // Invalid value type
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
             responses: {
               '200': {
@@ -867,21 +878,21 @@ describe('API Pattern Error Handling', () => {
                       type: 'object',
                       properties: {
                         results: {
-                          type: 'string' // Invalid type, should be array
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                          type: 'string', // Invalid type, should be array
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
-    const result = validateOpenAPI(invalidSpec, { 
-      strict: true // Enable strict validation
+    const result = validateOpenAPI(invalidSpec, {
+      strict: true, // Enable strict validation
     });
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
@@ -905,14 +916,14 @@ describe('API Pattern Error Handling', () => {
               content: {
                 'text/plain': {
                   schema: {
-                    type: 'string'
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    type: 'string',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(invalidSpec);
@@ -932,12 +943,12 @@ describe('API Pattern Error Handling', () => {
               content: {
                 'application/json': {
                   // Missing schema
-                }
-              }
-            }
-          }
-        }
-      }
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(invalidSpec);
@@ -951,7 +962,7 @@ describe('API Pattern Error Handling', () => {
       openapi: '3.0.0',
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/resources/bulk': {
@@ -969,22 +980,25 @@ describe('API Pattern Error Handling', () => {
                           type: 'object',
                           required: ['op', 'path'],
                           properties: {
-                            op: { type: 'string', enum: ['create', 'update', 'delete'] },
+                            op: {
+                              type: 'string',
+                              enum: ['create', 'update', 'delete'],
+                            },
                             path: { type: 'string' },
-                            value: { 
+                            value: {
                               type: 'object',
                               properties: {
-                                name: { type: 'string' }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                                name: { type: 'string' },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
               },
-              required: true
+              required: true,
             },
             responses: {
               '200': {
@@ -1003,34 +1017,36 @@ describe('API Pattern Error Handling', () => {
                             properties: {
                               status: { type: 'string' },
                               path: { type: 'string' },
-                              error: { type: 'string' }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                              error: { type: 'string' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     // Use non-strict mode to bypass pattern validation
-    const result = validateOpenAPI(specWithBulkResponseSchema, { strict: false });
+    const result = validateOpenAPI(specWithBulkResponseSchema, {
+      strict: false,
+    });
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
   });
-  
+
   test('catches invalid bulk operation response schema', () => {
     // This test verifies that an invalid bulk operation schema is caught
     const specWithInvalidBulkResponseSchema = {
       openapi: '3.0.0',
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/resources/bulk': {
@@ -1048,17 +1064,20 @@ describe('API Pattern Error Handling', () => {
                           type: 'object',
                           required: ['op', 'path'],
                           properties: {
-                            op: { type: 'string', enum: ['create', 'update', 'delete'] },
+                            op: {
+                              type: 'string',
+                              enum: ['create', 'update', 'delete'],
+                            },
                             path: { type: 'string' },
-                            value: { type: 'string' } // String instead of object - should cause error
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                            value: { type: 'string' }, // String instead of object - should cause error
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
               },
-              required: true
+              required: true,
             },
             responses: {
               '200': {
@@ -1069,32 +1088,35 @@ describe('API Pattern Error Handling', () => {
                       type: 'object',
                       // Missing required 'results' field
                       properties: {
-                        invalidResults: { // Wrong property name
+                        invalidResults: {
+                          // Wrong property name
                           type: 'array',
                           items: {
                             type: 'object',
                             properties: {
                               status: { type: 'number' }, // Should be string
-                              path: { type: 'string' }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                              path: { type: 'string' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     // Force strict mode validation with an existing API pattern
-    const result = validateOpenAPI(specWithInvalidBulkResponseSchema, { strict: true });
+    const result = validateOpenAPI(specWithInvalidBulkResponseSchema, {
+      strict: true,
+    });
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
-    
+
     // Log the validation issues to debug
     console.log('Validation issues:', result.errors?.issues);
   });
@@ -1104,7 +1126,7 @@ describe('API Pattern Error Handling', () => {
       openapi: '3.0.0',
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/resources': {
@@ -1113,59 +1135,61 @@ describe('API Pattern Error Handling', () => {
               {
                 name: 'page',
                 in: 'query',
-                schema: { type: 'integer', minimum: 1 }
+                schema: { type: 'integer', minimum: 1 },
               },
               {
                 name: 'per_page',
                 in: 'query',
-                schema: { type: 'integer', minimum: 1 }
+                schema: { type: 'integer', minimum: 1 },
               },
               {
                 name: 'sort',
                 in: 'query',
-                schema: { type: 'string', enum: ['asc', 'desc'] }
-              }
+                schema: { type: 'string', enum: ['asc', 'desc'] },
+              },
             ],
             responses: {
               '200': {
                 description: 'Paginated results',
                 headers: {
                   'X-Total-Count': {
-                    schema: { type: 'integer' }
+                    schema: { type: 'integer' },
                   },
                   'X-Page': {
-                    schema: { type: 'integer' }
+                    schema: { type: 'integer' },
                   },
                   'X-Per-Page': {
-                    schema: { type: 'integer' }
+                    schema: { type: 'integer' },
                   },
                   'X-Total-Pages': {
-                    schema: { type: 'integer' }
-                  }
+                    schema: { type: 'integer' },
+                  },
                 },
                 content: {
                   'application/json': {
                     schema: {
                       type: 'array',
-                      items: { 
+                      items: {
                         type: 'object',
                         properties: {
                           id: { type: 'string' },
-                          name: { type: 'string' }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                          name: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     // Use non-strict mode to bypass pattern validation
-    const result = validateOpenAPI(specWithPaginationHeaders, { strict: false });
+    const result = validateOpenAPI(specWithPaginationHeaders, {
+      strict: false,
+    });
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
   });
@@ -1175,7 +1199,7 @@ describe('API Pattern Error Handling', () => {
       openapi: '3.0.0',
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/resources': {
@@ -1184,18 +1208,18 @@ describe('API Pattern Error Handling', () => {
               {
                 name: 'page',
                 in: 'query',
-                schema: { type: 'object' } // Should be integer
+                schema: { type: 'object' }, // Should be integer
               },
               {
                 name: 'per_page',
                 in: 'query',
-                schema: { type: 'object' } // Should be integer
+                schema: { type: 'object' }, // Should be integer
               },
               {
                 name: 'sort',
                 in: 'query',
-                schema: { type: 'object' } // Should be string enum
-              }
+                schema: { type: 'object' }, // Should be string enum
+              },
             ],
             responses: {
               '200': {
@@ -1205,21 +1229,21 @@ describe('API Pattern Error Handling', () => {
                   'application/json': {
                     schema: {
                       type: 'array',
-                      items: { type: 'object' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                      items: { type: 'object' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithInvalidPaginationHeaders);
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
-    
+
     // Log the validation issues to debug
     console.log('Validation issues:', result.errors?.issues);
   });
@@ -1238,15 +1262,15 @@ describe('Reference Validation', () => {
                 content: {
                   'application/json': {
                     schema: {
-                      $ref: '#/components/schemas/NonExistentModel'
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                      $ref: '#/components/schemas/NonExistentModel',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1264,10 +1288,10 @@ describe('Reference Validation', () => {
           User: {
             type: 'object',
             properties: {
-              profile: { $ref: '#/components/schemas/Profile' }
-            }
-          }
-        }
+              profile: { $ref: '#/components/schemas/Profile' },
+            },
+          },
+        },
       },
       paths: {
         '/users': {
@@ -1276,14 +1300,14 @@ describe('Reference Validation', () => {
               '200': {
                 content: {
                   'application/json': {
-                    schema: { $ref: '#/components/schemas/User' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    schema: { $ref: '#/components/schemas/User' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1301,12 +1325,12 @@ describe('Reference Validation', () => {
           get: {
             responses: {
               '200': {
-                $ref: '#/components/responses/SuccessResponse'
-              }
-            }
-          }
-        }
-      }
+                $ref: '#/components/responses/SuccessResponse',
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1326,27 +1350,27 @@ describe('Schema Composition Keywords', () => {
           Pet: {
             oneOf: [
               { $ref: '#/components/schemas/Cat' },
-              { $ref: '#/components/schemas/Dog' }
-            ]
+              { $ref: '#/components/schemas/Dog' },
+            ],
           },
           Cat: {
             type: 'object',
             required: ['type', 'name'],
             properties: {
               type: { type: 'string', enum: ['cat'] },
-              name: { type: 'string' }
-            }
+              name: { type: 'string' },
+            },
           },
           Dog: {
             type: 'object',
             required: ['type', 'name'],
             properties: {
               type: { type: 'string', enum: ['dog'] },
-              name: { type: 'string' }
-            }
-          }
-        }
-      }
+              name: { type: 'string' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1366,20 +1390,20 @@ describe('Schema Composition Keywords', () => {
               {
                 type: 'object',
                 properties: {
-                  details: { type: 'string' }
-                }
-              }
-            ]
+                  details: { type: 'string' },
+                },
+              },
+            ],
           },
           BaseError: {
             type: 'object',
             properties: {
               code: { type: 'integer' },
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1399,20 +1423,20 @@ describe('Schema Composition Keywords', () => {
                 type: 'object',
                 properties: {
                   type: { type: 'string', enum: ['string'] },
-                  value: { type: 'string' }
-                }
+                  value: { type: 'string' },
+                },
               },
               {
                 type: 'object',
                 properties: {
                   type: { type: 'string', enum: ['number'] },
-                  value: { type: 'number' }
-                }
-              }
-            ]
-          }
-        }
-      }
+                  value: { type: 'number' },
+                },
+              },
+            ],
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1431,30 +1455,30 @@ describe('Discriminator Validation', () => {
           Pet: {
             oneOf: [
               { $ref: '#/components/schemas/Cat' },
-              { $ref: '#/components/schemas/Dog' }
+              { $ref: '#/components/schemas/Dog' },
             ],
             discriminator: {
-              propertyName: 'type'
-            }
+              propertyName: 'type',
+            },
           },
           Cat: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['cat'] },
-              meow: { type: 'boolean' }
-            }
+              meow: { type: 'boolean' },
+            },
           },
           Dog: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['dog'] },
-              bark: { type: 'boolean' }
-            }
-          }
-        }
-      }
+              bark: { type: 'boolean' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1471,30 +1495,30 @@ describe('Discriminator Validation', () => {
           Response: {
             anyOf: [
               { $ref: '#/components/schemas/Success' },
-              { $ref: '#/components/schemas/Error' }
+              { $ref: '#/components/schemas/Error' },
             ],
             discriminator: {
-              propertyName: 'status'
-            }
+              propertyName: 'status',
+            },
           },
           Success: {
             type: 'object',
             required: ['status'],
             properties: {
               status: { type: 'string', enum: ['success'] },
-              data: { type: 'object' }
-            }
+              data: { type: 'object' },
+            },
           },
           Error: {
             type: 'object',
             required: ['status'],
             properties: {
               status: { type: 'string', enum: ['error'] },
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1511,34 +1535,34 @@ describe('Discriminator Validation', () => {
           ApiResponse: {
             anyOf: [
               { $ref: '#/components/schemas/SuccessResponse' },
-              { $ref: '#/components/schemas/ErrorResponse' }
+              { $ref: '#/components/schemas/ErrorResponse' },
             ],
             discriminator: {
               propertyName: 'type',
               mapping: {
                 ok: '#/components/schemas/SuccessResponse',
-                fail: '#/components/schemas/ErrorResponse'
-              }
-            }
+                fail: '#/components/schemas/ErrorResponse',
+              },
+            },
           },
           SuccessResponse: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['ok'] },
-              result: { type: 'object' }
-            }
+              result: { type: 'object' },
+            },
           },
           ErrorResponse: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['fail'] },
-              error: { type: 'string' }
-            }
-          }
-        }
-      }
+              error: { type: 'string' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1555,32 +1579,32 @@ describe('Discriminator Validation', () => {
           Vehicle: {
             oneOf: [
               { $ref: '#/components/schemas/Car' },
-              { $ref: '#/components/schemas/Bike' }
+              { $ref: '#/components/schemas/Bike' },
             ],
             discriminator: {
               propertyName: 'type',
               mapping: {
                 car: '#/components/schemas/Car',
-                bike: '#/components/schemas/Bike'
-              }
-            }
+                bike: '#/components/schemas/Bike',
+              },
+            },
           },
           Car: {
             type: 'object',
             required: ['type'],
             properties: {
-              type: { type: 'string', enum: ['car'] }
-            }
+              type: { type: 'string', enum: ['car'] },
+            },
           },
           Bike: {
             type: 'object',
             required: ['type'],
             properties: {
-              type: { type: 'string', enum: ['bike'] }
-            }
-          }
-        }
-      }
+              type: { type: 'string', enum: ['bike'] },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1597,30 +1621,30 @@ describe('Discriminator Validation', () => {
           Shape: {
             oneOf: [
               { $ref: '#/components/schemas/Circle' },
-              { $ref: '#/components/schemas/Square' }
+              { $ref: '#/components/schemas/Square' },
             ],
             discriminator: {
-              propertyName: 'type'
-            }
+              propertyName: 'type',
+            },
           },
           Circle: {
             type: 'object',
             // Missing required discriminator property
             properties: {
               type: { type: 'string', enum: ['circle'] },
-              radius: { type: 'number' }
-            }
+              radius: { type: 'number' },
+            },
           },
           Square: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['square'] },
-              sideLength: { type: 'number' }
-            }
-          }
-        }
-      }
+              sideLength: { type: 'number' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1635,26 +1659,24 @@ describe('Discriminator Validation', () => {
       components: {
         schemas: {
           Animal: {
-            oneOf: [
-              { $ref: '#/components/schemas/Lion' }
-            ],
+            oneOf: [{ $ref: '#/components/schemas/Lion' }],
             discriminator: {
               propertyName: 'type',
               mapping: {
                 lion: '#/components/schemas/Lion',
-                tiger: '#/components/schemas/Tiger' // Non-existent schema
-              }
-            }
+                tiger: '#/components/schemas/Tiger', // Non-existent schema
+              },
+            },
           },
           Lion: {
             type: 'object',
             required: ['type'],
             properties: {
-              type: { type: 'string', enum: ['lion'] }
-            }
-          }
-        }
-      }
+              type: { type: 'string', enum: ['lion'] },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -1672,28 +1694,28 @@ describe('Discriminator Validation', () => {
             Pet: {
               oneOf: [
                 { $ref: '#/components/schemas/Cat' },
-                { $ref: '#/components/schemas/Dog' }
+                { $ref: '#/components/schemas/Dog' },
               ],
               discriminator: {
-                propertyName: 'petKind' // property doesn't exist in schemas
-              }
+                propertyName: 'petKind', // property doesn't exist in schemas
+              },
             },
             Cat: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['cat'] }
-              }
+                type: { type: 'string', enum: ['cat'] },
+              },
             },
             Dog: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['dog'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['dog'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -1708,26 +1730,24 @@ describe('Discriminator Validation', () => {
         components: {
           schemas: {
             Shape: {
-              oneOf: [
-                { $ref: '#/components/schemas/Circle' }
-              ],
+              oneOf: [{ $ref: '#/components/schemas/Circle' }],
               discriminator: {
                 propertyName: 'type',
                 mapping: {
                   circle: '#/components/schemas/Circle',
-                  square: '#/components/schemas/Square' // non-existent schema
-                }
-              }
+                  square: '#/components/schemas/Square', // non-existent schema
+                },
+              },
             },
             Circle: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['circle'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['circle'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -1744,28 +1764,28 @@ describe('Discriminator Validation', () => {
             Vehicle: {
               oneOf: [
                 { $ref: '#/components/schemas/Car' },
-                { $ref: '#/components/schemas/Bike' }
+                { $ref: '#/components/schemas/Bike' },
               ],
               discriminator: {
-                propertyName: 'type'
-              }
+                propertyName: 'type',
+              },
             },
             Car: {
               type: 'object',
               // type is not in required array
               properties: {
-                type: { type: 'string', enum: ['car'] }
-              }
+                type: { type: 'string', enum: ['car'] },
+              },
             },
             Bike: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['bike'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['bike'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -1780,25 +1800,23 @@ describe('Discriminator Validation', () => {
         components: {
           schemas: {
             Result: {
-              oneOf: [
-                { $ref: '#/components/schemas/Success' }
-              ],
+              oneOf: [{ $ref: '#/components/schemas/Success' }],
               discriminator: {
                 propertyName: 'status',
                 mapping: {
-                  success: 'invalid-reference-format' // should be #/components/...
-                }
-              }
+                  success: 'invalid-reference-format', // should be #/components/...
+                },
+              },
             },
             Success: {
               type: 'object',
               required: ['status'],
               properties: {
-                status: { type: 'string', enum: ['success'] }
-              }
-            }
-          }
-        }
+                status: { type: 'string', enum: ['success'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -1817,40 +1835,40 @@ describe('Discriminator Validation', () => {
             Response: {
               oneOf: [
                 { $ref: '#/components/schemas/Success' },
-                { 
+                {
                   anyOf: [
                     { $ref: '#/components/schemas/ErrorA' },
-                    { $ref: '#/components/schemas/ErrorB' }
-                  ]
-                }
+                    { $ref: '#/components/schemas/ErrorB' },
+                  ],
+                },
               ],
               discriminator: {
-                propertyName: 'type'
-              }
+                propertyName: 'type',
+              },
             },
             Success: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['success'] }
-              }
+                type: { type: 'string', enum: ['success'] },
+              },
             },
             ErrorA: {
               type: 'object',
               required: ['kind'], // different discriminator property
               properties: {
-                kind: { type: 'string', enum: ['error-a'] }
-              }
+                kind: { type: 'string', enum: ['error-a'] },
+              },
             },
             ErrorB: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['error-b'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['error-b'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -1867,27 +1885,28 @@ describe('Discriminator Validation', () => {
             Animal: {
               anyOf: [
                 { $ref: '#/components/schemas/Cat' },
-                { $ref: '#/components/schemas/Dog' }
+                { $ref: '#/components/schemas/Dog' },
               ],
               discriminator: {
-                propertyName: 'species'
-              }
+                propertyName: 'species',
+              },
             },
             Cat: {
               type: 'object',
               required: ['species'], // required here
               properties: {
-                species: { type: 'string', enum: ['cat'] }
-              }
+                species: { type: 'string', enum: ['cat'] },
+              },
             },
             Dog: {
               type: 'object',
-              properties: { // not required here
-                species: { type: 'string', enum: ['dog'] }
-              }
-            }
-          }
-        }
+              properties: {
+                // not required here
+                species: { type: 'string', enum: ['dog'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -1904,33 +1923,33 @@ describe('Discriminator Validation', () => {
             Shape: {
               oneOf: [
                 { $ref: '#/components/schemas/Circle' },
-                { $ref: '#/components/schemas/Square' }
+                { $ref: '#/components/schemas/Square' },
               ],
               discriminator: {
                 propertyName: 'type',
                 mapping: {
                   circle: '#/components/schemas/Circle', // valid
                   square: 'invalid-reference', // invalid
-                  triangle: '#/components/schemas/Triangle' // non-existent
-                }
-              }
+                  triangle: '#/components/schemas/Triangle', // non-existent
+                },
+              },
             },
             Circle: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['circle'] }
-              }
+                type: { type: 'string', enum: ['circle'] },
+              },
             },
             Square: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['square'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['square'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -1947,11 +1966,11 @@ describe('Discriminator Validation', () => {
             Entity: {
               oneOf: [
                 { $ref: '#/components/schemas/Person' },
-                { $ref: '#/components/schemas/Organization' }
+                { $ref: '#/components/schemas/Organization' },
               ],
               discriminator: {
-                propertyName: 'entityType'
-              }
+                propertyName: 'entityType',
+              },
             },
             Person: {
               type: 'object',
@@ -1962,36 +1981,37 @@ describe('Discriminator Validation', () => {
                 details: {
                   oneOf: [
                     { $ref: '#/components/schemas/Employee' },
-                    { $ref: '#/components/schemas/Customer' }
+                    { $ref: '#/components/schemas/Customer' },
                   ],
                   discriminator: {
-                    propertyName: 'type' // conflicts with parent property
-                  }
-                }
-              }
+                    propertyName: 'type', // conflicts with parent property
+                  },
+                },
+              },
             },
             Organization: {
               type: 'object',
               required: ['entityType'],
               properties: {
-                entityType: { type: 'string', enum: ['org'] }
-              }
+                entityType: { type: 'string', enum: ['org'] },
+              },
             },
             Employee: {
               type: 'object',
-              properties: { // missing required discriminator
-                type: { type: 'string', enum: ['employee'] }
-              }
+              properties: {
+                // missing required discriminator
+                type: { type: 'string', enum: ['employee'] },
+              },
             },
             Customer: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['customer'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['customer'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2010,29 +2030,29 @@ describe('Discriminator Validation', () => {
             Mixed: {
               oneOf: [
                 { $ref: '#/components/schemas/TypeA' },
-                { $ref: '#/components/schemas/TypeB' }
+                { $ref: '#/components/schemas/TypeB' },
               ],
               discriminator: {
                 propertyName: 'type',
-                mapping: {} // empty mapping
-              }
+                mapping: {}, // empty mapping
+              },
             },
             TypeA: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['a'] }
-              }
+                type: { type: 'string', enum: ['a'] },
+              },
             },
             TypeB: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['b'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['b'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2047,26 +2067,24 @@ describe('Discriminator Validation', () => {
         components: {
           schemas: {
             Parent: {
-              oneOf: [
-                { $ref: '#/components/schemas/Child' }
-              ],
+              oneOf: [{ $ref: '#/components/schemas/Child' }],
               discriminator: {
                 propertyName: 'type',
                 mapping: {
                   child: '#/components/schemas/Child',
-                  parent: '#/components/schemas/Parent' // circular reference
-                }
-              }
+                  parent: '#/components/schemas/Parent', // circular reference
+                },
+              },
             },
             Child: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['child'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['child'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2083,28 +2101,28 @@ describe('Discriminator Validation', () => {
             NullableType: {
               oneOf: [
                 { $ref: '#/components/schemas/ValidType' },
-                { $ref: '#/components/schemas/NullType' }
+                { $ref: '#/components/schemas/NullType' },
               ],
               discriminator: {
-                propertyName: 'type'
-              }
+                propertyName: 'type',
+              },
             },
             ValidType: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['valid'] }
-              }
+                type: { type: 'string', enum: ['valid'] },
+              },
             },
             NullType: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: [null] } // invalid enum value
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: [null] }, // invalid enum value
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2121,28 +2139,28 @@ describe('Discriminator Validation', () => {
             Status: {
               oneOf: [
                 { $ref: '#/components/schemas/Success' },
-                { $ref: '#/components/schemas/SuccessAlias' }
+                { $ref: '#/components/schemas/SuccessAlias' },
               ],
               discriminator: {
-                propertyName: 'status'
-              }
+                propertyName: 'status',
+              },
             },
             Success: {
               type: 'object',
               required: ['status'],
               properties: {
-                status: { type: 'string', enum: ['success'] }
-              }
+                status: { type: 'string', enum: ['success'] },
+              },
             },
             SuccessAlias: {
               type: 'object',
               required: ['status'],
               properties: {
-                status: { type: 'string', enum: ['success'] } // duplicate enum value
-              }
-            }
-          }
-        }
+                status: { type: 'string', enum: ['success'] }, // duplicate enum value
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2159,28 +2177,28 @@ describe('Discriminator Validation', () => {
             Result: {
               oneOf: [
                 { $ref: '#/components/schemas/Success' },
-                { $ref: '#/components/schemas/Error' }
+                { $ref: '#/components/schemas/Error' },
               ],
               discriminator: {
-                propertyName: 'type'
-              }
+                propertyName: 'type',
+              },
             },
             Success: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string' } // missing enum
-              }
+                type: { type: 'string' }, // missing enum
+              },
             },
             Error: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['error'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['error'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2199,11 +2217,11 @@ describe('Discriminator Validation', () => {
             Level1: {
               oneOf: [
                 { $ref: '#/components/schemas/Level2A' },
-                { $ref: '#/components/schemas/Level2B' }
+                { $ref: '#/components/schemas/Level2B' },
               ],
               discriminator: {
-                propertyName: 'type'
-              }
+                propertyName: 'type',
+              },
             },
             Level2A: {
               type: 'object',
@@ -2213,20 +2231,20 @@ describe('Discriminator Validation', () => {
                 next: {
                   oneOf: [
                     { $ref: '#/components/schemas/Level3A' },
-                    { $ref: '#/components/schemas/Level3B' }
+                    { $ref: '#/components/schemas/Level3B' },
                   ],
                   discriminator: {
-                    propertyName: 'type'
-                  }
-                }
-              }
+                    propertyName: 'type',
+                  },
+                },
+              },
             },
             Level2B: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['level2b'] }
-              }
+                type: { type: 'string', enum: ['level2b'] },
+              },
             },
             Level3A: {
               type: 'object',
@@ -2236,20 +2254,20 @@ describe('Discriminator Validation', () => {
                 next: {
                   oneOf: [
                     { $ref: '#/components/schemas/Level4A' },
-                    { $ref: '#/components/schemas/Level4B' }
+                    { $ref: '#/components/schemas/Level4B' },
                   ],
                   discriminator: {
-                    propertyName: 'type'
-                  }
-                }
-              }
+                    propertyName: 'type',
+                  },
+                },
+              },
             },
             Level3B: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['level3b'] }
-              }
+                type: { type: 'string', enum: ['level3b'] },
+              },
             },
             Level4A: {
               type: 'object',
@@ -2259,37 +2277,37 @@ describe('Discriminator Validation', () => {
                 next: {
                   oneOf: [
                     { $ref: '#/components/schemas/Level5A' },
-                    { $ref: '#/components/schemas/Level5B' }
+                    { $ref: '#/components/schemas/Level5B' },
                   ],
                   discriminator: {
-                    propertyName: 'type'
-                  }
-                }
-              }
+                    propertyName: 'type',
+                  },
+                },
+              },
             },
             Level4B: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['level4b'] }
-              }
+                type: { type: 'string', enum: ['level4b'] },
+              },
             },
             Level5A: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['level5a'] }
-              }
+                type: { type: 'string', enum: ['level5a'] },
+              },
             },
             Level5B: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['level5b'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['level5b'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2307,11 +2325,11 @@ describe('Discriminator Validation', () => {
               oneOf: [
                 { $ref: '#/components/schemas/BranchA' },
                 { $ref: '#/components/schemas/BranchB' },
-                { $ref: '#/components/schemas/BranchC' }
+                { $ref: '#/components/schemas/BranchC' },
               ],
               discriminator: {
-                propertyName: 'type'
-              }
+                propertyName: 'type',
+              },
             },
             BranchA: {
               type: 'object',
@@ -2321,13 +2339,13 @@ describe('Discriminator Validation', () => {
                 subBranch: {
                   oneOf: [
                     { $ref: '#/components/schemas/SubBranchA1' },
-                    { $ref: '#/components/schemas/SubBranchA2' }
+                    { $ref: '#/components/schemas/SubBranchA2' },
                   ],
                   discriminator: {
-                    propertyName: 'subType'
-                  }
-                }
-              }
+                    propertyName: 'subType',
+                  },
+                },
+              },
             },
             BranchB: {
               type: 'object',
@@ -2337,13 +2355,13 @@ describe('Discriminator Validation', () => {
                 subBranch: {
                   oneOf: [
                     { $ref: '#/components/schemas/SubBranchB1' },
-                    { $ref: '#/components/schemas/SubBranchB2' }
+                    { $ref: '#/components/schemas/SubBranchB2' },
                   ],
                   discriminator: {
-                    propertyName: 'subType'
-                  }
-                }
-              }
+                    propertyName: 'subType',
+                  },
+                },
+              },
             },
             BranchC: {
               type: 'object',
@@ -2353,59 +2371,59 @@ describe('Discriminator Validation', () => {
                 subBranch: {
                   oneOf: [
                     { $ref: '#/components/schemas/SubBranchC1' },
-                    { $ref: '#/components/schemas/SubBranchC2' }
+                    { $ref: '#/components/schemas/SubBranchC2' },
                   ],
                   discriminator: {
-                    propertyName: 'subType'
-                  }
-                }
-              }
+                    propertyName: 'subType',
+                  },
+                },
+              },
             },
             // Pre-define all sub-branch schemas
             SubBranchA1: {
               type: 'object',
               required: ['subType'],
               properties: {
-                subType: { type: 'string', enum: ['sub-a1'] }
-              }
+                subType: { type: 'string', enum: ['sub-a1'] },
+              },
             },
             SubBranchA2: {
               type: 'object',
               required: ['subType'],
               properties: {
-                subType: { type: 'string', enum: ['sub-a2'] }
-              }
+                subType: { type: 'string', enum: ['sub-a2'] },
+              },
             },
             SubBranchB1: {
               type: 'object',
               required: ['subType'],
               properties: {
-                subType: { type: 'string', enum: ['sub-b1'] }
-              }
+                subType: { type: 'string', enum: ['sub-b1'] },
+              },
             },
             SubBranchB2: {
               type: 'object',
               required: ['subType'],
               properties: {
-                subType: { type: 'string', enum: ['sub-b2'] }
-              }
+                subType: { type: 'string', enum: ['sub-b2'] },
+              },
             },
             SubBranchC1: {
               type: 'object',
               required: ['subType'],
               properties: {
-                subType: { type: 'string', enum: ['sub-c1'] }
-              }
+                subType: { type: 'string', enum: ['sub-c1'] },
+              },
             },
             SubBranchC2: {
               type: 'object',
               required: ['subType'],
               properties: {
-                subType: { type: 'string', enum: ['sub-c2'] }
-              }
-            }
-          }
-        }
+                subType: { type: 'string', enum: ['sub-c2'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2423,11 +2441,11 @@ describe('Discriminator Validation', () => {
               oneOf: [
                 { $ref: '#/components/schemas/DeepBranch' },
                 { $ref: '#/components/schemas/WideBranch' },
-                { $ref: '#/components/schemas/SimpleBranch' }
+                { $ref: '#/components/schemas/SimpleBranch' },
               ],
               discriminator: {
-                propertyName: 'type'
-              }
+                propertyName: 'type',
+              },
             },
             // Deep nested branch
             DeepBranch: {
@@ -2436,14 +2454,12 @@ describe('Discriminator Validation', () => {
               properties: {
                 type: { type: 'string', enum: ['deep'] },
                 next: {
-                  oneOf: [
-                    { $ref: '#/components/schemas/DeepLevel2' }
-                  ],
+                  oneOf: [{ $ref: '#/components/schemas/DeepLevel2' }],
                   discriminator: {
-                    propertyName: 'level'
-                  }
-                }
-              }
+                    propertyName: 'level',
+                  },
+                },
+              },
             },
             DeepLevel2: {
               type: 'object',
@@ -2451,21 +2467,19 @@ describe('Discriminator Validation', () => {
               properties: {
                 level: { type: 'string', enum: ['level2'] },
                 next: {
-                  oneOf: [
-                    { $ref: '#/components/schemas/DeepLevel3' }
-                  ],
+                  oneOf: [{ $ref: '#/components/schemas/DeepLevel3' }],
                   discriminator: {
-                    propertyName: 'level'
-                  }
-                }
-              }
+                    propertyName: 'level',
+                  },
+                },
+              },
             },
             DeepLevel3: {
               type: 'object',
               required: ['level'],
               properties: {
-                level: { type: 'string', enum: ['level3'] }
-              }
+                level: { type: 'string', enum: ['level3'] },
+              },
             },
             // Wide branch with multiple options
             WideBranch: {
@@ -2478,52 +2492,52 @@ describe('Discriminator Validation', () => {
                     { $ref: '#/components/schemas/OptionA' },
                     { $ref: '#/components/schemas/OptionB' },
                     { $ref: '#/components/schemas/OptionC' },
-                    { $ref: '#/components/schemas/OptionD' }
+                    { $ref: '#/components/schemas/OptionD' },
                   ],
                   discriminator: {
-                    propertyName: 'option'
-                  }
-                }
-              }
+                    propertyName: 'option',
+                  },
+                },
+              },
             },
             OptionA: {
               type: 'object',
               required: ['option'],
               properties: {
-                option: { type: 'string', enum: ['a'] }
-              }
+                option: { type: 'string', enum: ['a'] },
+              },
             },
             OptionB: {
               type: 'object',
               required: ['option'],
               properties: {
-                option: { type: 'string', enum: ['b'] }
-              }
+                option: { type: 'string', enum: ['b'] },
+              },
             },
             OptionC: {
               type: 'object',
               required: ['option'],
               properties: {
-                option: { type: 'string', enum: ['c'] }
-              }
+                option: { type: 'string', enum: ['c'] },
+              },
             },
             OptionD: {
               type: 'object',
               required: ['option'],
               properties: {
-                option: { type: 'string', enum: ['d'] }
-              }
+                option: { type: 'string', enum: ['d'] },
+              },
             },
             // Simple single-level branch
             SimpleBranch: {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['simple'] }
-              }
-            }
-          }
-        }
+                type: { type: 'string', enum: ['simple'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2540,11 +2554,11 @@ describe('Discriminator Validation', () => {
             Root: {
               oneOf: [
                 { $ref: '#/components/schemas/MixedBranchA' },
-                { $ref: '#/components/schemas/MixedBranchB' }
+                { $ref: '#/components/schemas/MixedBranchB' },
               ],
               discriminator: {
-                propertyName: 'type'
-              }
+                propertyName: 'type',
+              },
             },
             MixedBranchA: {
               type: 'object',
@@ -2554,13 +2568,13 @@ describe('Discriminator Validation', () => {
                 data: {
                   anyOf: [
                     { $ref: '#/components/schemas/DataOption1' },
-                    { $ref: '#/components/schemas/DataOption2' }
+                    { $ref: '#/components/schemas/DataOption2' },
                   ],
                   discriminator: {
-                    propertyName: 'dataType'
-                  }
-                }
-              }
+                    propertyName: 'dataType',
+                  },
+                },
+              },
             },
             MixedBranchB: {
               type: 'object',
@@ -2570,44 +2584,44 @@ describe('Discriminator Validation', () => {
                 data: {
                   oneOf: [
                     { $ref: '#/components/schemas/DataOption3' },
-                    { $ref: '#/components/schemas/DataOption4' }
+                    { $ref: '#/components/schemas/DataOption4' },
                   ],
                   discriminator: {
-                    propertyName: 'dataType'
-                  }
-                }
-              }
+                    propertyName: 'dataType',
+                  },
+                },
+              },
             },
             DataOption1: {
               type: 'object',
               required: ['dataType'],
               properties: {
-                dataType: { type: 'string', enum: ['option1'] }
-              }
+                dataType: { type: 'string', enum: ['option1'] },
+              },
             },
             DataOption2: {
               type: 'object',
               required: ['dataType'],
               properties: {
-                dataType: { type: 'string', enum: ['option2'] }
-              }
+                dataType: { type: 'string', enum: ['option2'] },
+              },
             },
             DataOption3: {
               type: 'object',
               required: ['dataType'],
               properties: {
-                dataType: { type: 'string', enum: ['option3'] }
-              }
+                dataType: { type: 'string', enum: ['option3'] },
+              },
             },
             DataOption4: {
               type: 'object',
               required: ['dataType'],
               properties: {
-                dataType: { type: 'string', enum: ['option4'] }
-              }
-            }
-          }
-        }
+                dataType: { type: 'string', enum: ['option4'] },
+              },
+            },
+          },
+        },
       };
 
       const result = validateOpenAPI(spec, { strict: true });
@@ -2628,28 +2642,28 @@ describe('Enhanced Error Reporting', () => {
           Pet: {
             oneOf: [
               { $ref: '#/components/schemas/Cat' },
-              { $ref: '#/components/schemas/Dog' }
+              { $ref: '#/components/schemas/Dog' },
             ],
             discriminator: {
-              propertyName: 'petKind' // Intentionally wrong property
-            }
+              propertyName: 'petKind', // Intentionally wrong property
+            },
           },
           Cat: {
             type: 'object',
             required: ['petType'],
             properties: {
-              petType: { type: 'string', enum: ['cat'] }
-            }
+              petType: { type: 'string', enum: ['cat'] },
+            },
           },
           Dog: {
             type: 'object',
             required: ['petType'],
             properties: {
-              petType: { type: 'string', enum: ['dog'] }
-            }
-          }
-        }
-      }
+              petType: { type: 'string', enum: ['dog'] },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -2659,7 +2673,7 @@ describe('Enhanced Error Reporting', () => {
       expect(result.errors.issues[0]).toMatchObject({
         code: 'invalid_union',
         path: ['components', 'schemas', 'Pet'],
-        message: 'Invalid input'
+        message: 'Invalid input',
       });
     }
   });
@@ -2672,25 +2686,23 @@ describe('Enhanced Error Reporting', () => {
       components: {
         schemas: {
           Result: {
-            oneOf: [
-              { $ref: '#/components/schemas/Success' }
-            ],
+            oneOf: [{ $ref: '#/components/schemas/Success' }],
             discriminator: {
               propertyName: 'status',
               mapping: {
-                success: 'invalid-reference'
-              }
-            }
+                success: 'invalid-reference',
+              },
+            },
           },
           Success: {
             type: 'object',
             required: ['status'],
             properties: {
-              status: { type: 'string', enum: ['success'] }
-            }
-          }
-        }
-      }
+              status: { type: 'string', enum: ['success'] },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -2700,7 +2712,7 @@ describe('Enhanced Error Reporting', () => {
       expect(result.errors.issues[0]).toMatchObject({
         code: 'invalid_union',
         path: ['components', 'schemas', 'Result'],
-        message: 'Invalid input'
+        message: 'Invalid input',
       });
     }
   });
@@ -2713,21 +2725,19 @@ describe('Enhanced Error Reporting', () => {
       components: {
         schemas: {
           Parent: {
-            oneOf: [
-              { $ref: '#/components/schemas/Child' }
-            ],
+            oneOf: [{ $ref: '#/components/schemas/Child' }],
             discriminator: {
-              propertyName: 'type'
-            }
+              propertyName: 'type',
+            },
           },
           Child: {
             type: 'object',
             properties: {
-              type: { type: 'string', enum: ['child'] }
-            }
-          }
-        }
-      }
+              type: { type: 'string', enum: ['child'] },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -2737,7 +2747,7 @@ describe('Enhanced Error Reporting', () => {
       expect(result.errors.issues[0]).toMatchObject({
         code: 'invalid_union',
         path: ['components', 'schemas', 'Parent'],
-        message: 'Invalid input'
+        message: 'Invalid input',
       });
     }
   });
@@ -2752,26 +2762,26 @@ describe('Enhanced Error Reporting', () => {
           Mixed: {
             oneOf: [
               { $ref: '#/components/schemas/TypeA' },
-              { $ref: '#/components/schemas/TypeB' }
+              { $ref: '#/components/schemas/TypeB' },
             ],
             discriminator: {
-              propertyName: 'type'
-            }
+              propertyName: 'type',
+            },
           },
           TypeA: {
             type: 'object',
             properties: {
-              type: { type: 'string' }
-            }
+              type: { type: 'string' },
+            },
           },
           TypeB: {
             type: 'object',
             properties: {
-              type: { type: 'string' }
-            }
-          }
-        }
-      }
+              type: { type: 'string' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -2782,7 +2792,7 @@ describe('Enhanced Error Reporting', () => {
         expect.objectContaining({
           code: 'invalid_union',
           path: ['components', 'schemas', 'Mixed'],
-          message: 'Invalid input'
+          message: 'Invalid input',
         })
       );
     }
@@ -2798,30 +2808,30 @@ describe('Enhanced Error Reporting', () => {
           Response: {
             anyOf: [
               { $ref: '#/components/schemas/Success' },
-              { $ref: '#/components/schemas/Error' }
+              { $ref: '#/components/schemas/Error' },
             ],
             discriminator: {
-              propertyName: 'type'
-            }
+              propertyName: 'type',
+            },
           },
           Success: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['success'] },
-              data: { type: 'object' }
-            }
+              data: { type: 'object' },
+            },
           },
           Error: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['error'] },
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -2831,7 +2841,7 @@ describe('Enhanced Error Reporting', () => {
       expect(result.errors.issues[0]).toMatchObject({
         code: 'invalid_union',
         path: ['components', 'schemas', 'Response'],
-        message: 'Invalid input'
+        message: 'Invalid input',
       });
     }
   });
@@ -2851,24 +2861,24 @@ describe('Enhanced Error Reporting', () => {
                 required: ['type'],
                 properties: {
                   type: { type: 'string', enum: ['validation', 'system'] },
-                  details: { type: 'string' }
-                }
-              }
+                  details: { type: 'string' },
+                },
+              },
             ],
             discriminator: {
-              propertyName: 'type'
-            }
+              propertyName: 'type',
+            },
           },
           BaseError: {
             type: 'object',
             required: ['code'],
             properties: {
               code: { type: 'integer' },
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -2878,7 +2888,7 @@ describe('Enhanced Error Reporting', () => {
       expect(result.errors.issues[0]).toMatchObject({
         code: 'invalid_union',
         path: ['components', 'schemas', 'ErrorResponse'],
-        message: 'Invalid input'
+        message: 'Invalid input',
       });
     }
   });
@@ -2895,41 +2905,41 @@ describe('Enhanced Error Reporting', () => {
               {
                 anyOf: [
                   { $ref: '#/components/schemas/SuccessA' },
-                  { $ref: '#/components/schemas/SuccessB' }
-                ]
+                  { $ref: '#/components/schemas/SuccessB' },
+                ],
               },
-              { $ref: '#/components/schemas/Error' }
+              { $ref: '#/components/schemas/Error' },
             ],
             discriminator: {
-              propertyName: 'type'
-            }
+              propertyName: 'type',
+            },
           },
           SuccessA: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['success-a'] },
-              dataA: { type: 'string' }
-            }
+              dataA: { type: 'string' },
+            },
           },
           SuccessB: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['success-b'] },
-              dataB: { type: 'string' }
-            }
+              dataB: { type: 'string' },
+            },
           },
           Error: {
             type: 'object',
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['error'] },
-              message: { type: 'string' }
-            }
-          }
-        }
-      }
+              message: { type: 'string' },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -2939,7 +2949,7 @@ describe('Enhanced Error Reporting', () => {
       expect(result.errors.issues[0]).toMatchObject({
         code: 'invalid_union',
         path: ['components', 'schemas', 'ApiResponse'],
-        message: 'Invalid input'
+        message: 'Invalid input',
       });
     }
   });
@@ -2951,7 +2961,7 @@ describe('Error Map Handling', () => {
       openapi: '3.0.0',
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/test': {
@@ -2959,18 +2969,18 @@ describe('Error Map Handling', () => {
             responses: {
               '200': {
                 description: 'OK',
-                headers: {} // Missing required headers
-              }
-            }
-          }
-        }
-      }
+                headers: {}, // Missing required headers
+              },
+            },
+          },
+        },
+      },
     };
 
     // Use both strict mode and custom error message for headers
     const result = validateOpenAPI(spec, {
       strict: true,
-      strictRules: { requireRateLimitHeaders: true }
+      strictRules: { requireRateLimitHeaders: true },
     });
 
     expect(result.valid).toBe(false);
@@ -2983,15 +2993,15 @@ describe('Error Map Handling', () => {
       openapi: '3.0.0',
       info: {
         title: 'Test API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/test': {
           get: {
             // Missing required responses field
-          }
-        }
-      }
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec);
@@ -3006,7 +3016,7 @@ describe('Error Map Handling', () => {
     const mockIssue = {
       code: z.ZodIssueCode.custom,
       path: ['unknown', 'path'],
-      message: 'Custom error'
+      message: 'Custom error',
     };
 
     // Create a parser that uses the error map
@@ -3015,7 +3025,10 @@ describe('Error Map Handling', () => {
         if (issue.code === z.ZodIssueCode.custom) {
           switch (issue.path[issue.path.length - 1]) {
             case 'headers':
-              if (options.strict && options.strictRules?.requireRateLimitHeaders) {
+              if (
+                options.strict &&
+                options.strictRules?.requireRateLimitHeaders
+              ) {
                 return { message: issue.message ?? ctx.defaultError };
               }
               return { message: ctx.defaultError };
@@ -3027,10 +3040,13 @@ describe('Error Map Handling', () => {
       };
     };
 
-    const errorMap = createErrorMap({ strict: true, strictRules: { requireRateLimitHeaders: true } });
-    const result = errorMap(mockIssue, { 
+    const errorMap = createErrorMap({
+      strict: true,
+      strictRules: { requireRateLimitHeaders: true },
+    });
+    const result = errorMap(mockIssue, {
       defaultError: 'Default error message',
-      data: {}
+      data: {},
     });
 
     expect(result.message).toBe('Default error message');

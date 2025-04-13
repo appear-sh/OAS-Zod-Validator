@@ -5,22 +5,25 @@ import { getValidationCache } from './cache.js';
 
 /**
  * Verifies that all references in a document point to valid targets
- * 
+ *
  * @param doc - The document to check
  * @param refs - Array to collect found references as strings
  * @throws {ReferenceError} If a reference is invalid or not found
  */
-export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): void {
+export function verifyRefTargets(
+  doc: Record<string, unknown>,
+  refs: string[]
+): void {
   const cache = getValidationCache();
-  
+
   /**
    * Recursively collects all references in an object
-   * 
+   *
    * @param obj - The object to check for references
    */
   const collectRefs = (obj: unknown): void => {
     if (!obj || typeof obj !== 'object') return;
-    
+
     if ('$ref' in obj && typeof obj.$ref === 'string') {
       try {
         // Validate ref format
@@ -29,14 +32,14 @@ export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): 
         refs.push(obj.$ref);
       } catch (error) {
         throw new ReferenceError(
-          String(obj.$ref), 
+          String(obj.$ref),
           `Invalid reference format: ${obj.$ref}`,
           { code: ErrorCode.INVALID_REFERENCE }
         );
       }
       return; // Stop recursing after finding a ref
     }
-    
+
     Object.values(obj).forEach(collectRefs);
   };
 
@@ -48,16 +51,16 @@ export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): 
     try {
       // Validate the format again to ensure type safety
       const jsonPointer = createJSONPointer(ref);
-      
+
       // Check if we have this reference target cached
       const cachedTarget = cache.getRefTarget(jsonPointer, doc);
       if (cachedTarget !== undefined) {
         return; // Reference exists in cache
       }
-      
+
       const path = jsonPointer.substring(2).split('/');
       const target = get(doc, path);
-      
+
       if (!target) {
         throw new ReferenceError(
           jsonPointer,
@@ -65,18 +68,16 @@ export function verifyRefTargets(doc: Record<string, unknown>, refs: string[]): 
           { code: ErrorCode.REFERENCE_NOT_FOUND }
         );
       }
-      
+
       // Cache the target for future reference lookups
       cache.setRefTarget(jsonPointer, doc, target);
     } catch (error) {
       if (error instanceof ReferenceError) {
         throw error;
       }
-      throw new ReferenceError(
-        ref,
-        `Invalid reference: ${ref}`,
-        { code: ErrorCode.INVALID_REFERENCE }
-      );
+      throw new ReferenceError(ref, `Invalid reference: ${ref}`, {
+        code: ErrorCode.INVALID_REFERENCE,
+      });
     }
   });
 }

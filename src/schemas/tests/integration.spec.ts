@@ -9,18 +9,18 @@ describe('Integration tests for multiple OAS specs', () => {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const specsDir = path.join(__dirname, 'test-specs');
-  
+
   // Add a static test that will always run
   test('validates basic OpenAPI spec', () => {
     const basicSpec = {
       openapi: '3.0.0',
       info: {
         title: 'Basic API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
-      paths: {}
+      paths: {},
     };
-    
+
     const result = validateOpenAPI(basicSpec);
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
@@ -79,7 +79,7 @@ components:
           type: integer
       required:
         - name
-`
+`,
       };
 
       Object.entries(testSpecs).forEach(([filename, content]) => {
@@ -91,11 +91,15 @@ components:
     });
 
     test('validates all test specs', () => {
-      const testFiles = fs.readdirSync(specsDir).filter(file => {
-        return file.endsWith('.json') || file.endsWith('.yaml') || file.endsWith('.yml');
+      const testFiles = fs.readdirSync(specsDir).filter((file) => {
+        return (
+          file.endsWith('.json') ||
+          file.endsWith('.yaml') ||
+          file.endsWith('.yml')
+        );
       });
 
-      testFiles.forEach(file => {
+      testFiles.forEach((file) => {
         const fullPath = path.join(specsDir, file);
         const fileData = fs.readFileSync(fullPath, 'utf-8');
         let doc: Record<string, unknown>;
@@ -104,15 +108,16 @@ components:
         } else {
           doc = JSON.parse(fileData) as Record<string, unknown>;
         }
-        
-        const isExpectedValid = file.startsWith('valid-') || file.startsWith('valid.');
+
+        const isExpectedValid =
+          file.startsWith('valid-') || file.startsWith('valid.');
         const options = {
           allowFutureOASVersions: file.includes('3.1') || file.includes('3.2'),
           strict: true,
         };
-        
+
         const result = validateOpenAPI(doc, options);
-        
+
         if (isExpectedValid) {
           expect(result.valid).toBe(true);
           expect(result.errors).toBeUndefined();

@@ -1,20 +1,20 @@
-        openapi: 3.1.0
-        info:
-          title: Test API - Missing License and Desc
-          version: 1.0.0
-          contact:
-            name: Test Team
-            email: test@example.com
-          # Intentionally missing license object
-        paths:
-          /hello:
-            get:
-              # Intentionally missing summary
-              responses:
-                '200':
-                  description: OK # Has description
-          /bye:
-            post:
-              summary: Says bye
-              responses:
-                '204': {} # Missing description
+openapi: 3.1.0
+info:
+  title: Test API - Missing License and Desc
+  version: 1.0.0
+  contact:
+    name: Test Team
+    email: test@example.com
+  # Intentionally missing license object
+paths:
+  /hello:
+    get:
+      # Intentionally missing summary
+      responses:
+        '200':
+          description: OK # Has description
+  /bye:
+    post:
+      summary: Says bye
+      responses:
+        '204': {} # Missing description

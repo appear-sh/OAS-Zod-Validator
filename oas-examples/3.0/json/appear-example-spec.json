@@ -1,304 +1,237 @@
 {
-    "openapi": "3.0.3",
-    "info": {
-      "title": "Enterprise Integration Hub",
-      "description": "A comprehensive API hub demonstrating common enterprise integration patterns, analytics tracking, and service management capabilities. Suitable for organizations managing multiple internal and external service integrations.",
-      "version": "1.0.0",
-      "contact": {
-        "name": "API Support", 
-        "email": "api-support@example.com",
-        "url": "https://docs.example.com"
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Enterprise Integration Hub",
+    "description": "A comprehensive API hub demonstrating common enterprise integration patterns, analytics tracking, and service management capabilities. Suitable for organizations managing multiple internal and external service integrations.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "api-support@example.com",
+      "url": "https://docs.example.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v1",
+      "description": "Production API Server"
+    },
+    {
+      "url": "https://api.staging.example.com/v1",
+      "description": "Staging API Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "services",
+      "description": "Service registration and management"
+    },
+    {
+      "name": "analytics",
+      "description": "Usage tracking and performance metrics"
+    },
+    {
+      "name": "auth",
+      "description": "Authentication and authorization management"
+    },
+    {
+      "name": "events",
+      "description": "Event processing and webhooks"
+    }
+  ],
+  "paths": {
+    "/services": {
+      "get": {
+        "tags": ["services"],
+        "summary": "List registered services",
+        "description": "Returns a paginated list of registered services with their current status and metadata.",
+        "operationId": "listServices",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by service status",
+            "schema": {
+              "type": "string",
+              "enum": ["active", "deprecated", "development"]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number for pagination",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceList"
+                }
+              }
+            }
+          }
+        }
       },
-      "license": {
-        "name": "Apache 2.0",
-        "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+      "post": {
+        "tags": ["services"],
+        "summary": "Register new service",
+        "description": "Register a new service in the catalog with its specifications and metadata.",
+        "operationId": "registerService",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceRegistration"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Service successfully registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Service"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input"
+          }
+        }
       }
     },
-    "servers": [
-      {
-        "url": "https://api.example.com/v1",
-        "description": "Production API Server"
-      },
-      {
-        "url": "https://api.staging.example.com/v1", 
-        "description": "Staging API Server"
-      }
-    ],
-    "tags": [
-      {
-        "name": "services",
-        "description": "Service registration and management"
-      },
-      {
-        "name": "analytics",
-        "description": "Usage tracking and performance metrics"
-      },
-      {
-        "name": "auth",
-        "description": "Authentication and authorization management"
-      },
-      {
-        "name": "events",
-        "description": "Event processing and webhooks"
-      }
-    ],
-    "paths": {
-      "/services": {
-        "get": {
-          "tags": ["services"],
-          "summary": "List registered services",
-          "description": "Returns a paginated list of registered services with their current status and metadata.",
-          "operationId": "listServices",
-          "parameters": [
-            {
-              "name": "status",
-              "in": "query",
-              "description": "Filter by service status",
-              "schema": {
-                "type": "string",
-                "enum": ["active", "deprecated", "development"]
-              }
-            },
-            {
-              "name": "page",
-              "in": "query", 
-              "description": "Page number for pagination",
-              "schema": {
-                "type": "integer",
-                "minimum": 1,
-                "default": 1
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Successful operation",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ServiceList"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "post": {
-          "tags": ["services"],
-          "summary": "Register new service",
-          "description": "Register a new service in the catalog with its specifications and metadata.",
-          "operationId": "registerService",
-          "requestBody": {
-            "required": true,
+    "/services/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/id"
+        }
+      ],
+      "get": {
+        "tags": ["services"],
+        "summary": "Get service details",
+        "description": "Retrieve detailed information about a specific service.",
+        "operationId": "getService",
+        "responses": {
+          "200": {
+            "description": "Service details retrieved successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServiceRegistration"
+                  "$ref": "#/components/schemas/Service"
                 }
               }
             }
           },
-          "responses": {
-            "201": {
-              "description": "Service successfully registered",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Service"
-                  }
-                }
-              }
-            },
-            "400": {
-              "description": "Invalid input"
-            }
+          "404": {
+            "description": "Service not found"
           }
         }
       },
-      "/services/{id}": {
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/id"
-          }
-        ],
-        "get": {
-          "tags": ["services"],
-          "summary": "Get service details",
-          "description": "Retrieve detailed information about a specific service.",
-          "operationId": "getService",
-          "responses": {
-            "200": {
-              "description": "Service details retrieved successfully",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Service"
-                  }
-                }
+      "put": {
+        "tags": ["services"],
+        "summary": "Update service",
+        "description": "Replace all service information with the provided data.",
+        "operationId": "updateService",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServiceUpdate"
               }
-            },
-            "404": {
-              "description": "Service not found"
             }
           }
         },
-        "put": {
-          "tags": ["services"],
-          "summary": "Update service",
-          "description": "Replace all service information with the provided data.",
-          "operationId": "updateService",
-          "requestBody": {
-            "required": true,
+        "responses": {
+          "200": {
+            "description": "Service updated successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ServiceUpdate"
+                  "$ref": "#/components/schemas/Service"
                 }
               }
             }
           },
-          "responses": {
-            "200": {
-              "description": "Service updated successfully",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/Service"
-                  }
-                }
-              }
-            },
-            "404": {
-              "description": "Service not found"
-            }
+          "404": {
+            "description": "Service not found"
           }
-        },
-        "delete": {
-          "tags": ["services"],
-          "summary": "Delete service",
-          "description": "Remove a service from the catalog.",
-          "operationId": "deleteService",
-          "responses": {
-            "204": {
-              "description": "Service deleted successfully"
-            },
-            "404": {
-              "description": "Service not found"
-            }
+        }
+      },
+      "delete": {
+        "tags": ["services"],
+        "summary": "Delete service",
+        "description": "Remove a service from the catalog.",
+        "operationId": "deleteService",
+        "responses": {
+          "204": {
+            "description": "Service deleted successfully"
+          },
+          "404": {
+            "description": "Service not found"
           }
-        },
-        "head": {
-          "tags": ["services"],
-          "summary": "Service existence check",
-          "description": "Verify if a service exists and get its metadata without retrieving the body.",
-          "operationId": "checkService",
-          "responses": {
-            "200": {
-              "description": "Service exists"
-            },
-            "404": {
-              "description": "Service not found"
-            }
+        }
+      },
+      "head": {
+        "tags": ["services"],
+        "summary": "Service existence check",
+        "description": "Verify if a service exists and get its metadata without retrieving the body.",
+        "operationId": "checkService",
+        "responses": {
+          "200": {
+            "description": "Service exists"
+          },
+          "404": {
+            "description": "Service not found"
           }
-        },
-        "options": {
-          "tags": ["services"],
-          "summary": "Service options",
-          "description": "Get the allowed HTTP methods and other options for this endpoint.",
-          "operationId": "getServiceOptions",
-          "responses": {
-            "204": {
-              "description": "Options retrieved successfully",
-              "headers": {
-                "Allow": {
-                  "description": "List of allowed HTTP methods",
-                  "schema": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "trace": {
-          "tags": ["services"],
-          "summary": "Trace service request",
-          "description": "Get a diagnostic trace of the request-response cycle for debugging purposes.",
-          "operationId": "traceService",
-          "responses": {
-            "200": {
-              "description": "Trace information retrieved successfully",
-              "content": {
-                "message/http": {
-                  "schema": {
-                    "type": "string"
-                  }
+        }
+      },
+      "options": {
+        "tags": ["services"],
+        "summary": "Service options",
+        "description": "Get the allowed HTTP methods and other options for this endpoint.",
+        "operationId": "getServiceOptions",
+        "responses": {
+          "204": {
+            "description": "Options retrieved successfully",
+            "headers": {
+              "Allow": {
+                "description": "List of allowed HTTP methods",
+                "schema": {
+                  "type": "string"
                 }
               }
             }
           }
         }
       },
-      "/analytics/metrics/{metricId}": {
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/metricId"
-          }
-        ],
-        "get": {
-          "tags": ["analytics"],
-          "summary": "Get service metrics",
-          "description": "Retrieve performance metrics and usage statistics for a specific service.",
-          "operationId": "getServiceMetrics",
-          "parameters": [
-            {
-              "name": "timeframe",
-              "in": "query",
-              "description": "Time period for metrics",
-              "schema": {
-                "type": "string",
-                "enum": ["1h", "24h", "7d", "30d"]
-              }
-            }
-          ],
-          "responses": {
-            "200": {
-              "description": "Metrics retrieved successfully",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/ServiceMetrics"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "/events/subscriptions": {
-        "post": {
-          "tags": ["events"],
-          "summary": "Create event subscription",
-          "description": "Subscribe to events from specific services with custom filtering criteria.",
-          "operationId": "createEventSubscription",
-          "requestBody": {
-            "required": true,
+      "trace": {
+        "tags": ["services"],
+        "summary": "Trace service request",
+        "description": "Get a diagnostic trace of the request-response cycle for debugging purposes.",
+        "operationId": "traceService",
+        "responses": {
+          "200": {
+            "description": "Trace information retrieved successfully",
             "content": {
-              "application/json": {
+              "message/http": {
                 "schema": {
-                  "$ref": "#/components/schemas/EventSubscription"
-                }
-              }
-            }
-          },
-          "responses": {
-            "201": {
-              "description": "Subscription created successfully",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "$ref": "#/components/schemas/EventSubscriptionResponse"
-                  }
+                  "type": "string"
                 }
               }
             }
@@ -306,206 +239,273 @@
         }
       }
     },
-    "components": {
-      "parameters": {
-        "id": {
-          "name": "id",
-          "in": "path",
-          "required": true,
-          "description": "Unique identifier of the service",
-          "schema": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "metricId": {
-          "name": "metricId",
-          "in": "path",
-          "required": true,
-          "description": "Unique identifier for the metrics",
-          "schema": {
-            "type": "string",
-            "format": "uuid"
-          }
+    "/analytics/metrics/{metricId}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/metricId"
         }
-      },
-      "schemas": {
-        "Service": {
-          "type": "object",
-          "required": ["id", "name", "version", "status"],
-          "properties": {
-            "id": {
+      ],
+      "get": {
+        "tags": ["analytics"],
+        "summary": "Get service metrics",
+        "description": "Retrieve performance metrics and usage statistics for a specific service.",
+        "operationId": "getServiceMetrics",
+        "parameters": [
+          {
+            "name": "timeframe",
+            "in": "query",
+            "description": "Time period for metrics",
+            "schema": {
               "type": "string",
-              "format": "uuid"
-            },
-            "name": {
-              "type": "string"
-            },
-            "version": {
-              "type": "string"
-            },
-            "status": {
-              "type": "string",
-              "enum": ["active", "deprecated", "development"]
-            },
-            "description": {
-              "type": "string"
-            },
-            "metadata": {
-              "type": "object",
-              "additionalProperties": true
+              "enum": ["1h", "24h", "7d", "30d"]
             }
           }
-        },
-        "ServiceRegistration": {
-          "type": "object",
-          "required": ["name", "version", "status"],
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "version": {
-              "type": "string"
-            },
-            "status": {
-              "type": "string",
-              "enum": ["active", "deprecated", "development"]
-            },
-            "description": {
-              "type": "string"
-            },
-            "metadata": {
-              "type": "object",
-              "additionalProperties": true
-            }
-          }
-        },
-        "ServiceList": {
-          "type": "object",
-          "required": ["items", "total"],
-          "properties": {
-            "items": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/Service"
+        ],
+        "responses": {
+          "200": {
+            "description": "Metrics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ServiceMetrics"
+                }
               }
-            },
-            "total": {
-              "type": "integer"
-            }
-          }
-        },
-        "ServiceMetrics": {
-          "type": "object",
-          "required": ["serviceId", "timestamp"],
-          "properties": {
-            "serviceId": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "timestamp": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "requestCount": {
-              "type": "integer"
-            },
-            "averageLatency": {
-              "type": "number"
-            },
-            "errorRate": {
-              "type": "number"
-            },
-            "statusCodes": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "integer"
-              }
-            }
-          }
-        },
-        "EventSubscription": {
-          "type": "object",
-          "required": ["serviceId", "eventTypes"],
-          "properties": {
-            "serviceId": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "eventTypes": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "EventSubscriptionResponse": {
-          "type": "object",
-          "required": ["id", "status"],
-          "properties": {
-            "id": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "status": {
-              "type": "string",
-              "enum": ["active", "pending"]
-            }
-          }
-        },
-        "ServiceUpdate": {
-          "type": "object",
-          "required": ["name", "version", "status"],
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "version": {
-              "type": "string"
-            },
-            "status": {
-              "type": "string",
-              "enum": ["active", "deprecated", "development"]
-            },
-            "description": {
-              "type": "string"
-            },
-            "metadata": {
-              "type": "object",
-              "additionalProperties": true
-            }
-          }
-        },
-        "ServicePatch": {
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "version": {
-              "type": "string"
-            },
-            "status": {
-              "type": "string",
-              "enum": ["active", "deprecated", "development"]
-            },
-            "description": {
-              "type": "string"
-            },
-            "metadata": {
-              "type": "object",
-              "additionalProperties": true
             }
           }
         }
-      },
-      "securitySchemes": {
-        "bearerAuth": {
-          "type": "http",
-          "scheme": "bearer",
-          "bearerFormat": "JWT"
+      }
+    },
+    "/events/subscriptions": {
+      "post": {
+        "tags": ["events"],
+        "summary": "Create event subscription",
+        "description": "Subscribe to events from specific services with custom filtering criteria.",
+        "operationId": "createEventSubscription",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventSubscription"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscription created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventSubscriptionResponse"
+                }
+              }
+            }
+          }
         }
       }
     }
+  },
+  "components": {
+    "parameters": {
+      "id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier of the service",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "metricId": {
+        "name": "metricId",
+        "in": "path",
+        "required": true,
+        "description": "Unique identifier for the metrics",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "schemas": {
+      "Service": {
+        "type": "object",
+        "required": ["id", "name", "version", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "deprecated", "development"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ServiceRegistration": {
+        "type": "object",
+        "required": ["name", "version", "status"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "deprecated", "development"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ServiceList": {
+        "type": "object",
+        "required": ["items", "total"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Service"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "ServiceMetrics": {
+        "type": "object",
+        "required": ["serviceId", "timestamp"],
+        "properties": {
+          "serviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "requestCount": {
+            "type": "integer"
+          },
+          "averageLatency": {
+            "type": "number"
+          },
+          "errorRate": {
+            "type": "number"
+          },
+          "statusCodes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "EventSubscription": {
+        "type": "object",
+        "required": ["serviceId", "eventTypes"],
+        "properties": {
+          "serviceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventTypes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "EventSubscriptionResponse": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "pending"]
+          }
+        }
+      },
+      "ServiceUpdate": {
+        "type": "object",
+        "required": ["name", "version", "status"],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "deprecated", "development"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "ServicePatch": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["active", "deprecated", "development"]
+          },
+          "description": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
 }

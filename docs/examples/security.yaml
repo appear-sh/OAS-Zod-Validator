@@ -12,7 +12,7 @@ paths:
   /auth/token:
     post:
       summary: Get OAuth2 token
-      security: []  # No auth required for token endpoint
+      security: [] # No auth required for token endpoint
       requestBody:
         required: true
         content:
@@ -237,4 +237,4 @@ components:
                 type: string
                 enum: [CONFLICT]
               message:
-                type: string 
+                type: string

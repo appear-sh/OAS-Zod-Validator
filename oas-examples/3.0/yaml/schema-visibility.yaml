@@ -8,7 +8,8 @@ servers:
 paths:
   '/':
     post:
-      description: This operation has a `requestBody` with a `readOnly` and a `writeOnly`
+      description:
+        This operation has a `requestBody` with a `readOnly` and a `writeOnly`
         property, as well as a response with the same. `writeOnly` properties should
         show up in the form and `readOnly` properties should show up in response examples.
       requestBody:

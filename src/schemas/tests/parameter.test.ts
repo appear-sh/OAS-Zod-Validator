@@ -8,10 +8,10 @@ describe('Parameter Object Validation', () => {
       in: 'path',
       required: true,
       schema: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     };
-    
+
     expect(() => ParameterObject.parse(param)).not.toThrow();
   });
 
@@ -21,10 +21,10 @@ describe('Parameter Object Validation', () => {
       in: 'query',
       schema: {
         type: 'string',
-        enum: ['active', 'inactive']
-      }
+        enum: ['active', 'inactive'],
+      },
     };
-    
+
     expect(() => ParameterObject.parse(param)).not.toThrow();
   });
 
@@ -35,10 +35,10 @@ describe('Parameter Object Validation', () => {
       required: true,
       schema: {
         type: 'string',
-        pattern: '^\\d+\\.\\d+\\.\\d+$'
-      }
+        pattern: '^\\d+\\.\\d+\\.\\d+$',
+      },
     };
-    
+
     expect(() => ParameterObject.parse(param)).not.toThrow();
   });
 
@@ -47,10 +47,10 @@ describe('Parameter Object Validation', () => {
       name: 'sessionId',
       in: 'cookie',
       schema: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     };
-    
+
     expect(() => ParameterObject.parse(param)).not.toThrow();
   });
 
@@ -60,10 +60,10 @@ describe('Parameter Object Validation', () => {
       in: 'path',
       required: false, // This should fail
       schema: {
-        type: 'string'
-      }
+        type: 'string',
+      },
     };
-    
+
     expect(() => ParameterObject.parse(param)).toThrow();
   });
 
@@ -74,11 +74,11 @@ describe('Parameter Object Validation', () => {
       schema: {
         type: 'object',
         properties: {
-          filter: { type: 'string' }
-        }
-      }
+          filter: { type: 'string' },
+        },
+      },
     };
-    
+
     expect(() => ParameterObject.parse(param)).not.toThrow();
   });
 });

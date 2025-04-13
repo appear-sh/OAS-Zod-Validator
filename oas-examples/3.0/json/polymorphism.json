@@ -341,7 +341,10 @@
                         "properties": {
                           "reason": {
                             "type": "string",
-                            "enum": ["LISTING_TYPE_NOT_INCLUDED", "LISTING_NOT_TOURIST_ACCOMMODATION"]
+                            "enum": [
+                              "LISTING_TYPE_NOT_INCLUDED",
+                              "LISTING_NOT_TOURIST_ACCOMMODATION"
+                            ]
                           },
                           "registration_ownership": {
                             "type": "string",
@@ -357,7 +360,13 @@
                             "type": "string"
                           }
                         },
-                        "required": ["reason", "registration_ownership", "email", "full_name", "identification_number"]
+                        "required": [
+                          "reason",
+                          "registration_ownership",
+                          "email",
+                          "full_name",
+                          "identification_number"
+                        ]
                       }
                     },
                     "required": ["listing_id", "regulatory_body"]
@@ -420,7 +429,12 @@
                             "type": "boolean"
                           }
                         },
-                        "required": ["exemption_reason", "full_name", "email", "attestation_exemption_claim"]
+                        "required": [
+                          "exemption_reason",
+                          "full_name",
+                          "email",
+                          "attestation_exemption_claim"
+                        ]
                       }
                     },
                     "required": ["listing_id", "regulatory_body"]
@@ -454,14 +468,25 @@
                             "type": "boolean"
                           }
                         },
-                        "required": ["permit_number", "email", "full_name", "listing_address", "attestation"]
+                        "required": [
+                          "permit_number",
+                          "email",
+                          "full_name",
+                          "listing_address",
+                          "attestation"
+                        ]
                       },
                       "exemption": {
                         "type": "object",
                         "properties": {
                           "exemption_reason": {
                             "type": "string",
-                            "enum": ["hotel_motel", "bed_breakfast_lodging", "institutional_business", "hospitals"]
+                            "enum": [
+                              "hotel_motel",
+                              "bed_breakfast_lodging",
+                              "institutional_business",
+                              "hospitals"
+                            ]
                           },
                           "listing_address": {
                             "type": "string"
@@ -470,7 +495,11 @@
                             "type": "boolean"
                           }
                         },
-                        "required": ["exemption_reason", "listing_address", "attestation"]
+                        "required": [
+                          "exemption_reason",
+                          "listing_address",
+                          "attestation"
+                        ]
                       }
                     },
                     "required": ["listing_id", "regulatory_body"]
@@ -517,7 +546,11 @@
                         "properties": {
                           "reason": {
                             "type": "string",
-                            "enum": ["listing_not_full_building", "listing_is_shared_room", "other_exemption_reason"]
+                            "enum": [
+                              "listing_not_full_building",
+                              "listing_is_shared_room",
+                              "other_exemption_reason"
+                            ]
                           },
                           "registration_ownership": {
                             "type": "string",
@@ -533,7 +566,13 @@
                             "type": "string"
                           }
                         },
-                        "required": ["reason", "registration_ownership", "email", "full_name", "identification_number"]
+                        "required": [
+                          "reason",
+                          "registration_ownership",
+                          "email",
+                          "full_name",
+                          "identification_number"
+                        ]
                       }
                     },
                     "required": ["listing_id", "regulatory_body"]
@@ -558,7 +597,11 @@
                         "required": ["permit_number"]
                       }
                     },
-                    "required": ["listing_id", "regulatory_body", "registration"]
+                    "required": [
+                      "listing_id",
+                      "regulatory_body",
+                      "registration"
+                    ]
                   },
                   {
                     "title": "Cuba",
@@ -580,7 +623,10 @@
                             "type": "string"
                           }
                         },
-                        "required": ["attestation_entrepreneur", "listing_address"]
+                        "required": [
+                          "attestation_entrepreneur",
+                          "listing_address"
+                        ]
                       }
                     },
                     "required": ["listing_id", "regulatory_body", "affiliation"]
@@ -629,7 +675,11 @@
                         "required": ["listing_type"]
                       }
                     },
-                    "required": ["listing_id", "regulatory_body", "categorization"]
+                    "required": [
+                      "listing_id",
+                      "regulatory_body",
+                      "categorization"
+                    ]
                   }
                 ]
               }
@@ -743,7 +793,10 @@
                 "properties": {
                   "event": {
                     "type": "string",
-                    "oneOf": [{ "description": "oneof one" }, { "description": "oneof two" }]
+                    "oneOf": [
+                      { "description": "oneof one" },
+                      { "description": "oneof two" }
+                    ]
                   }
                 }
               }

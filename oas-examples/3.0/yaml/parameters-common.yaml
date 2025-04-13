@@ -36,7 +36,8 @@ paths:
           description: OK
   '/anything/{id}/{action}':
     summary: '[common] Summary'
-    description: '[common] Description on an operation with **multiple** common path
+    description:
+      '[common] Description on an operation with **multiple** common path
       parameters.'
     parameters:
       - in: path
@@ -62,7 +63,8 @@ paths:
           description: OK
   '/anything/{id}/{action}/{id}':
     summary: '[common] Summary'
-    description: '[common] Description on an operation with **multiple** common path
+    description:
+      '[common] Description on an operation with **multiple** common path
       parameters, one of which is used more than once in the path.'
     parameters:
       - in: path
@@ -86,7 +88,8 @@ paths:
         '200':
           description: OK
   '/anything/{id}/override':
-    summary: This path item has a common parameter that's overridden by the more specific
+    summary:
+      This path item has a common parameter that's overridden by the more specific
       operation.
     parameters:
       - name: id

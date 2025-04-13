@@ -35,7 +35,8 @@ paths:
         '200':
           description: OK
     put:
-      description: This operation is different because it has a circular ref array
+      description:
+        This operation is different because it has a circular ref array
         as a parameter and in its response, but not its request body.
       parameters:
         - name: content

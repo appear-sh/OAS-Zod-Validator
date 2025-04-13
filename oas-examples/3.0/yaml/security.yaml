@@ -201,7 +201,8 @@ paths:
   '/status/401':
     post:
       summary: Forced invalid authentication
-      description: This endpoint requires an authentication header but making any
+      description:
+        This endpoint requires an authentication header but making any
         request to it will forcefully return a 401 status code for invalid auth.
       tags:
         - Other
@@ -230,18 +231,21 @@ components:
     basic:
       type: http
       scheme: basic
-      description: Basic auth that takes a base64'd combination of `user:password`.
+      description:
+        Basic auth that takes a base64'd combination of `user:password`.
         https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#basic-authentication-sample
     bearer:
       type: http
       scheme: bearer
-      description: A bearer token that will be supplied within an `Authentication`
+      description:
+        A bearer token that will be supplied within an `Authentication`
         header as `bearer <token>`. https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#basic-authentication-sample
     bearer_jwt:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: A bearer token that will be supplied within an `Authentication`
+      description:
+        A bearer token that will be supplied within an `Authentication`
         header as `bearer <token>`. In this case, the format of the token is specified
         as JWT. https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#jwt-bearer-sample
     oauth2:
@@ -267,7 +271,8 @@ components:
             write:things: Add things to your account
     oauth2_authorizationCode:
       type: oauth2
-      description: An OAuth 2 security flow that only supports the `authorizationCode`
+      description:
+        An OAuth 2 security flow that only supports the `authorizationCode`
         flow type. https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flows-object
       flows:
         authorizationCode:
@@ -277,7 +282,8 @@ components:
             write:things: Add things to your account
     oauth2_clientCredentials:
       type: oauth2
-      description: An OAuth 2 security flow that only supports the `clientCredentials`
+      description:
+        An OAuth 2 security flow that only supports the `clientCredentials`
         flow type. https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flows-object
       flows:
         clientCredentials:
@@ -286,7 +292,8 @@ components:
             write:things: Add things to your account
     oauth2_implicit:
       type: oauth2
-      description: An OAuth 2 security flow that only supports the `implicit` flow
+      description:
+        An OAuth 2 security flow that only supports the `implicit` flow
         type. https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flows-object
       flows:
         implicit:
@@ -295,7 +302,8 @@ components:
             write:things: Add things to your account
     oauth2_password:
       type: oauth2
-      description: An OAuth 2 security flow that only supports the `password` flow
+      description:
+        An OAuth 2 security flow that only supports the `password` flow
         type. https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#oauth-flows-object
       flows:
         password:

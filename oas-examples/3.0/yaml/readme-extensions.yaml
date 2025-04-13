@@ -228,7 +228,8 @@ paths:
   '/x-samples-languages':
     get:
       operationId: x-readme_samples-languages
-      summary: Control available code sample languages the "x-readme.samples-languages"
+      summary:
+        Control available code sample languages the "x-readme.samples-languages"
         extension
       description: |-
         With an array of languages present in `x-readme.samples-languages` code samples will be generated for only those languages. If not present, it will default to: `curl`, `node`, `ruby`, `javascript`, and `python`.
@@ -261,7 +262,8 @@ paths:
   '/x-proxy-enabled':
     post:
       operationId: x-readme_proxy-enabled
-      summary: Disable funneling requests through our CORS proxy with the "x-readme.proxy-enabled"
+      summary:
+        Disable funneling requests through our CORS proxy with the "x-readme.proxy-enabled"
         extension
       description: |-
         When `x-readme.proxy-enabled` is set to `false` all requests from the interactive API Explorer will be funneled directly to the configured server URL, otherwise they will be piped through our proxy to allow [CORS-enabled](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) requests for you.
@@ -276,7 +278,8 @@ paths:
         proxy-enabled: false
     patch:
       operationId: x-proxy-enabled
-      summary: Disable funneling requests through our CORS proxy with the "x-proxy-enabled"
+      summary:
+        Disable funneling requests through our CORS proxy with the "x-proxy-enabled"
         extension
       description: |-
         When `x-proxy-enabled` is set to `false` all requests from the interactive API Explorer will be funneled directly to the configured server URL, otherwise they will be piped through our proxy to allow [CORS-enabled](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) requests for you.
@@ -293,7 +296,8 @@ paths:
   '/x-metrics-enabled':
     post:
       operationId: x-readme_metrics-enabled
-      summary: Disable tracking requests through our API Metrics product with the
+      summary:
+        Disable tracking requests through our API Metrics product with the
         "x-readme.metrics-enabled" extension
       description: |-
         When `x-readme.metrics-enabled` is set to `false` all requests from the interactive API Explorer will not be tracked for you within our [API Metrics product](https://readme.com/metrics) and you will not see any requests on that operations reference page that may have been logged to API Metrics through one of our many SDKs.
@@ -308,7 +312,8 @@ paths:
         metrics-enabled: false
     patch:
       operationId: x-metrics-enabled
-      summary: Disable tracking requests through our API Metrics product with the
+      summary:
+        Disable tracking requests through our API Metrics product with the
         "x-metrics-enabled" extension
       description: |-
         When `x-metrics-enabled` is set to `false` all requests from the interactive API Explorer will not be tracked for you within our [API Metrics product](https://readme.com/metrics) and you will not see any requests on that operations reference page that may have been logged to API Metrics through one of our many SDKs.

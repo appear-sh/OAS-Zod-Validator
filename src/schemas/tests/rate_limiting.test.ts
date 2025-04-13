@@ -8,7 +8,7 @@ describe('Rate Limiting Validation', () => {
       openapi: '3.0.0',
       info: {
         title: 'Enterprise API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/users': {
@@ -19,22 +19,22 @@ describe('Rate Limiting Validation', () => {
                 headers: {
                   'X-RateLimit-Limit': {
                     description: 'Rate limit per hour',
-                    schema: { type: 'integer' }
+                    schema: { type: 'integer' },
                   },
                   'X-RateLimit-Remaining': {
                     description: 'Remaining requests',
-                    schema: { type: 'integer' }
+                    schema: { type: 'integer' },
                   },
                   'X-RateLimit-Reset': {
                     description: 'Time until reset',
-                    schema: { type: 'integer' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    schema: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithRateLimiting);
@@ -47,26 +47,26 @@ describe('Rate Limiting Validation', () => {
       openapi: '3.0.0',
       info: {
         title: 'Enterprise API',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/users': {
           get: {
             responses: {
               '200': {
-                description: 'Success'
-              }
-            }
-          }
-        }
-      }
+                description: 'Success',
+              },
+            },
+          },
+        },
+      },
     };
 
-    const result = validateOpenAPI(specWithoutRateLimiting, { 
+    const result = validateOpenAPI(specWithoutRateLimiting, {
       strict: true,
       strictRules: {
-        requireRateLimitHeaders: true
-      }
+        requireRateLimitHeaders: true,
+      },
     });
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();

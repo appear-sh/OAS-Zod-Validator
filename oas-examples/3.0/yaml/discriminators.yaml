@@ -12,7 +12,8 @@ paths:
     patch:
       operationId: oneOfWithTopLevelDiscriminatorAndMapping
       summary: oneOf with discriminator and mapping
-      description: Polymorphic `oneOf` schema with a top-level discriminator and a
+      description:
+        Polymorphic `oneOf` schema with a top-level discriminator and a
         mapping definition.
       requestBody:
         content:
@@ -33,7 +34,8 @@ paths:
     patch:
       operationId: oneOfWithTopLevelDiscriminatorNoMapping
       summary: oneOf with top-level discriminator (no mapping)
-      description: Polymorphic `oneOf` schema with a top-level discriminator and **no**
+      description:
+        Polymorphic `oneOf` schema with a top-level discriminator and **no**
         mapping definition.
       requestBody:
         content:
@@ -50,7 +52,8 @@ paths:
   '/embedded-discriminator':
     patch:
       summary: oneOf request with a nested allOf and embedded discriminator
-      description: This operation contains a request schema of a `oneOf` that itself
+      description:
+        This operation contains a request schema of a `oneOf` that itself
         contains an `allOf` with a discriminator for the afformentioned `allOf`. This
         is considered an embedded discriminator.
       requestBody:
@@ -66,7 +69,8 @@ paths:
   '/oneof-allof-top-level-disc':
     patch:
       summary: oneOf request with a nested allOf and top level discriminator
-      description: This operation has a `oneOf`, with a discriminator, but its `oneOf`
+      description:
+        This operation has a `oneOf`, with a discriminator, but its `oneOf`
         contents contain an `allOf` where that discriminator `propertyName` is in
         reference to.
       requestBody:
@@ -141,7 +145,8 @@ paths:
   '/mapping-of-schema-names':
     patch:
       summary: Discriminator with a schema name mapping
-      description: Schema names, instead of `$ref` pointers, can be used in discriminator
+      description:
+        Schema names, instead of `$ref` pointers, can be used in discriminator
         mappings.
       requestBody:
         content:
@@ -162,7 +167,8 @@ paths:
     patch:
       operationId: oneOfWithImproperlyPlacedDiscriminator
       summary: oneOf with a discriminator that is referencing a property up a level
-      description: This operation has a `discriminator` that's in reference to a property
+      description:
+        This operation has a `discriminator` that's in reference to a property
         a level above it. **This is an improper use of discriminators.** Though this
         is improper, in this case we should ignore the discriminator instead of failing
         to render the operation.
@@ -214,7 +220,8 @@ paths:
   '/potentially-undefined-formData':
     post:
       summary: Handling for potentially undefined formData
-      description: This operation contains a schema that at one point produced an
+      description:
+        This operation contains a schema that at one point produced an
         edgecase within the form system where `formData` was `undefined`.
       tags:
         - Quirks

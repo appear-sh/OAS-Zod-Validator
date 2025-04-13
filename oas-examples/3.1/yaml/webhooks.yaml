@@ -13,7 +13,8 @@ webhooks:
               '$ref': '#/components/schemas/Pet'
       responses:
         '200':
-          description: Return a 200 status to indicate that the data was received
+          description:
+            Return a 200 status to indicate that the data was received
             successfully
       tags:
         - Webhooks

@@ -10,9 +10,9 @@ describe('OpenAPI 3.1 Validation', () => {
       webhooks: {
         // webhooks must be an object with *keys* that are the webhook paths
         '/onData': {
-          post: { responses: { '200': { description: 'OK' } } }
-        }
-      }
+          post: { responses: { '200': { description: 'OK' } } },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec3_1);
@@ -28,14 +28,14 @@ describe('OpenAPI 3.1 Validation', () => {
       jsonSchemaDialect: 'https://spec.openapis.org/oas/3.1/dialect/base',
       paths: {},
       components: {
-        schemas: { 
-          Payload: { 
+        schemas: {
+          Payload: {
             type: 'object',
-            properties: { 
-              msg: { type: 'string' } 
-            } 
-          } 
-        }
+            properties: {
+              msg: { type: 'string' },
+            },
+          },
+        },
       },
       webhooks: {
         onEvent: {
@@ -45,28 +45,28 @@ describe('OpenAPI 3.1 Validation', () => {
               required: true,
               content: {
                 'application/json': {
-                  schema: { $ref: '#/components/schemas/Payload' }
-                }
-              }
+                  schema: { $ref: '#/components/schemas/Payload' },
+                },
+              },
             },
             responses: {
-              '200': { 
+              '200': {
                 description: 'OK',
                 content: {
                   'application/json': {
-                    schema: { 
+                    schema: {
                       type: 'object',
                       properties: {
-                        status: { type: 'string' }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                        status: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec, { strict: true });
@@ -81,9 +81,9 @@ describe('OpenAPI 3.1 Specific Features', () => {
       openapi: '3.1.0',
       info: { title: 'Test API', version: '1.0.0' },
       jsonSchemaDialect: 'https://json-schema.org/draft/2020-12/schema',
-      paths: {}
+      paths: {},
     };
-    
+
     const result = validateOpenAPI(spec);
     expect(result.valid).toBe(true);
   });
@@ -93,9 +93,9 @@ describe('OpenAPI 3.1 Specific Features', () => {
       openapi: '3.1.0',
       info: { title: 'Test API', version: '1.0.0' },
       jsonSchemaDialect: 'not-a-url',
-      paths: {}
+      paths: {},
     };
-    
+
     const result = validateOpenAPI(spec);
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
@@ -116,29 +116,29 @@ describe('OpenAPI 3.1 Specific Features', () => {
                 name: 'trace-id',
                 in: 'header',
                 required: true,
-                schema: { type: 'string' }
-              }
+                schema: { type: 'string' },
+              },
             ],
-            responses: { 
-              '200': { 
+            responses: {
+              '200': {
                 description: 'OK',
                 content: {
                   'application/json': {
-                    schema: { 
+                    schema: {
                       type: 'object',
                       properties: {
-                        status: { type: 'string' }
-                      }
-                    }
-                  }
-                }
-              } 
-            }
-          }
-        }
-      }
+                        status: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
-    
+
     const result = validateOpenAPI(spec);
     expect(result.valid).toBe(true);
   });
@@ -151,13 +151,13 @@ describe('OpenAPI 3.1 Specific Features', () => {
       paths: {},
       components: {
         schemas: {
-          Event: { 
+          Event: {
             type: 'object',
             properties: {
-              id: { type: 'string' }
-            }
-          }
-        }
+              id: { type: 'string' },
+            },
+          },
+        },
       },
       webhooks: {
         onEvent: {
@@ -167,30 +167,30 @@ describe('OpenAPI 3.1 Specific Features', () => {
               required: true,
               content: {
                 'application/json': {
-                  schema: { $ref: '#/components/schemas/Event' }
-                }
-              }
+                  schema: { $ref: '#/components/schemas/Event' },
+                },
+              },
             },
             responses: {
-              '200': { 
+              '200': {
                 description: 'OK',
                 content: {
                   'application/json': {
-                    schema: { 
+                    schema: {
                       type: 'object',
                       properties: {
-                        status: { type: 'string' }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                        status: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
-    
+
     const result = validateOpenAPI(spec, { strict: true });
     expect(result.valid).toBe(true);
     expect(result.resolvedRefs).toContain('#/components/schemas/Event');

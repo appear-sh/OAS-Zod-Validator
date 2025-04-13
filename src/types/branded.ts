@@ -1,6 +1,6 @@
 /**
  * Branded types for stronger type safety
- * 
+ *
  * A branded type is a TypeScript technique to create nominal typing for primitive types
  * by adding a marker property that exists only at compile time.
  */
@@ -93,4 +93,4 @@ export function createAPIURL(url: string): APIURL {
  */
 export function createContentType(contentType: string): ContentType {
   return contentType as ContentType;
-} 
+}

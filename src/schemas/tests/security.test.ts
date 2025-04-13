@@ -1,4 +1,7 @@
-import { SecuritySchemeObject, SecurityRequirementObject } from '../security.js';
+import {
+  SecuritySchemeObject,
+  SecurityRequirementObject,
+} from '../security.js';
 import { describe, test, expect } from 'vitest';
 
 describe('Security Schema Validation', () => {
@@ -8,21 +11,21 @@ describe('Security Schema Validation', () => {
     });
 
     test('validates security requirement with no scopes', () => {
-      const requirement = { 'api_key': [] };
+      const requirement = { api_key: [] };
       expect(() => SecurityRequirementObject.parse(requirement)).not.toThrow();
     });
 
     test('validates security requirement with scopes', () => {
       const requirement = {
-        'oauth2': ['read', 'write'],
-        'api_key': []
+        oauth2: ['read', 'write'],
+        api_key: [],
       };
       expect(() => SecurityRequirementObject.parse(requirement)).not.toThrow();
     });
 
     test('rejects invalid scope types', () => {
       const requirement = {
-        'oauth2': ['read', 123]
+        oauth2: ['read', 123],
       };
       expect(() => SecurityRequirementObject.parse(requirement)).toThrow();
     });
@@ -34,24 +37,24 @@ describe('Security Schema Validation', () => {
         {
           type: 'apiKey',
           name: 'api_key',
-          in: 'header'
+          in: 'header',
         },
         {
           type: 'apiKey',
           name: 'api_key',
           in: 'query',
-          description: 'API Key in query'
+          description: 'API Key in query',
         },
         {
           type: 'apiKey',
           name: 'api_key',
           in: 'cookie',
           description: 'API Key in cookie',
-          'x-custom': 'value'
-        }
+          'x-custom': 'value',
+        },
       ];
 
-      schemes.forEach(scheme => {
+      schemes.forEach((scheme) => {
         expect(() => SecuritySchemeObject.parse(scheme)).not.toThrow();
       });
     });
@@ -60,21 +63,21 @@ describe('Security Schema Validation', () => {
       const schemes = [
         {
           type: 'http',
-          scheme: 'basic'
+          scheme: 'basic',
         },
         {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT'
+          bearerFormat: 'JWT',
         },
         {
           type: 'http',
           scheme: 'digest',
-          description: 'Digest auth'
-        }
+          description: 'Digest auth',
+        },
       ];
 
-      schemes.forEach(scheme => {
+      schemes.forEach((scheme) => {
         expect(() => SecuritySchemeObject.parse(scheme)).not.toThrow();
       });
     });
@@ -87,18 +90,18 @@ describe('Security Schema Validation', () => {
             authorizationUrl: 'https://example.com/auth',
             scopes: {
               read: 'Read access',
-              write: 'Write access'
-            }
+              write: 'Write access',
+            },
           },
           password: {
             tokenUrl: 'https://example.com/token',
             scopes: {
-              read: 'Read access'
-            }
+              read: 'Read access',
+            },
           },
           clientCredentials: {
             tokenUrl: 'https://example.com/token',
-            scopes: {}
+            scopes: {},
           },
           authorizationCode: {
             authorizationUrl: 'https://example.com/auth',
@@ -106,10 +109,10 @@ describe('Security Schema Validation', () => {
             refreshUrl: 'https://example.com/refresh',
             scopes: {
               read: 'Read access',
-              write: 'Write access'
-            }
-          }
-        }
+              write: 'Write access',
+            },
+          },
+        },
       };
 
       expect(() => SecuritySchemeObject.parse(scheme)).not.toThrow();
@@ -118,8 +121,9 @@ describe('Security Schema Validation', () => {
     test('validates openIdConnect security scheme', () => {
       const scheme = {
         type: 'openIdConnect',
-        openIdConnectUrl: 'https://example.com/.well-known/openid-configuration',
-        description: 'OpenID Connect'
+        openIdConnectUrl:
+          'https://example.com/.well-known/openid-configuration',
+        description: 'OpenID Connect',
       };
 
       expect(() => SecuritySchemeObject.parse(scheme)).not.toThrow();
@@ -130,40 +134,40 @@ describe('Security Schema Validation', () => {
         {
           type: 'apiKey',
           name: '',
-          in: 'header'
+          in: 'header',
         },
         {
           type: 'apiKey',
           name: 'api_key',
-          in: 'invalid_location'
+          in: 'invalid_location',
         },
         {
           type: 'http',
-          scheme: ''
+          scheme: '',
         },
         {
           type: 'oauth2',
-          flows: {}
+          flows: {},
         },
         {
           type: 'oauth2',
           flows: {
             implicit: {
               authorizationUrl: 'not-a-url',
-              scopes: {}
-            }
-          }
+              scopes: {},
+            },
+          },
         },
         {
           type: 'openIdConnect',
-          openIdConnectUrl: 'not-a-url'
+          openIdConnectUrl: 'not-a-url',
         },
         {
-          type: 'invalid_type'
-        }
+          type: 'invalid_type',
+        },
       ];
 
-      invalidSchemes.forEach(scheme => {
+      invalidSchemes.forEach((scheme) => {
         expect(() => SecuritySchemeObject.parse(scheme)).toThrow();
       });
     });

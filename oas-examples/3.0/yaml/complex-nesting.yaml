@@ -24,7 +24,8 @@ paths:
                 '$ref': '#/components/schemas/ArrayOfFlatObjects'
     put:
       summary: Array of Everything
-      description: This payload is an array containing a complex payload of arrays,
+      description:
+        This payload is an array containing a complex payload of arrays,
         objects, and primitives.
       requestBody:
         content:
@@ -128,7 +129,8 @@ components:
           description: Array of objects (containing objects and arrays)
           '$ref': '#/components/schemas/ArrayOfObjectsOfObjectsAndArrays'
         objectOfAdditionalProperties:
-          description: Object containing an `additionalProperties` declaration that's
+          description:
+            Object containing an `additionalProperties` declaration that's
             comprised of a polymorphic `oneOf`.
           '$ref': '#/components/schemas/ObjectOfAdditionalPropertiesObjectPolymorphism'
         string:

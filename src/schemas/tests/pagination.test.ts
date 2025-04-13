@@ -8,7 +8,7 @@ describe('Pagination Standards', () => {
       openapi: '3.0.0',
       info: {
         title: 'API with Pagination',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/products': {
@@ -17,23 +17,23 @@ describe('Pagination Standards', () => {
               {
                 name: 'page',
                 in: 'query' as const,
-                schema: { 
-                  type: 'integer' as const, 
-                  minimum: 1 
+                schema: {
+                  type: 'integer' as const,
+                  minimum: 1,
                 },
-                description: 'Page number'
+                description: 'Page number',
               },
               {
                 name: 'limit',
                 in: 'query' as const,
-                schema: { 
+                schema: {
                   type: 'integer' as const,
                   minimum: 1,
                   maximum: 100,
-                  default: 20
+                  default: 20,
                 },
-                description: 'Number of items per page'
-              }
+                description: 'Number of items per page',
+              },
             ],
             responses: {
               '200': {
@@ -46,41 +46,43 @@ describe('Pagination Standards', () => {
                       properties: {
                         items: {
                           type: 'array' as const,
-                          items: { $ref: '#/components/schemas/Product' }
+                          items: { $ref: '#/components/schemas/Product' },
                         },
                         pagination: {
                           type: 'object' as const,
                           required: ['total', 'pages'],
                           properties: {
-                            total: { 
+                            total: {
                               type: 'integer' as const,
-                              description: 'Total number of items'
+                              description: 'Total number of items',
                             },
-                            pages: { 
+                            pages: {
                               type: 'integer' as const,
-                              description: 'Total number of pages'
+                              description: 'Total number of pages',
                             },
-                            next: { 
+                            next: {
                               type: 'string' as const,
                               format: 'uri',
-                              description: 'URL for the next page (if available)'
+                              description:
+                                'URL for the next page (if available)',
                             },
-                            prev: { 
+                            prev: {
                               type: 'string' as const,
                               format: 'uri',
-                              description: 'URL for the previous page (if available)'
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                              description:
+                                'URL for the previous page (if available)',
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithPagination);
@@ -93,7 +95,7 @@ describe('Pagination Standards', () => {
       openapi: '3.0.0',
       info: {
         title: 'API with Cursor Pagination',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/products': {
@@ -102,21 +104,21 @@ describe('Pagination Standards', () => {
               {
                 name: 'cursor',
                 in: 'query' as const,
-                schema: { 
-                  type: 'string' as const
+                schema: {
+                  type: 'string' as const,
                 },
-                description: 'Cursor for pagination'
+                description: 'Cursor for pagination',
               },
               {
                 name: 'limit',
                 in: 'query' as const,
-                schema: { 
+                schema: {
                   type: 'integer' as const,
                   minimum: 1,
                   maximum: 100,
-                  default: 20
-                }
-              }
+                  default: 20,
+                },
+              },
             ],
             responses: {
               '200': {
@@ -129,27 +131,28 @@ describe('Pagination Standards', () => {
                       properties: {
                         items: {
                           type: 'array' as const,
-                          items: { $ref: '#/components/schemas/Product' }
+                          items: { $ref: '#/components/schemas/Product' },
                         },
                         pagination: {
                           type: 'object' as const,
                           required: ['next_cursor'],
                           properties: {
-                            next_cursor: { 
+                            next_cursor: {
                               type: 'string' as const,
-                              description: 'Cursor for the next page (null if no more pages)'
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                              description:
+                                'Cursor for the next page (null if no more pages)',
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithCursorPagination);
@@ -162,7 +165,7 @@ describe('Pagination Standards', () => {
       openapi: '3.0.0',
       info: {
         title: 'API without Pagination',
-        version: '1.0.0'
+        version: '1.0.0',
       },
       paths: {
         '/products': {
@@ -174,15 +177,15 @@ describe('Pagination Standards', () => {
                   'application/json': {
                     schema: {
                       type: 'array' as const,
-                      items: { $ref: '#/components/schemas/Product' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                      items: { $ref: '#/components/schemas/Product' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(specWithoutPagination, { strict: true });

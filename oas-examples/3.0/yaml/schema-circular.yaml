@@ -75,18 +75,22 @@ paths:
         '200':
           description: Successfully processed.
         '400':
-          description: Invalid payload. This can be due to invalid headers or form-data
+          description:
+            Invalid payload. This can be due to invalid headers or form-data
             params.
         '401':
-          description: Permissions error. The Authorization header may be missing,
+          description:
+            Permissions error. The Authorization header may be missing,
             the value may be invalid or the associated organization/user does not
             have permission to modify the specified typename.
         '500':
-          description: Server error. Something unexpected happened while processing
+          description:
+            Server error. Something unexpected happened while processing
             the request. Try again later.
   '/not-quite-circular':
     post:
-      description: This is a schema that is technically circular, but not in a way
+      description:
+        This is a schema that is technically circular, but not in a way
         that will cause infinite recursion when processing it.
       requestBody:
         required: true
@@ -225,7 +229,8 @@ components:
             type: array
             items:
               '$ref': '#/components/schemas/ParameterizedHeader'
-      description: A single file which will be added/updated or a ZIP archive containing
+      description:
+        A single file which will be added/updated or a ZIP archive containing
         files that will be added/updated. The name of the ZIP archive does not matter
         but the names of the files contained within do.
       example: file=@2018-report.pdf

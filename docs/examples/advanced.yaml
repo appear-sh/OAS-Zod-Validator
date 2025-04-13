@@ -275,4 +275,4 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ValidationError' 
+            $ref: '#/components/schemas/ValidationError'

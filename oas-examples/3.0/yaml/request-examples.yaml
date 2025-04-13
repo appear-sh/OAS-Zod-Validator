@@ -15,7 +15,8 @@ paths:
       tags:
         - Multiple examples
       summary: Within `examples` (parameters)
-      description: "This operation has several parameters with examples alongside
+      description:
+        "This operation has several parameters with examples alongside
         separately maintained example within `examples` at the Media Type Object level.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
         [3.1.0 Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#mediaTypeObject)"
@@ -68,7 +69,8 @@ paths:
             application/xml:
               examples:
                 response:
-                  value: <?xml version="1.0" encoding="UTF-8"?><note><body>Invalid
+                  value:
+                    <?xml version="1.0" encoding="UTF-8"?><note><body>Invalid
                     user!</body></note>
         default:
           description: OK
@@ -86,7 +88,8 @@ paths:
       tags:
         - Multiple examples
       summary: Within `examples` (mixed)
-      description: "This operation has parameter and body examples alongside separately
+      description:
+        "This operation has parameter and body examples alongside separately
         maintained example within `examples` at the Media Type Object level.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
         [3.1.0 Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#mediaTypeObject)"
@@ -185,7 +188,8 @@ paths:
             application/xml:
               examples:
                 response:
-                  value: <?xml version="1.0" encoding="UTF-8"?><note><body>Invalid
+                  value:
+                    <?xml version="1.0" encoding="UTF-8"?><note><body>Invalid
                     user!</body></note>
         default:
           description: OK
@@ -203,7 +207,8 @@ paths:
       tags:
         - Single example
       summary: Within `example`
-      description: "This operation has a param example and `requestBody` with separately
+      description:
+        "This operation has a param example and `requestBody` with separately
         maintained example within a simple `example` object at the Media Type Object
         level.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3 Media Type
         Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
@@ -247,7 +252,8 @@ paths:
       tags:
         - Multiple examples
       summary: Within `examples` (body)
-      description: "This operation has a `requestBody` with separately maintained
+      description:
+        "This operation has a `requestBody` with separately maintained
         examples within `examples` at the Media Type Object level.\n\n\U0001F4DA OpenAPI
         specification references:\n\n* [3.0.3 Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
         [3.1.0 Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#mediaTypeObject)"
@@ -294,7 +300,8 @@ paths:
             application/xml:
               examples:
                 response:
-                  value: <?xml version="1.0" encoding="UTF-8"?><note><body>Invalid
+                  value:
+                    <?xml version="1.0" encoding="UTF-8"?><note><body>Invalid
                     user!</body></note>
         default:
           description: OK
@@ -312,7 +319,8 @@ paths:
       tags:
         - Single example
       summary: Within `example`
-      description: "This operation has a `requestBody` with separately maintained
+      description:
+        "This operation has a `requestBody` with separately maintained
         example within a simple `example` object at the Media Type Object level.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
         [3.1.0 Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#mediaTypeObject)"
@@ -341,7 +349,8 @@ paths:
       tags:
         - Single example
       summary: '`$ref` within `example`'
-      description: "This operation has a `requestBody` with separately maintained
+      description:
+        "This operation has a `requestBody` with separately maintained
         example within a `$ref` in a simple `example` object at the Media Type Object
         level.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3 Media Type
         Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
@@ -368,7 +377,8 @@ paths:
       tags:
         - Single example
       summary: Primitive `example`
-      description: "This operation has a `requestBody` with separately maintained
+      description:
+        "This operation has a `requestBody` with separately maintained
         **primitive** example within a simple `example` object at the Media Type Object
         level.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3 Media Type
         Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
@@ -392,7 +402,8 @@ paths:
       tags:
         - Multiple examples
       summary: Stringified JSON object in an `examples` value
-      description: "This operation has a `requestBody` with separately maintained
+      description:
+        "This operation has a `requestBody` with separately maintained
         example within `examples` at the Media Type Object level containing stringified
         JSON object.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3 Media
         Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
@@ -444,7 +455,8 @@ paths:
       tags:
         - Multiple examples
       summary: Stringified JSON arrays in an `examples` value
-      description: "This operation has a `requestBody` with separately maintained
+      description:
+        "This operation has a `requestBody` with separately maintained
         example within `examples` at the Media Type Object level containing a stringified
         JSON array.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3 Media
         Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
@@ -505,7 +517,8 @@ paths:
       tags:
         - Multiple media types
       summary: Within `examples`
-      description: "This operation has a `requestBody` containing multiple media types
+      description:
+        "This operation has a `requestBody` containing multiple media types
         with each containing a separately maintained example within `examples` at
         the Media Type Object level.\n\n\U0001F4DA OpenAPI specification references:\n\n*
         [3.0.3 Media Type Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#mediaTypeObject)\n\n*
@@ -555,7 +568,8 @@ paths:
             application/xml:
               examples:
                 response:
-                  value: <?xml version="1.0" encoding="UTF-8"?><note><body>Invalid
+                  value:
+                    <?xml version="1.0" encoding="UTF-8"?><note><body>Invalid
                     pet!</body></note>
   '/requestBody-form-data-example':
     post:

@@ -2,7 +2,8 @@ openapi: 3.0.3
 info:
   version: 1.0.0
   title: HTTP Status Codes
-  description: Demos how we handle various status codes. Documentation pulled from
+  description:
+    Demos how we handle various status codes. Documentation pulled from
     https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
 servers:
   - url: https://httpbin.org
@@ -26,7 +27,8 @@ paths:
       tags:
         - Successful responses
       summary: Returns a "201 Created"
-      description: The request has succeeded and a new resource has been created as
+      description:
+        The request has succeeded and a new resource has been created as
         a result. This is typically the response sent after `POST` requests, or some
         `PUT` requests.
       responses:
@@ -37,7 +39,8 @@ paths:
       tags:
         - Successful responses
       summary: Returns a "202 Accepted"
-      description: The request has been received but not yet acted upon. It is noncommittal,
+      description:
+        The request has been received but not yet acted upon. It is noncommittal,
         since there is no way in HTTP to later send an asynchronous response indicating
         the outcome of the request. It is intended for cases where another process
         or server handles the request, or for batch processing.
@@ -49,7 +52,8 @@ paths:
       tags:
         - Successful responses
       summary: Returns a "203 Non-Authoritative Information"
-      description: This response code means the returned meta-information is not exactly
+      description:
+        This response code means the returned meta-information is not exactly
         the same as is available from the origin server, but is collected from a local
         or a third-party copy. This is mostly used for mirrors or backups of another
         resource. Except for that specific case, the "200 OK" response is preferred
@@ -62,7 +66,8 @@ paths:
       tags:
         - Successful responses
       summary: Returns a "204 No Content"
-      description: There is no content to send for this request, but the headers may
+      description:
+        There is no content to send for this request, but the headers may
         be useful. The user-agent may update its cached headers for this resource
         with the new ones.
       responses:
@@ -93,7 +98,8 @@ paths:
       tags:
         - Successful responses
       summary: Returns a "200 Multi-Status"
-      description: Conveys information about multiple resources, for situations where
+      description:
+        Conveys information about multiple resources, for situations where
         multiple status codes might be appropriate.
       responses:
         '207':
@@ -103,7 +109,8 @@ paths:
       tags:
         - Successful responses
       summary: Returns a "208 Already Reported"
-      description: Used inside a `<dav:propstat>` response element to avoid repeatedly
+      description:
+        Used inside a `<dav:propstat>` response element to avoid repeatedly
         enumerating the internal members of multiple bindings to the same collection.
       responses:
         '208':
@@ -121,7 +128,8 @@ paths:
       tags:
         - Successful responses
       summary: Returns a "226 IM Used"
-      description: The server has fulfilled a GET request for the resource, and the
+      description:
+        The server has fulfilled a GET request for the resource, and the
         response is a representation of the result of one or more instance-manipulations
         applied to the current instance.
       responses:
@@ -132,7 +140,8 @@ paths:
       tags:
         - Redirection messages
       summary: Returns a "300 Multiple Choice"
-      description: The request has more than one possible response. The user-agent
+      description:
+        The request has more than one possible response. The user-agent
         or user should choose one of them. (There is no standardized way of choosing
         one of the responses, but HTML links to the possibilities are recommended
         so the user can pick.)
@@ -144,7 +153,8 @@ paths:
       tags:
         - Redirection messages
       summary: Returns a "301 Moved Permanently"
-      description: The URL of the requested resource has been changed permanently.
+      description:
+        The URL of the requested resource has been changed permanently.
         The new URL is given in the response.
       responses:
         '301':
@@ -154,7 +164,8 @@ paths:
       tags:
         - Redirection messages
       summary: Returns a "302 Found"
-      description: This response code means that the URI of requested resource has
+      description:
+        This response code means that the URI of requested resource has
         been changed temporarily. Further changes in the URI might be made in the
         future. Therefore, this same URI should be used by the client in future requests.
       responses:
@@ -165,7 +176,8 @@ paths:
       tags:
         - Redirection messages
       summary: Returns a "303 See Other"
-      description: The server sent this response to direct the client to get the requested
+      description:
+        The server sent this response to direct the client to get the requested
         resource at another URI with a GET request.
       responses:
         '303':
@@ -175,7 +187,8 @@ paths:
       tags:
         - Redirection messages
       summary: Returns a "304 Not Modified"
-      description: This is used for caching purposes. It tells the client that the
+      description:
+        This is used for caching purposes. It tells the client that the
         response has not been modified, so the client can continue to use the same
         cached version of the response.
       responses:
@@ -186,7 +199,8 @@ paths:
       tags:
         - Redirection messages
       summary: Returns a "305 Use Proxy"
-      description: Defined in a previous version of the HTTP specification to indicate
+      description:
+        Defined in a previous version of the HTTP specification to indicate
         that a requested response must be accessed by a proxy. It has been deprecated
         due to security concerns regarding in-band configuration of a proxy.
       responses:
@@ -197,7 +211,8 @@ paths:
       tags:
         - Redirection messages
       summary: Returns a "306 Switch Proxy"
-      description: This response code is no longer used; it is just reserved. It was
+      description:
+        This response code is no longer used; it is just reserved. It was
         used in a previous version of the HTTP/1.1 specification.
       responses:
         '306':
@@ -207,7 +222,8 @@ paths:
       tags:
         - Redirection messages
       summary: Returns a "307 Temporary Redirect"
-      description: 'The server sends this response to direct the client to get the
+      description:
+        'The server sends this response to direct the client to get the
         requested resource at another URI with same method that was used in the prior
         request. This has the same semantics as the `302 Found` HTTP response code,
         with the exception that the user agent must not change the HTTP method used:
@@ -221,7 +237,8 @@ paths:
       tags:
         - Redirection messages
       summary: Returns a "308 Permanent Redirect"
-      description: 'This means that the resource is now permanently located at another
+      description:
+        'This means that the resource is now permanently located at another
         URI, specified by the `Location:` HTTP Response header. This has the same
         semantics as the `301 Moved Permanently` HTTP response code, with the exception
         that the user agent must not change the HTTP method used: If a `POST` was
@@ -243,7 +260,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "401 Unauthorized"
-      description: Although the HTTP standard specifies "unauthorized", semantically
+      description:
+        Although the HTTP standard specifies "unauthorized", semantically
         this response means "unauthenticated". That is, the client must authenticate
         itself to get the requested response.
       responses:
@@ -254,7 +272,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "402 Payment Required"
-      description: This response code is reserved for future use. The initial aim
+      description:
+        This response code is reserved for future use. The initial aim
         for creating this code was using it for digital payment systems, however this
         status code is used very rarely and no standard convention exists.
       responses:
@@ -265,7 +284,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "403 Forbidden"
-      description: The client does not have access rights to the content; that is,
+      description:
+        The client does not have access rights to the content; that is,
         it is unauthorized, so the server is refusing to give the requested resource.
         Unlike 401, the client's identity is known to the server.
       responses:
@@ -276,7 +296,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "404 Not Found"
-      description: The server can not find the requested resource. In the browser,
+      description:
+        The server can not find the requested resource. In the browser,
         this means the URL is not recognized. In an API, this can also mean that the
         endpoint is valid but the resource itself does not exist. Servers may also
         send this response instead of 403 to hide the existence of a resource from
@@ -290,7 +311,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "405 Method Not Allowed"
-      description: The request method is known by the server but is not supported
+      description:
+        The request method is known by the server but is not supported
         by the target resource. For example, an API may forbid DELETE-ing a resource.
       responses:
         '405':
@@ -300,7 +322,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "406 Not Acceptable"
-      description: This response is sent when the web server, after performing [server-driven
+      description:
+        This response is sent when the web server, after performing [server-driven
         content negotiation](https://developer.mozilla.org/en-US/docs/Web/HTTP/Content_negotiation#server-driven_negotiation),
         doesn't find any content that conforms to the criteria given by the user agent.
       responses:
@@ -311,7 +334,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "407 Proxy Authentication Required"
-      description: This is similar to 401 but authentication is needed to be done
+      description:
+        This is similar to 401 but authentication is needed to be done
         by a proxy.
       responses:
         '407':
@@ -321,7 +345,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "408 Request Timeout"
-      description: This response is sent on an idle connection by some servers, even
+      description:
+        This response is sent on an idle connection by some servers, even
         without any previous request by the client. It means that the server would
         like to shut down this unused connection. This response is used much more
         since some browsers, like Chrome, Firefox 27+, or IE9, use HTTP pre-connection
@@ -335,7 +360,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "409 Conflict"
-      description: This response is sent when a request conflicts with the current
+      description:
+        This response is sent when a request conflicts with the current
         state of the server.
       responses:
         '409':
@@ -345,7 +371,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "410 Gone"
-      description: This response is sent when the requested content has been permanently
+      description:
+        This response is sent when the requested content has been permanently
         deleted from server, with no forwarding address. Clients are expected to remove
         their caches and links to the resource. The HTTP specification intends this
         status code to be used for "limited-time, promotional services". APIs should
@@ -359,7 +386,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "411 Length Required"
-      description: Server rejected the request because the `Content-Length` header
+      description:
+        Server rejected the request because the `Content-Length` header
         field is not defined and the server requires it.
       responses:
         '411':
@@ -369,7 +397,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "412 Precondition Failed"
-      description: The client has indicated preconditions in its headers which the
+      description:
+        The client has indicated preconditions in its headers which the
         server does not meet.
       responses:
         '412':
@@ -379,7 +408,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "413 Payload Too Large"
-      description: Request entity is larger than limits defined by server; the server
+      description:
+        Request entity is larger than limits defined by server; the server
         might close the connection or return an `Retry-After` header field.
       responses:
         '413':
@@ -389,7 +419,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "414 URI Too Long"
-      description: The URI requested by the client is longer than the server is willing
+      description:
+        The URI requested by the client is longer than the server is willing
         to interpret.
       responses:
         '414':
@@ -399,7 +430,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "415 Unsupported Media Type"
-      description: The media format of the requested data is not supported by the
+      description:
+        The media format of the requested data is not supported by the
         server, so the server is rejecting the request.
       responses:
         '415':
@@ -409,7 +441,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "416 Range Not Satisfiable"
-      description: The range specified by the `Range` header field in the request
+      description:
+        The range specified by the `Range` header field in the request
         can't be fulfilled; it's possible that the range is outside the size of the
         target URI's data.
       responses:
@@ -420,7 +453,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "417 Expectation Failed"
-      description: This response code means the expectation indicated by the `Expect`
+      description:
+        This response code means the expectation indicated by the `Expect`
         request header field can't be met by the server.
       responses:
         '417':
@@ -457,7 +491,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "421 Misdirected Request"
-      description: The request was directed at a server that is not able to produce
+      description:
+        The request was directed at a server that is not able to produce
         a response. This can be sent by a server that is not configured to produce
         responses for the combination of scheme and authority that are included in
         the request URI.
@@ -469,7 +504,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "422 Unprocessable Entity"
-      description: The request was well-formed but was unable to be followed due to
+      description:
+        The request was well-formed but was unable to be followed due to
         semantic errors.
       responses:
         '422':
@@ -497,7 +533,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "425 Too Early"
-      description: Indicates that the server is unwilling to risk processing a request
+      description:
+        Indicates that the server is unwilling to risk processing a request
         that might be replayed.
       responses:
         '425':
@@ -507,7 +544,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "426 Upgrade Required"
-      description: The server refuses to perform the request using the current protocol
+      description:
+        The server refuses to perform the request using the current protocol
         but might be willing to do so after the client upgrades to a different protocol.
         The server sends an [`Upgrade`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Upgrade)
         header in a 426 response to indicate the required protocol(s).
@@ -519,7 +557,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "428 Precondition Required"
-      description: The origin server requires the request to be conditional. This
+      description:
+        The origin server requires the request to be conditional. This
         response is intended to prevent the 'lost update' problem, where a client
         GETs a resource's state, modifies it, and PUTs it back to the server, when
         meanwhile a third party has modified the state on the server, leading to a
@@ -532,7 +571,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "429 Too Many Requests"
-      description: The user has sent too many requests in a given amount of time ("rate
+      description:
+        The user has sent too many requests in a given amount of time ("rate
         limiting").
       responses:
         '429':
@@ -544,7 +584,8 @@ paths:
       summary: |-
         > ⚠️ Unofficial Status Code
         Returns a "430 Request Header Fields Too Large"
-      description: The server is unwilling to process the request because its header
+      description:
+        The server is unwilling to process the request because its header
         fields are too large. The request may be resubmitted after reducing the size
         of the request header fields.
       responses:
@@ -555,7 +596,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "431 Request Header Fields Too Large"
-      description: The server is unwilling to process the request because its header
+      description:
+        The server is unwilling to process the request because its header
         fields are too large. The request may be resubmitted after reducing the size
         of the request header fields.
       responses:
@@ -602,7 +644,8 @@ paths:
       tags:
         - Client error responses
       summary: Returns a "451 Unavailable For Legal Reasons"
-      description: The user-agent requested a resource that cannot legally be provided,
+      description:
+        The user-agent requested a resource that cannot legally be provided,
         such as a web page censored by a government.
       responses:
         '451':
@@ -675,7 +718,8 @@ paths:
       tags:
         - Server error responses
       summary: Returns a "501 Not Implemented"
-      description: The request method is not supported by the server and cannot be
+      description:
+        The request method is not supported by the server and cannot be
         handled. The only methods that servers are required to support (and therefore
         that must not return this code) are `GET` and `HEAD`.
       responses:
@@ -686,7 +730,8 @@ paths:
       tags:
         - Server error responses
       summary: Returns a "502 Bad Gateway"
-      description: This error response means that the server, while working as a gateway
+      description:
+        This error response means that the server, while working as a gateway
         to get a response needed to handle the request, got an invalid response.
       responses:
         '502':
@@ -696,7 +741,8 @@ paths:
       tags:
         - Server error responses
       summary: Returns a "503 Service Unavailable"
-      description: 'The server is not ready to handle the request. Common causes are
+      description:
+        'The server is not ready to handle the request. Common causes are
         a server that is down for maintenance or that is overloaded. Note that together
         with this response, a user-friendly page explaining the problem should be
         sent. This response should be used for temporary conditions and the `Retry-After`:
@@ -712,7 +758,8 @@ paths:
       tags:
         - Server error responses
       summary: Returns a "504 Gateway Timeout"
-      description: This error response is given when the server is acting as a gateway
+      description:
+        This error response is given when the server is acting as a gateway
         and cannot get a response in time.
       responses:
         '504':
@@ -731,7 +778,8 @@ paths:
       tags:
         - Server error responses
       summary: Returns a "506 Variant Also Negotiates"
-      description: 'The server has an internal configuration error: the chosen variant
+      description:
+        'The server has an internal configuration error: the chosen variant
         resource is configured to engage in transparent content negotiation itself,
         and is therefore not a proper end point in the negotiation process.'
       responses:
@@ -742,7 +790,8 @@ paths:
       tags:
         - Server error responses
       summary: Returns a "507 Insufficient Storage"
-      description: The method could not be performed on the resource because the server
+      description:
+        The method could not be performed on the resource because the server
         is unable to store the representation needed to successfully complete the
         request.
       responses:
@@ -770,7 +819,8 @@ paths:
       tags:
         - Server error responses
       summary: Returns a "510 Not Extended"
-      description: Further extensions to the request are required for the server to
+      description:
+        Further extensions to the request are required for the server to
         fulfill it.
       responses:
         '510':
@@ -780,7 +830,8 @@ paths:
       tags:
         - Server error responses
       summary: Returns a "511 Network Authentication Required"
-      description: The 511 status code indicates that the client needs to authenticate
+      description:
+        The 511 status code indicates that the client needs to authenticate
         to gain network access.
       responses:
         '511':
@@ -889,7 +940,8 @@ paths:
       tags:
         - Information responses
       summary: Returns a "100 Continue"
-      description: This interim response indicates that everything so far is OK and
+      description:
+        This interim response indicates that everything so far is OK and
         that the client should continue the request, or ignore the response if the
         request is already finished.
       responses:
@@ -912,7 +964,8 @@ paths:
       tags:
         - Information responses
       summary: Returns a "102 Processing"
-      description: This code indicates that the server has received and is processing
+      description:
+        This code indicates that the server has received and is processing
         the request, but no response is available yet.
       responses:
         '102':

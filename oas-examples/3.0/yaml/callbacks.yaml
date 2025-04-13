@@ -10,7 +10,8 @@ paths:
         - name: callbackUrl
           in: query
           required: true
-          description: the location where data will be sent. Must be network accessible
+          description:
+            the location where data will be sent. Must be network accessible
             by the source server
           schema:
             type: string
@@ -48,7 +49,8 @@ paths:
                           type: string
               responses:
                 '202':
-                  description: Your server implementation should return this HTTP
+                  description:
+                    Your server implementation should return this HTTP
                     status code if the data was received successfully
                   content:
                     application/json:
@@ -69,7 +71,8 @@ paths:
                               email: test@example.com
                               name: Test user name
                 '204':
-                  description: Your server should return this HTTP status code if
+                  description:
+                    Your server should return this HTTP status code if
                     no longer interested in further updates
                   content:
                     application/json:

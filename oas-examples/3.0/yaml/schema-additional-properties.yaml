@@ -59,7 +59,8 @@ paths:
                   additionalProperties:
                     '$ref': '#/components/schemas/ref-with-ref'
                 object with `additionalPropeties` within an allOf:
-                  description: Technically this is not valid to the spec. The `additionalProperties`
+                  description:
+                    Technically this is not valid to the spec. The `additionalProperties`
                     rejections should cancel out each others new field but we indicate
                     we want this to work by enabling [json-schema-merge-allof](https://npm.im/json-schema-merge-allof)'s
                     `ignoreAdditionalProperties` option

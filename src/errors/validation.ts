@@ -20,7 +20,7 @@ export class SchemaValidationError extends OpenAPIValidatorError {
       code: ErrorCode.SCHEMA_VALIDATION,
       source: options?.source,
       context: options?.context,
-      cause: zodError
+      cause: zodError,
     });
     this.zodError = zodError;
   }
@@ -30,7 +30,7 @@ export class SchemaValidationError extends OpenAPIValidatorError {
    */
   getFormattedErrors(): string {
     return this.zodError.errors
-      .map(err => {
+      .map((err) => {
         const path = err.path.join('.');
         return `${path}: ${err.message}`;
       })
@@ -49,7 +49,10 @@ export class ReferenceError extends OpenAPIValidatorError {
     reference: string,
     message: string,
     options: {
-      code: ErrorCode.INVALID_REFERENCE | ErrorCode.REFERENCE_NOT_FOUND | ErrorCode.CIRCULAR_REFERENCE;
+      code:
+        | ErrorCode.INVALID_REFERENCE
+        | ErrorCode.REFERENCE_NOT_FOUND
+        | ErrorCode.CIRCULAR_REFERENCE;
       source?: string;
       context?: Record<string, unknown>;
     }
@@ -57,7 +60,7 @@ export class ReferenceError extends OpenAPIValidatorError {
     super(message, {
       code: options.code,
       source: options.source,
-      context: options.context
+      context: options.context,
     });
     this.reference = reference;
   }
@@ -78,7 +81,7 @@ export class StrictValidationError extends OpenAPIValidatorError {
     super(message, {
       code: options.code || ErrorCode.STRICT_VALIDATION,
       source: options.source,
-      context: options.context
+      context: options.context,
     });
   }
 }
@@ -101,8 +104,8 @@ export class VersionError extends OpenAPIValidatorError {
     super(message, {
       code: ErrorCode.UNSUPPORTED_VERSION,
       source: options?.source,
-      context: options?.context
+      context: options?.context,
     });
     this.version = version;
   }
-} 
+}

@@ -1,0 +1,11 @@
+# Ignore build output
+dist/
+
+# Ignore coverage reports
+coverage/
+
+# Ignore dependencies
+node_modules/
+
+# Ignore configuration directories
+.cursor/ 

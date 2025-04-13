@@ -1,9 +1,14 @@
-import { PathsObject, PathItemObject, OperationObject, ParameterObject } from '../paths.js';
+import {
+  PathsObject,
+  PathItemObject,
+  OperationObject,
+  ParameterObject,
+} from '../paths.js';
 
 import { describe, test, expect, vi } from 'vitest';
 describe('Paths Coverage Improvements', () => {
   // Focus on branch coverage for line 200
-  
+
   describe('path validation edge cases', () => {
     test('validates path with mixed operation types and non-standard fields', () => {
       const pathItem = {
@@ -11,27 +16,27 @@ describe('Paths Coverage Improvements', () => {
           operationId: 'getResource',
           responses: {
             '200': {
-              description: 'OK'
-            }
-          }
+              description: 'OK',
+            },
+          },
         },
         post: {
           operationId: 'createResource',
           responses: {
             '201': {
-              description: 'Created'
-            }
-          }
+              description: 'Created',
+            },
+          },
         },
         // Add non-standard fields that should be allowed as extensions
         'x-controller': 'ResourceController',
-        'x-middleware': ['auth', 'logging']
+        'x-middleware': ['auth', 'logging'],
       };
-      
+
       const result = PathItemObject.safeParse(pathItem);
       expect(result.success).toBe(true);
     });
-    
+
     test('validates path with complex parameter combinations', () => {
       const pathItem = {
         parameters: [
@@ -40,16 +45,16 @@ describe('Paths Coverage Improvements', () => {
             in: 'path',
             required: true,
             schema: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
           {
             name: 'filter',
             in: 'query',
             schema: {
-              type: 'string'
-            }
-          }
+              type: 'string',
+            },
+          },
         ],
         get: {
           parameters: [
@@ -57,37 +62,37 @@ describe('Paths Coverage Improvements', () => {
               name: 'fields',
               in: 'query',
               schema: {
-                type: 'string'
-              }
-            }
+                type: 'string',
+              },
+            },
           ],
           responses: {
             '200': {
-              description: 'OK'
-            }
-          }
-        }
+              description: 'OK',
+            },
+          },
+        },
       };
-      
+
       const result = PathItemObject.safeParse(pathItem);
       expect(result.success).toBe(true);
     });
-    
+
     test('validates operation with deprecated flag', () => {
       const operation = {
         operationId: 'getLegacyResource',
         deprecated: true,
         responses: {
           '200': {
-            description: 'OK'
-          }
-        }
+            description: 'OK',
+          },
+        },
       };
-      
+
       const result = OperationObject.safeParse(operation);
       expect(result.success).toBe(true);
     });
-    
+
     test('validates complex path patterns with path params', () => {
       const paths = {
         '/resources': {
@@ -95,10 +100,10 @@ describe('Paths Coverage Improvements', () => {
             operationId: 'getResources',
             responses: {
               '200': {
-                description: 'OK'
-              }
-            }
-          }
+                description: 'OK',
+              },
+            },
+          },
         },
         '/resources/{id}/sub-resources/{subId}': {
           parameters: [
@@ -107,33 +112,33 @@ describe('Paths Coverage Improvements', () => {
               in: 'path',
               required: true,
               schema: {
-                type: 'string'
-              }
+                type: 'string',
+              },
             },
             {
               name: 'subId',
               in: 'path',
               required: true,
               schema: {
-                type: 'string'
-              }
-            }
+                type: 'string',
+              },
+            },
           ],
           get: {
             operationId: 'getSubResource',
             responses: {
               '200': {
-                description: 'OK'
-              }
-            }
-          }
-        }
+                description: 'OK',
+              },
+            },
+          },
+        },
       };
-      
+
       const result = PathsObject.safeParse(paths);
       expect(result.success).toBe(true);
     });
-    
+
     test('validates parameter with complex schema', () => {
       const parameter = {
         name: 'filter',
@@ -143,18 +148,18 @@ describe('Paths Coverage Improvements', () => {
           properties: {
             status: {
               type: 'string',
-              enum: ['active', 'inactive']
+              enum: ['active', 'inactive'],
             },
             category: {
-              type: 'string'
-            }
+              type: 'string',
+            },
           },
-          additionalProperties: false
-        }
+          additionalProperties: false,
+        },
       };
-      
+
       const result = ParameterObject.safeParse(parameter);
       expect(result.success).toBe(true);
     });
   });
-}); 
+});

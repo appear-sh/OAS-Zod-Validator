@@ -1,4 +1,9 @@
-import { MediaTypeObject, RequestBodyObject, ResponseObject, ResponsesObject } from '../requestResponse.js';
+import {
+  MediaTypeObject,
+  RequestBodyObject,
+  ResponseObject,
+  ResponsesObject,
+} from '../requestResponse.js';
 import { describe, test, expect } from 'vitest';
 import { validateOpenAPI } from '../validator.js';
 
@@ -6,32 +11,32 @@ describe('Request/Response Schema Types', () => {
   describe('MediaTypeObject', () => {
     test('validates basic media type object', () => {
       const mediaType = {
-        schema: { 
+        schema: {
           type: 'object',
           properties: {
             id: { type: 'string' },
-            name: { type: 'string' }
-          }
+            name: { type: 'string' },
+          },
         },
-        example: { id: '1', name: 'test' }
+        example: { id: '1', name: 'test' },
       };
       expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
     });
 
     test('validates media type with examples', () => {
       const mediaType = {
-        schema: { 
+        schema: {
           type: 'object',
           properties: {
-            id: { type: 'string' }
-          }
+            id: { type: 'string' },
+          },
         },
         examples: {
           test: {
             summary: 'Test example',
-            value: { id: '1' }
-          }
-        }
+            value: { id: '1' },
+          },
+        },
       };
       expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
     });
@@ -41,21 +46,21 @@ describe('Request/Response Schema Types', () => {
         examples: {
           test: {
             value: { id: 1 },
-            externalValue: 'http://example.com/example.json'
-          }
-        }
+            externalValue: 'http://example.com/example.json',
+          },
+        },
       };
       expect(() => MediaTypeObject.parse(mediaType)).toThrow();
     });
 
     test('validates media type with schema', () => {
       const mediaType = {
-        schema: { 
+        schema: {
           type: 'object',
           properties: {
-            id: { type: 'string' }
-          }
-        }
+            id: { type: 'string' },
+          },
+        },
       };
       expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
     });
@@ -63,34 +68,34 @@ describe('Request/Response Schema Types', () => {
     test('validates media type with example', () => {
       const mediaType = {
         schema: { type: 'string' },
-        example: 'test-value'
+        example: 'test-value',
       };
       expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
     });
 
     test('validates media type with encoding', () => {
       const mediaType = {
-        schema: { 
+        schema: {
           type: 'object',
           properties: {
-            profileImage: { type: 'string', format: 'binary' }
-          }
+            profileImage: { type: 'string', format: 'binary' },
+          },
         },
         encoding: {
           profileImage: {
             contentType: 'image/png',
             headers: {
               'X-Upload-Token': {
-                schema: { 
+                schema: {
                   type: 'string',
                   properties: {
-                    token: { type: 'string' }
-                  }
-                }
-              }
-            }
-          }
-        }
+                    token: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
       };
       expect(() => MediaTypeObject.parse(mediaType)).not.toThrow();
     });
@@ -101,9 +106,9 @@ describe('Request/Response Schema Types', () => {
         examples: {
           test: {
             value: 'test',
-            externalValue: 'http://example.com/test' // Can't have both
-          }
-        }
+            externalValue: 'http://example.com/test', // Can't have both
+          },
+        },
       };
       expect(() => MediaTypeObject.parse(mediaType)).toThrow();
     });
@@ -119,11 +124,11 @@ describe('Request/Response Schema Types', () => {
             schema: {
               type: 'object',
               properties: {
-                name: { type: 'string' }
-              }
-            }
-          }
-        }
+                name: { type: 'string' },
+              },
+            },
+          },
+        },
       };
       expect(() => RequestBodyObject.parse(requestBody)).not.toThrow();
     });
@@ -131,8 +136,8 @@ describe('Request/Response Schema Types', () => {
     test('validates minimal request body', () => {
       const requestBody = {
         content: {
-          'application/json': {}
-        }
+          'application/json': {},
+        },
       };
       expect(() => RequestBodyObject.parse(requestBody)).not.toThrow();
     });
@@ -145,19 +150,19 @@ describe('Request/Response Schema Types', () => {
         headers: {
           'X-Test': {
             description: 'Test header',
-            schema: { type: 'string' }
-          }
+            schema: { type: 'string' },
+          },
         },
         content: {
           'application/json': {
             schema: {
               type: 'object',
               properties: {
-                result: { type: 'string' }
-              }
-            }
-          }
-        }
+                result: { type: 'string' },
+              },
+            },
+          },
+        },
       };
       expect(() => ResponseObject.parse(response)).not.toThrow();
     });
@@ -169,10 +174,10 @@ describe('Request/Response Schema Types', () => {
           testLink: {
             operationId: 'getUser',
             parameters: {
-              userId: '$response.body#/id'
-            }
-          }
-        }
+              userId: '$response.body#/id',
+            },
+          },
+        },
       };
       expect(() => ResponseObject.parse(response)).not.toThrow();
     });
@@ -183,9 +188,9 @@ describe('Request/Response Schema Types', () => {
         links: {
           testLink: {
             operationRef: '#/paths/user',
-            operationId: 'getUser' // Can't have both
-          }
-        }
+            operationId: 'getUser', // Can't have both
+          },
+        },
       };
       expect(() => ResponseObject.parse(response)).toThrow();
     });
@@ -203,26 +208,26 @@ describe('Request/Response Schema Types', () => {
                   headers: {
                     'X-RateLimit-Limit': {
                       description: 'Rate limit per hour',
-                      schema: { type: 'integer' }
+                      schema: { type: 'integer' },
                     },
                     'X-RateLimit-Remaining': {
                       description: 'Remaining requests',
-                      schema: { type: 'integer' }
+                      schema: { type: 'integer' },
                     },
                     'X-RateLimit-Reset': {
                       description: 'Time until reset',
-                      schema: { type: 'integer' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                      schema: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       };
-      const result = validateOpenAPI(doc, { 
-        strict: true, 
-        strictRules: { requireRateLimitHeaders: true } 
+      const result = validateOpenAPI(doc, {
+        strict: true,
+        strictRules: { requireRateLimitHeaders: true },
       });
       expect(result.valid).toBe(true);
     });
@@ -240,21 +245,23 @@ describe('Request/Response Schema Types', () => {
                   headers: {
                     'X-Test': {
                       description: 'Test header',
-                      schema: { type: 'string' }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                      schema: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       };
-      const result = validateOpenAPI(doc, { 
-        strict: true, 
-        strictRules: { requireRateLimitHeaders: true } 
+      const result = validateOpenAPI(doc, {
+        strict: true,
+        strictRules: { requireRateLimitHeaders: true },
       });
       expect(result.valid).toBe(false);
-      expect(result.errors?.issues[0].message).toBe('Rate limiting headers are required in strict mode');
+      expect(result.errors?.issues[0].message).toBe(
+        'Rate limiting headers are required in strict mode'
+      );
     });
 
     test('rejects response with only some rate limit headers', () => {
@@ -263,26 +270,26 @@ describe('Request/Response Schema Types', () => {
           description: 'Missing Reset',
           headers: {
             'X-RateLimit-Limit': { schema: { type: 'integer' } },
-            'X-RateLimit-Remaining': { schema: { type: 'integer' } }
-          }
+            'X-RateLimit-Remaining': { schema: { type: 'integer' } },
+          },
         },
         {
           description: 'Missing Remaining',
           headers: {
             'X-RateLimit-Limit': { schema: { type: 'integer' } },
-            'X-RateLimit-Reset': { schema: { type: 'integer' } }
-          }
+            'X-RateLimit-Reset': { schema: { type: 'integer' } },
+          },
         },
         {
           description: 'Missing Limit',
           headers: {
             'X-RateLimit-Remaining': { schema: { type: 'integer' } },
-            'X-RateLimit-Reset': { schema: { type: 'integer' } }
-          }
-        }
+            'X-RateLimit-Reset': { schema: { type: 'integer' } },
+          },
+        },
       ];
 
-      partialHeaders.forEach(headerSet => {
+      partialHeaders.forEach((headerSet) => {
         const doc = {
           openapi: '3.0.0',
           info: { title: 'Test API', version: '1.0.0' },
@@ -292,20 +299,22 @@ describe('Request/Response Schema Types', () => {
                 responses: {
                   '200': {
                     description: 'Test response',
-                    headers: headerSet.headers
-                  }
-                }
-              }
-            }
-          }
+                    headers: headerSet.headers,
+                  },
+                },
+              },
+            },
+          },
         };
 
-        const result = validateOpenAPI(doc, { 
-          strict: true, 
-          strictRules: { requireRateLimitHeaders: true } 
+        const result = validateOpenAPI(doc, {
+          strict: true,
+          strictRules: { requireRateLimitHeaders: true },
         });
         expect(result.valid).toBe(false);
-        expect(result.errors?.issues[0].message).toBe('Rate limiting headers are required in strict mode');
+        expect(result.errors?.issues[0].message).toBe(
+          'Rate limiting headers are required in strict mode'
+        );
       });
     });
   });
@@ -314,11 +323,11 @@ describe('Request/Response Schema Types', () => {
     test('validates response map', () => {
       const responses = {
         '200': {
-          description: 'OK response'
+          description: 'OK response',
         },
-        'default': {
-          description: 'Default response'
-        }
+        default: {
+          description: 'Default response',
+        },
       };
       expect(() => ResponsesObject.parse(responses)).not.toThrow();
     });
@@ -326,7 +335,7 @@ describe('Request/Response Schema Types', () => {
     test('validates responses with references', () => {
       const responses = {
         '200': { $ref: '#/components/responses/Success' },
-        '404': { $ref: '#/components/responses/NotFound' }
+        '404': { $ref: '#/components/responses/NotFound' },
       };
       expect(() => ResponsesObject.parse(responses)).not.toThrow();
     });

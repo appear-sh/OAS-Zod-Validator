@@ -27,21 +27,21 @@ describe('Reference Target Verification', () => {
           get: {
             responses: {
               '200': {
-                $ref: '#/components/responses/Success'
-              }
-            }
-          }
-        }
+                $ref: '#/components/responses/Success',
+              },
+            },
+          },
+        },
       },
       components: {
         responses: {
           Success: {
-            description: 'Successful response'
-          }
-        }
-      }
+            description: 'Successful response',
+          },
+        },
+      },
     };
-    
+
     const result = validateOpenAPI(doc, { strict: true });
     expect(result.valid).toBe(true);
     expect(result.resolvedRefs).toContain('#/components/responses/Success');
@@ -56,14 +56,14 @@ describe('Reference Target Verification', () => {
           get: {
             responses: {
               '200': {
-                $ref: '#/components/responses/NonExistent'
-              }
-            }
-          }
-        }
-      }
+                $ref: '#/components/responses/NonExistent',
+              },
+            },
+          },
+        },
+      },
     };
-    
+
     const result = validateOpenAPI(doc, { strict: true });
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
@@ -78,11 +78,11 @@ describe('Reference Target Verification Error Handling', () => {
       components: {
         schemas: {
           A: { $ref: '#/components/schemas/B' },
-          B: { $ref: '#/components/schemas/A' }
-        }
-      }
+          B: { $ref: '#/components/schemas/A' },
+        },
+      },
     };
-    
+
     const result = validateOpenAPI(doc, { strict: true });
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
@@ -103,21 +103,21 @@ describe('Reference Target Verification Error Handling', () => {
                 type: 'object',
                 required: ['ref'],
                 properties: {
-                  ref: { 
-                    $ref: '#/components/schemas/Target'
-                  }
-                }
-              }
-            }
+                  ref: {
+                    $ref: '#/components/schemas/Target',
+                  },
+                },
+              },
+            },
           },
-          Target: { 
+          Target: {
             type: 'string',
-            description: 'A target string'
-          }
-        }
-      }
+            description: 'A target string',
+          },
+        },
+      },
     };
-    
+
     const result = validateOpenAPI(doc, { strict: true });
     expect(result.valid).toBe(true);
     expect(result.resolvedRefs).toContain('#/components/schemas/Target');

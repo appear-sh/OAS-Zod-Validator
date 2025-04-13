@@ -1,6 +1,7 @@
 openapi: 3.0.2
 info:
-  description: Create beautiful product and API documentation with our developer friendly
+  description:
+    Create beautiful product and API documentation with our developer friendly
     platform.
   version: 4.355.0
   title: "ReadMe API \U0001F989"
@@ -32,7 +33,8 @@ paths:
       parameters:
         - name: uuid
           in: path
-          description: An API Registry UUID. This can be found by navigating to your
+          description:
+            An API Registry UUID. This can be found by navigating to your
             API Reference page and viewing code snippets for Node with the `api` library.
           schema:
             type: string
@@ -78,7 +80,8 @@ paths:
     post:
       operationId: uploadAPISpecification
       summary: Upload specification
-      description: Upload an API specification to ReadMe. Or, to use a newer solution
+      description:
+        Upload an API specification to ReadMe. Or, to use a newer solution
         see https://docs.readme.com/main/docs/rdme.
       tags:
         - API Specification
@@ -126,7 +129,8 @@ paths:
       parameters:
         - name: id
           in: path
-          description: ID of the API specification. The unique ID for each API can be
+          description:
+            ID of the API specification. The unique ID for each API can be
             found by navigating to your **API Definitions** page.
           schema:
             type: string
@@ -176,7 +180,8 @@ paths:
       parameters:
         - name: id
           in: path
-          description: ID of the API specification. The unique ID for each API can be
+          description:
+            ID of the API specification. The unique ID for each API can be
             found by navigating to your **API Definitions** page.
           schema:
             type: string
@@ -213,7 +218,8 @@ paths:
     post:
       operationId: applyToReadMe
       summary: Submit your application!
-      description: This endpoint will let you apply to a job at ReadMe programatically,
+      description:
+        This endpoint will let you apply to a job at ReadMe programatically,
         without having to go through our UI!
       tags:
         - Apply to ReadMe
@@ -281,7 +287,8 @@ paths:
       parameters:
         - name: slug
           in: path
-          description: A URL-safe representation of the category title. Slugs must be
+          description:
+            A URL-safe representation of the category title. Slugs must be
             all lowercase, and replace spaces with hyphens. For example, for the category
             "Getting Started", enter the slug "getting-started".
           example: getting-started
@@ -305,7 +312,8 @@ paths:
       parameters:
         - name: slug
           in: path
-          description: A URL-safe representation of the category title. Slugs must be
+          description:
+            A URL-safe representation of the category title. Slugs must be
             all lowercase, and replace spaces with hyphens. For example, for the category
             "Getting Started", enter the slug "getting-started".
           example: getting-started
@@ -340,7 +348,8 @@ paths:
       parameters:
         - name: slug
           in: path
-          description: A URL-safe representation of the category title. Slugs must be
+          description:
+            A URL-safe representation of the category title. Slugs must be
             all lowercase, and replace spaces with hyphens. For example, for the category
             "Getting Started", enter the slug "getting-started".
           example: getting-started
@@ -365,7 +374,8 @@ paths:
       parameters:
         - name: slug
           in: path
-          description: A URL-safe representation of the category title. Slugs must be
+          description:
+            A URL-safe representation of the category title. Slugs must be
             all lowercase, and replace spaces with hyphens. For example, for the category
             "Getting Started", enter the slug "getting-started".
           example: getting-started
@@ -429,7 +439,8 @@ paths:
       parameters:
         - name: slug
           in: path
-          description: A URL-safe representation of the changelog title. Slugs must
+          description:
+            A URL-safe representation of the changelog title. Slugs must
             be all lowercase, and replace spaces with hyphens. For example, for the
             changelog "Owlet Update", enter the slug "owlet-update".
           required: true
@@ -451,7 +462,8 @@ paths:
       parameters:
         - name: slug
           in: path
-          description: A URL-safe representation of the changelog title. Slugs must
+          description:
+            A URL-safe representation of the changelog title. Slugs must
             be all lowercase, and replace spaces with hyphens. For example, for the
             changelog "Owlet Weekly Update", enter the slug "owlet-weekly-update".
           required: true
@@ -481,7 +493,8 @@ paths:
       parameters:
         - name: slug
           in: path
-          description: A URL-safe representation of the changelog title. Slugs must
+          description:
+            A URL-safe representation of the changelog title. Slugs must
             be all lowercase, and replace spaces with hyphens. For example, for the
             changelog "Owlet Weekly Update", enter the slug "owlet-weekly-update".
           required: true
@@ -688,7 +701,8 @@ paths:
     get:
       operationId: getProductionDoc
       summary: Get production doc
-      description: This is intended for use by enterprise users with staging enabled.
+      description:
+        This is intended for use by enterprise users with staging enabled.
         This endpoint will return the live version of your document, whereas the standard
         endpoint will always return staging.
       tags:
@@ -923,7 +937,8 @@ components:
       scheme: basic
   headers:
     link:
-      description: Pagination information. See https://docs.readme.com/main/reference/pagination
+      description:
+        Pagination information. See https://docs.readme.com/main/reference/pagination
         for more information.
       schema:
         type: string
@@ -937,7 +952,8 @@ components:
     slug:
       name: slug
       in: path
-      description: A URL-safe representation of the page title. Slugs must be all
+      description:
+        A URL-safe representation of the page title. Slugs must be all
         lowercase, and replace spaces with hyphens. For example, for the title "Getting
         Started", enter the slug "getting-started".
       required: true
@@ -954,7 +970,8 @@ components:
     perPage:
       name: perPage
       in: query
-      description: Number of items to include in pagination (up to 100, defaults to
+      description:
+        Number of items to include in pagination (up to 100, defaults to
         10).
       schema:
         type: integer
@@ -964,7 +981,8 @@ components:
     x-readme-version:
       in: header
       name: x-readme-version
-      description: Version number of your docs project, for example, v3.0. By default
+      description:
+        Version number of your docs project, for example, v3.0. By default
         the main project version is used. To see all valid versions for your docs
         project call https://docs.readme.com/main/reference/version#getversions.
       example: v3.0
@@ -974,7 +992,8 @@ components:
     versionId:
       name: versionId
       in: path
-      description: Semver identifier for the project version. For best results, use
+      description:
+        Semver identifier for the project version. For best results, use
         the formatted `version_clean` value listed in the response from the [Get Versions
         endpoint](/reference/getversions).
       example: v1.0.0
@@ -1241,13 +1260,15 @@ components:
         docs:
           type: string
           format: url
-          description: A [ReadMe Metrics](https://readme.com/metrics/) log URL where
+          description:
+            A [ReadMe Metrics](https://readme.com/metrics/) log URL where
             you can see more information the request that you made. If we have metrics
             URLs unavailable for your request, this URL will be a URL to our API Reference.
           example: https://docs.readme.com/logs/6883d0ee-cf79-447a-826f-a48f7d5bdf5f
         help:
           type: string
-          description: Information on where you can receive additional assistance
+          description:
+            Information on where you can receive additional assistance
             from our wonderful support team.
           example: If you need help, email support@readme.io
         poem:
@@ -1300,7 +1321,8 @@ components:
           description: What should we know about you?
         dontReallyApply:
           type: boolean
-          description: Want to play with the API but not actually apply? Set this
+          description:
+            Want to play with the API but not actually apply? Set this
             to true.
           default: false
       required:
@@ -1312,7 +1334,8 @@ components:
       properties:
         title:
           type: string
-          description: A short title for the category. This is what will show in the
+          description:
+            A short title for the category. This is what will show in the
             sidebar.
         type:
           type: string
@@ -1320,7 +1343,8 @@ components:
             - reference
             - guide
           default: guide
-          description: A category can be part of your reference or guide documentation,
+          description:
+            A category can be part of your reference or guide documentation,
             which is determined by this field.
     changelog:
       type: object
@@ -1360,7 +1384,8 @@ components:
         baseUrl:
           type: string
           format: url
-          description: The base URL for the project. If the project is not running
+          description:
+            The base URL for the project. If the project is not running
             under a custom domain, it will be `https://projectSubdomain.readme.io`,
             otherwise it can either be or `https://example.com` or, in the case of
             an enterprise child project `https://example.com/projectSubdomain`.
@@ -1377,11 +1402,13 @@ components:
           description: Body formatted in Markdown (displayed by default).
         html:
           type: string
-          description: Body formatted in HTML (sanitized, only displayed if `htmlmode`
+          description:
+            Body formatted in HTML (sanitized, only displayed if `htmlmode`
             is **true**).
         htmlmode:
           type: boolean
-          description: '**true** if `html` should be displayed, **false** if `body`
+          description:
+            '**true** if `html` should be displayed, **false** if `body`
             should be displayed.'
           default: false
         hidden:
@@ -1398,7 +1425,8 @@ components:
           description: Title of the page.
         type:
           type: string
-          description: Type of the page. The available types all show up under the
+          description:
+            Type of the page. The available types all show up under the
             /docs/ URL path of your docs project (also known as the "guides" section).
             Can be "basic" (most common), "error" (page desribing an API error), or
             "link" (page that redirects to an external link).
@@ -1411,7 +1439,8 @@ components:
           description: Body content of the page, formatted in [ReadMe-flavored Markdown](https://docs.readme.com/rdmd/docs).
         category:
           type: string
-          description: Category ID of the page, which you can get through [the **Get
+          description:
+            Category ID of the page, which you can get through [the **Get
             all categories** endpoint](https://docs.readme.com/main/reference/getcategories).
         hidden:
           type: boolean
@@ -1431,12 +1460,14 @@ components:
               description: The error code for docs with the "error" type.
         categorySlug:
           type: string
-          description: The slug of the category this page is associated with. You
+          description:
+            The slug of the category this page is associated with. You
             can get this through [the **Get all categories** endpoint](https://docs.readme.com/main/reference/getcategories).
             This field is an alternative to the `category` field.
         parentDocSlug:
           type: string
-          description: If this page is a subpage, this field will be the slug of the
+          description:
+            If this page is a subpage, this field will be the slug of the
             parent document. You can get this through https://docs.readme.com/main/reference/docs#getdoc.
             This field is an alternative to the `parentDoc` field.
       oneOf:
@@ -1457,7 +1488,8 @@ components:
           description: Title of the page.
         type:
           type: string
-          description: Type of the page. The available types all show up under the
+          description:
+            Type of the page. The available types all show up under the
             /docs/ URL path of your docs project (also known as the "guides" section).
             Can be "basic" (most common), "error" (page desribing an API error), or
             "link" (page that redirects to an external link).
@@ -1470,7 +1502,8 @@ components:
           description: Body content of the page, formatted in [ReadMe-flavored Markdown](https://docs.readme.com/rdmd/docs).
         category:
           type: string
-          description: Category ID of the page, which you can get through [the **Get
+          description:
+            Category ID of the page, which you can get through [the **Get
             all categories** endpoint](https://docs.readme.com/main/reference/getcategories).
         hidden:
           type: boolean
@@ -1490,12 +1523,14 @@ components:
               description: The error code for docs with the "error" type.
         categorySlug:
           type: string
-          description: The slug of the category this page is associated with. You
+          description:
+            The slug of the category this page is associated with. You
             can get this through [the **Get all categories** endpoint](https://docs.readme.com/main/reference/getcategories).
             This field is an alternative to the `category` field.
         parentDocSlug:
           type: string
-          description: If this page is a subpage, this field will be the slug of the
+          description:
+            If this page is a subpage, this field will be the slug of the
             parent document. You can get this through https://docs.readme.com/main/reference/docs#getdoc.
             This field is an alternative to the `parentDoc` field.
       additionalProperties: true
@@ -1507,7 +1542,8 @@ components:
           description: Title of the page.
         type:
           type: string
-          description: Type of the page. The available types all show up under the
+          description:
+            Type of the page. The available types all show up under the
             /docs/ URL path of your docs project (also known as the "guides" section).
             Can be "basic" (most common), "error" (page desribing an API error), or
             "link" (page that redirects to an external link).
@@ -1520,7 +1556,8 @@ components:
           description: Body content of the page, formatted in [ReadMe-flavored Markdown](https://docs.readme.com/rdmd/docs).
         category:
           type: string
-          description: Category ID of the page, which you can get through [the **Get
+          description:
+            Category ID of the page, which you can get through [the **Get
             all categories** endpoint](https://docs.readme.com/main/reference/getcategories).
         hidden:
           type: boolean
@@ -1579,7 +1616,8 @@ components:
           example: API Engineer
         description:
           type: string
-          description: The description for this open position. This content is formatted
+          description:
+            The description for this open position. This content is formatted
             as HTML.
         pullquote:
           type: string

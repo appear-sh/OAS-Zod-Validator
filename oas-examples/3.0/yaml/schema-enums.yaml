@@ -13,7 +13,8 @@ paths:
     post:
       operationId: string_enumSupport
       summary: String enum support
-      description: "Support and handling of enums on `type: string` schemas.\n\n\U0001F4DA
+      description:
+        "Support and handling of enums on `type: string` schemas.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -48,7 +49,8 @@ paths:
                   default: available
                 enum (with default) *required:
                   type: string
-                  description: A required enum with a default (if a field is required
+                  description:
+                    A required enum with a default (if a field is required
                     it should probably always have a default, eh?)
                   enum:
                     - available
@@ -73,7 +75,8 @@ paths:
                   example: pending
                 enum (with non-value example):
                   type: string
-                  description: This enum has an example that isn't part of the enum,
+                  description:
+                    This enum has an example that isn't part of the enum,
                     so the option does not get hidden
                   enum:
                     - available
@@ -82,7 +85,8 @@ paths:
                   example: Choose...
                 enum (with non-value example) *required:
                   type: string
-                  description: This enum has an example that isn't part of the enum,
+                  description:
+                    This enum has an example that isn't part of the enum,
                     so the option does not get hidden
                   enum:
                     - available
@@ -91,7 +95,8 @@ paths:
                   example: Choose...
                 enum (with empty option):
                   type: string
-                  description: This enum has an empty string (`""`) as one of its
+                  description:
+                    This enum has an empty string (`""`) as one of its
                     available options.
                   enum:
                     - ''
@@ -100,7 +105,8 @@ paths:
                     - sold
                 enum (with duplicate options):
                   type: string
-                  description: This enum has multiple duplicate options, they should
+                  description:
+                    This enum has multiple duplicate options, they should
                     get deduped in the UI
                   enum:
                     - ''
@@ -109,7 +115,8 @@ paths:
                     - available
                 enum (with empty option and empty default):
                   type: string
-                  description: This enum has a an empty string (`""`) as its only
+                  description:
+                    This enum has a an empty string (`""`) as its only
                     available option, and that same value is set as its `default`.
                   enum:
                     - ''
@@ -125,7 +132,8 @@ paths:
     get:
       operationId: number_enumSupport
       summary: Number enum support
-      description: "Support and handling of enums on `type: number` schemas.\n\n\U0001F4DA
+      description:
+        "Support and handling of enums on `type: number` schemas.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -160,7 +168,8 @@ paths:
                   default: 1
                 enum (with default) *required:
                   type: number
-                  description: A required enum with a default (if a field is required
+                  description:
+                    A required enum with a default (if a field is required
                     it should probably always have a default, eh?)
                   enum:
                     - 0
@@ -185,7 +194,8 @@ paths:
                   example: 1
                 enum (with empty option):
                   type: number
-                  description: This enum has an empty string (`""`) as one of its
+                  description:
+                    This enum has an empty string (`""`) as one of its
                     available options.
                   enum:
                     - ''
@@ -194,7 +204,8 @@ paths:
                     - 2
                 enum (with duplicate options):
                   type: number
-                  description: This enum has multiple duplicate options, they should
+                  description:
+                    This enum has multiple duplicate options, they should
                     get deduped in the UI
                   enum:
                     - ''
@@ -212,7 +223,8 @@ paths:
     put:
       operationId: boolean_enumSupport
       summary: Boolean enum support
-      description: "Support and handling of enums on `type: boolean` schemas.\n\n\U0001F4DA
+      description:
+        "Support and handling of enums on `type: boolean` schemas.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -244,7 +256,8 @@ paths:
                   default: false
                 enum (with default) *required:
                   type: boolean
-                  description: A required enum with a default (if a field is required
+                  description:
+                    A required enum with a default (if a field is required
                     it should probably always have a default, eh?)
                   enum:
                     - true

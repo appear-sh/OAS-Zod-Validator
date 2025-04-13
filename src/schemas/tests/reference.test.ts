@@ -1,4 +1,8 @@
-import { ReferenceObject, isReferenceObject, validateReference } from '../reference.js';
+import {
+  ReferenceObject,
+  isReferenceObject,
+  validateReference,
+} from '../reference.js';
 import { describe, test, expect } from 'vitest';
 
 describe('Reference Object Validation', () => {
@@ -13,9 +17,9 @@ describe('Reference Object Validation', () => {
   });
 
   test('rejects additional properties', () => {
-    const refWithExtra = { 
+    const refWithExtra = {
       $ref: '#/components/schemas/User',
-      extra: 'property'
+      extra: 'property',
     };
     expect(() => ReferenceObject.parse(refWithExtra)).toThrow();
   });

@@ -234,7 +234,8 @@ paths:
                   description: Type of astronomical object
                 locationUid:
                   type: string
-                  description: Unique ID of astronomical object containing objects
+                  description:
+                    Unique ID of astronomical object containing objects
                     being searched
       responses:
         '200':
@@ -816,7 +817,8 @@ paths:
                   description: Whether it should be a hologram
                 fictionalCharacter:
                   type: boolean
-                  description: Whether it should be a fictional character (from universe
+                  description:
+                    Whether it should be a fictional character (from universe
                     point of view)
                 mirror:
                   type: boolean
@@ -969,7 +971,8 @@ paths:
                   description: Whether it should be a photonovel
                 adaptation:
                   type: boolean
-                  description: Whether it should be an adaptation of an episode or
+                  description:
+                    Whether it should be an adaptation of an episode or
                     a movie
       responses:
         '200':
@@ -1529,7 +1532,8 @@ paths:
                   description: Whether it should be a matte painting company
                 modelAndMiniatureEffectsCompany:
                   type: boolean
-                  description: Whether it should be a model and miniature effects
+                  description:
+                    Whether it should be a model and miniature effects
                     company
                 postProductionCompany:
                   type: boolean
@@ -1673,11 +1677,13 @@ paths:
                   description: Whether it should be an Earth conflict
                 federationWar:
                   type: boolean
-                  description: Whether this conflict should be a part of war involving
+                  description:
+                    Whether this conflict should be a part of war involving
                     Federation
                 klingonWar:
                   type: boolean
-                  description: Whether this conflict should be a part of war involving
+                  description:
+                    Whether this conflict should be a part of war involving
                     the Klingons
                 dominionWarBattle:
                   type: boolean
@@ -1965,12 +1971,14 @@ paths:
                   format: int32
                 usAirDateFrom:
                   type: string
-                  description: Minimal date the episode was first aired in the United
+                  description:
+                    Minimal date the episode was first aired in the United
                     States
                   format: date
                 usAirDateTo:
                   type: string
-                  description: Maximal date the episode was first aired in the United
+                  description:
+                    Maximal date the episode was first aired in the United
                     States
                   format: date
                 finalScriptDateFrom:
@@ -3045,12 +3053,14 @@ paths:
                   format: int32
                 usReleaseDateFrom:
                   type: string
-                  description: Minimal date the movie was first released in the United
+                  description:
+                    Minimal date the movie was first released in the United
                     States
                   format: date
                 usReleaseDateTo:
                   type: string
-                  description: Maximal date the movie was first released in the United
+                  description:
+                    Maximal date the movie was first released in the United
                     States
                   format: date
       responses:
@@ -3313,7 +3323,8 @@ paths:
                   description: Whether this organization should be from mirror universe
                 alternateReality:
                   type: boolean
-                  description: Whether this organization should be from alternate
+                  description:
+                    Whether this organization should be from alternate
                     reality
       responses:
         '200':
@@ -3456,19 +3467,23 @@ paths:
                   description: Whether it should be an animal performer
                 disPerformer:
                   type: boolean
-                  description: 'Whether it should be a performer that appeared in
+                  description:
+                    'Whether it should be a performer that appeared in
                     Star Trek: Discovery'
                 ds9Performer:
                   type: boolean
-                  description: 'Whether it should be a performer that appeared in
+                  description:
+                    'Whether it should be a performer that appeared in
                     Star Trek: Deep Space Nine'
                 entPerformer:
                   type: boolean
-                  description: 'Whether it should be a performer that appeared in
+                  description:
+                    'Whether it should be a performer that appeared in
                     Star Trek: Enterprise'
                 filmPerformer:
                   type: boolean
-                  description: Whether it should be a performer that appeared in a
+                  description:
+                    Whether it should be a performer that appeared in a
                     Star Trek movie
                 standInPerformer:
                   type: boolean
@@ -3478,15 +3493,18 @@ paths:
                   description: Whether it should be a stunt performer
                 tasPerformer:
                   type: boolean
-                  description: 'Whether it should be a performer that appeared in
+                  description:
+                    'Whether it should be a performer that appeared in
                     Star Trek: The Animated Series'
                 tngPerformer:
                   type: boolean
-                  description: 'Whether it should be a performer that appeared in
+                  description:
+                    'Whether it should be a performer that appeared in
                     Star Trek: The Next Generation'
                 tosPerformer:
                   type: boolean
-                  description: 'Whether it should be a performer that appeared in
+                  description:
+                    'Whether it should be a performer that appeared in
                     Star Trek: The Original Series'
                 videoGamePerformer:
                   type: boolean
@@ -3496,7 +3514,8 @@ paths:
                   description: Whether it should be a voice performer
                 voyPerformer:
                   type: boolean
-                  description: 'Whether it should be a performer that appeared in
+                  description:
+                    'Whether it should be a performer that appeared in
                     Star Trek: Voyager'
       responses:
         '200':
@@ -4110,7 +4129,8 @@ paths:
                   description: Whether it should be a warp-capable spacecraft class
                 alternateReality:
                   type: boolean
-                  description: Whether this spacecraft class should be from alternate
+                  description:
+                    Whether this spacecraft class should be from alternate
                     reality
       responses:
         '200':
@@ -4403,7 +4423,8 @@ paths:
                   description: Whether this person should be a production designer
                 cameraAndElectricalDepartment:
                   type: boolean
-                  description: Whether this person should be from camera and electrical
+                  description:
+                    Whether this person should be from camera and electrical
                     department
                 cinematographer:
                   type: boolean
@@ -4422,11 +4443,13 @@ paths:
                   description: Whether this person should be a director
                 assistantOrSecondUnitDirector:
                   type: boolean
-                  description: Whether this person should be an assistant or secound
+                  description:
+                    Whether this person should be an assistant or secound
                     unit director director
                 exhibitAndAttractionStaff:
                   type: boolean
-                  description: Whether this person should be an exhibit and attraction
+                  description:
+                    Whether this person should be an exhibit and attraction
                     staff
                 filmEditor:
                   type: boolean
@@ -4469,7 +4492,8 @@ paths:
                   description: Whether this person should be from sound department
                 specialAndVisualEffectsStaff:
                   type: boolean
-                  description: Whether this person should be a special and visual
+                  description:
+                    Whether this person should be a special and visual
                     effects staff
                 author:
                   type: boolean
@@ -4536,11 +4560,13 @@ paths:
                   description: Whether this person should be a publicity artist
                 cbsDigitalStaff:
                   type: boolean
-                  description: Whether this person should be a part of CBS digital
+                  description:
+                    Whether this person should be a part of CBS digital
                     staff
                 ilmProductionStaff:
                   type: boolean
-                  description: Whether this person should be a part of ILM production
+                  description:
+                    Whether this person should be a part of ILM production
                     staff
                 specialFeaturesStaff:
                   type: boolean
@@ -4685,7 +4711,8 @@ paths:
                   description: Whether it should be a computer technology
                 computerProgramming:
                   type: boolean
-                  description: Whether it should be a technology related to computer
+                  description:
+                    Whether it should be a technology related to computer
                     programming
                 subroutine:
                   type: boolean
@@ -5760,7 +5787,8 @@ components:
           '$ref': '#/components/schemas/AstronomicalObjectBase'
         astronomicalObjects:
           type: array
-          description: Astronomical objects located in this astronomical object, like
+          description:
+            Astronomical objects located in this astronomical object, like
             planets in a star system
           items:
             '$ref': '#/components/schemas/AstronomicalObjectBase'
@@ -5897,7 +5925,8 @@ components:
           description: Whether it's a novelization
         audiobook:
           type: boolean
-          description: Whether it's an audiobook, or has been release as an audiobook
+          description:
+            Whether it's an audiobook, or has been release as an audiobook
             in addition to other form
         audiobookAbridged:
           type: boolean
@@ -5988,7 +6017,8 @@ components:
           description: Whether it's a novelization
         audiobook:
           type: boolean
-          description: Whether it's an audiobook, or has been release as an audiobook
+          description:
+            Whether it's an audiobook, or has been release as an audiobook
             in addition to other form
         audiobookAbridged:
           type: boolean
@@ -6443,7 +6473,8 @@ components:
           description: Whether this character is a hologram
         fictionalCharacter:
           type: boolean
-          description: Whether this character is a fictional character (from universe
+          description:
+            Whether this character is a fictional character (from universe
             point of view)
         mirror:
           type: boolean
@@ -6520,7 +6551,8 @@ components:
           description: Whether this character is a hologram
         fictionalCharacter:
           type: boolean
-          description: Whether this character is a fictional character (from universe
+          description:
+            Whether this character is a fictional character (from universe
             point of view)
         mirror:
           type: boolean
@@ -9268,7 +9300,8 @@ components:
           description: "Whether it's a performer that appeared in Star Trek: Discovery"
         ds9Performer:
           type: boolean
-          description: "Whether it's a performer that appeared in Star Trek: Deep
+          description:
+            "Whether it's a performer that appeared in Star Trek: Deep
             Space Nine"
         entPerformer:
           type: boolean
@@ -9343,7 +9376,8 @@ components:
           description: "Whether it's a performer that appeared in Star Trek: Discovery"
         ds9Performer:
           type: boolean
-          description: "Whether it's a performer that appeared in Star Trek: Deep
+          description:
+            "Whether it's a performer that appeared in Star Trek: Deep
             Space Nine"
         entPerformer:
           type: boolean
@@ -9864,7 +9898,8 @@ components:
           description: Spacecraft registry
         status:
           type: string
-          description: Status of a spacecraft (in prime reality, if spacecraft was
+          description:
+            Status of a spacecraft (in prime reality, if spacecraft was
             in more than one realities)
         dateStatus:
           type: string
@@ -9893,7 +9928,8 @@ components:
           description: Spacecraft registry
         status:
           type: string
-          description: Status of a spacecraft (in prime reality, if spacecraft was
+          description:
+            Status of a spacecraft (in prime reality, if spacecraft was
             in more than one realities)
         dateStatus:
           type: string
@@ -10269,7 +10305,8 @@ components:
           description: Whether this person is a director
         assistantOrSecondUnitDirector:
           type: boolean
-          description: Whether this person is an assistant or secound unit director
+          description:
+            Whether this person is an assistant or secound unit director
             director
         exhibitAndAttractionStaff:
           type: boolean
@@ -10467,7 +10504,8 @@ components:
           description: Whether this person is a director
         assistantOrSecondUnitDirector:
           type: boolean
-          description: Whether this person is an assistant or secound unit director
+          description:
+            Whether this person is an assistant or secound unit director
             director
         exhibitAndAttractionStaff:
           type: boolean
@@ -10983,7 +11021,8 @@ components:
           description: Release year, if set was releases over multiple years
         productionRun:
           type: integer
-          description: Production run, if different from trading card set production
+          description:
+            Production run, if different from trading card set production
             run
         tradingCardSet:
           '$ref': '#/components/schemas/TradingCardSetHeader'
@@ -11014,7 +11053,8 @@ components:
           description: Release year, if set was releases over multiple years
         productionRun:
           type: integer
-          description: Production run, if different from trading card set production
+          description:
+            Production run, if different from trading card set production
             run
       required:
         - uid

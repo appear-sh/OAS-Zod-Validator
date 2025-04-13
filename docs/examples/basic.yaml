@@ -35,7 +35,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-    
+
     post:
       summary: Create user
       description: Creates a new user
@@ -93,7 +93,7 @@ components:
           type: string
           format: date-time
           description: Creation timestamp
-    
+
     UserInput:
       type: object
       required:
@@ -109,7 +109,7 @@ components:
           minLength: 1
           maxLength: 100
           description: User full name
-    
+
     Error:
       type: object
       required:
@@ -122,4 +122,4 @@ components:
           description: Error code
         message:
           type: string
-          description: Error message 
+          description: Error message

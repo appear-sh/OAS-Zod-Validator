@@ -2,7 +2,9 @@ import type { z } from 'zod';
 import type { OpenAPIObject } from './openapi.js';
 import type { OpenAPIObject31 } from './openapi31.js';
 
-export type OpenAPISpec = z.infer<typeof OpenAPIObject | typeof OpenAPIObject31>;
+export type OpenAPISpec = z.infer<
+  typeof OpenAPIObject | typeof OpenAPIObject31
+>;
 
 export interface ValidationOptions {
   strict?: boolean;

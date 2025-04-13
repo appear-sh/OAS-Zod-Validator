@@ -1,19 +1,10 @@
 export default {
-  env: {
-    node: true,
-    es2022: true,
-    jest: true
-  },
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'vitest'],
   extends: [
     'eslint:recommended',
-    'plugin:@typescript-eslint/recommended'
+    'plugin:@typescript-eslint/recommended',
+    'plugin:vitest/recommended',
+    'plugin:prettier/recommended',
   ],
-  rules: {
-    // Customize rules as needed
-    'semi': ['error', 'always'],
-    'quotes': ['error', 'single'],
-    // ...
-  }
 };

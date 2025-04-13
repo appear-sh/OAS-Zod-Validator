@@ -77,10 +77,10 @@ Example usage:
 const result = validateOpenAPI(spec);
 
 if (result.valid) {
-  console.log("✅ Valid OpenAPI specification");
-  console.log("📎 Resolved references:", result.resolvedRefs);
+  console.log('✅ Valid OpenAPI specification');
+  console.log('📎 Resolved references:', result.resolvedRefs);
 } else {
-  console.error("❌ Validation errors:", result.errors);
+  console.error('❌ Validation errors:', result.errors);
 }
 ```
 

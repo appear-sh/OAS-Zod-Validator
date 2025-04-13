@@ -59,11 +59,11 @@ const asciiArt = `
 `;
 
 const gradientColors = [
-  '#35D1BA',  // Fresh teal
-  '#61C49E',  // Mint
-  '#96B37C',  // Sage
-  '#D39F56',  // Warm gold
-  '#EE9644',  // Sunset orange
+  '#35D1BA', // Fresh teal
+  '#61C49E', // Mint
+  '#96B37C', // Sage
+  '#D39F56', // Warm gold
+  '#EE9644', // Sunset orange
 ];
 
 /**
@@ -91,25 +91,35 @@ function displayWelcome(): void {
 async function loadConfig(configPath: string): Promise<ConfigFile> {
   const spinner = ora({
     text: 'Loading configuration...',
-    color: 'cyan'
+    color: 'cyan',
   }).start();
 
   try {
-    const config = JSON.parse(await fs.promises.readFile(configPath, 'utf8')) as ConfigFile;
-    
+    const config = JSON.parse(
+      await fs.promises.readFile(configPath, 'utf8')
+    ) as ConfigFile;
+
     // Validate cache configuration
     if (config.cache) {
-      if (typeof config.cache.enabled !== 'undefined' && typeof config.cache.enabled !== 'boolean') {
+      if (
+        typeof config.cache.enabled !== 'undefined' &&
+        typeof config.cache.enabled !== 'boolean'
+      ) {
         throw new Error('Configuration error: cache.enabled must be a boolean');
       }
-      
+
       if (typeof config.cache.maxSize !== 'undefined') {
-        if (typeof config.cache.maxSize !== 'number' || config.cache.maxSize < 1) {
-          throw new Error('Configuration error: cache.maxSize must be a positive number');
+        if (
+          typeof config.cache.maxSize !== 'number' ||
+          config.cache.maxSize < 1
+        ) {
+          throw new Error(
+            'Configuration error: cache.maxSize must be a positive number'
+          );
         }
       }
     }
-    
+
     spinner.succeed('Configuration loaded successfully');
     return config;
   } catch (err) {
@@ -137,21 +147,25 @@ function getValueFromPath(obj: any, path: (string | number)[]): any {
     // Handle cases where path segments might represent keys with dots
     // This is a simple check; more robust handling might be needed if keys truly contain dots.
     if (typeof key === 'string' && key.includes('.') && !(key in current)) {
-        // Attempt splitting if direct key access fails - might be overly simplistic
-        const keys = key.split('.');
-        let tempCurrent = current;
-        for (const subKey of keys) {
-            if (tempCurrent === null || typeof tempCurrent !== 'object' || !(subKey in tempCurrent)) {
-                current = undefined; // Path segment not found
-                break;
-            }
-            tempCurrent = tempCurrent[subKey];
+      // Attempt splitting if direct key access fails - might be overly simplistic
+      const keys = key.split('.');
+      let tempCurrent = current;
+      for (const subKey of keys) {
+        if (
+          tempCurrent === null ||
+          typeof tempCurrent !== 'object' ||
+          !(subKey in tempCurrent)
+        ) {
+          current = undefined; // Path segment not found
+          break;
         }
-        current = tempCurrent;
-    } else if (!(key in current)){
-        current = undefined; // Path segment not found
+        tempCurrent = tempCurrent[subKey];
+      }
+      current = tempCurrent;
+    } else if (!(key in current)) {
+      current = undefined; // Path segment not found
     } else {
-       current = current[key];
+      current = current[key];
     }
 
     if (current === undefined) {
@@ -173,7 +187,7 @@ function formatValueForCli(value: any): string {
   }
   if (typeof value === 'string') {
     if (value.length > 100) {
-       // Add quotes for strings
+      // Add quotes for strings
       return chalk.dim(`"${value.substring(0, 97)}..."`);
     }
     return chalk.dim(`"${value}"`);
@@ -181,13 +195,18 @@ function formatValueForCli(value: any): string {
   if (typeof value === 'object' && value !== null) {
     try {
       // Use YAML dump for potentially better readability of structures
-      const yamlString = yaml.dump(value, { indent: 2, lineWidth: 80, skipInvalid: true });
+      const yamlString = yaml.dump(value, {
+        indent: 2,
+        lineWidth: 80,
+        skipInvalid: true,
+      });
       const lines = yamlString.split('\n');
-      if (lines.length > 10 || yamlString.length > 300) { // Limit output size
+      if (lines.length > 10 || yamlString.length > 300) {
+        // Limit output size
         return chalk.dim('{ /* Large object/array */ }');
       }
       // Indent the YAML output slightly
-      return chalk.dim(lines.map(l => `  ${l}`).join('\n'));
+      return chalk.dim(lines.map((l) => `  ${l}`).join('\n'));
     } catch (e) {
       return chalk.dim('[Unserializable Value]');
     }
@@ -207,14 +226,14 @@ async function validateSpec(
 ): Promise<void> {
   const spinner = ora({
     text: 'Validating OpenAPI specification...',
-    color: 'cyan'
+    color: 'cyan',
   }).start();
 
   let parsedContent: any = null; // Variable to hold the parsed spec
 
   try {
     const fileContent = await fs.promises.readFile(filePath, 'utf8');
-    
+
     // Parse the content once for context retrieval
     try {
       if (path.extname(filePath).toLowerCase().startsWith('.y')) {
@@ -236,12 +255,12 @@ async function validateSpec(
       strict: cliOptions.strict,
       allowFutureOASVersions: cliOptions.allowFutureOASVersions,
       strictRules: {
-        requireRateLimitHeaders: cliOptions.requireRateLimitHeaders
+        requireRateLimitHeaders: cliOptions.requireRateLimitHeaders,
       },
       cache: {
         enabled: cliOptions.cacheEnabled !== false,
-        maxSize: cliOptions.cacheSize
-      }
+        maxSize: cliOptions.cacheSize,
+      },
     };
 
     // For now, we'll assume it works with the string, but we have parsedContent for context.
@@ -249,7 +268,7 @@ async function validateSpec(
 
     if (result.valid) {
       spinner.succeed('Validation successful! ✨');
-      
+
       if (cliOptions.format === 'json') {
         console.log(JSON.stringify(result, null, 2));
       } else {
@@ -258,12 +277,12 @@ async function validateSpec(
       }
     } else {
       spinner.fail('Validation failed');
-      
+
       let errorCount = 0;
       let warningCount = 0;
 
       const issues = result.errors?.issues || [];
-      issues.forEach(issue => {
+      issues.forEach((issue) => {
         const severity = getIssueSeverity(issue);
         if (severity === 'error') {
           errorCount++;
@@ -274,31 +293,39 @@ async function validateSpec(
 
       if (cliOptions.format === 'json') {
         // Include severity in JSON output
-        const outputIssues = issues.map(issue => ({
+        const outputIssues = issues.map((issue) => ({
           ...issue,
-          severity: getIssueSeverity(issue)
+          severity: getIssueSeverity(issue),
         }));
         console.log(JSON.stringify({ errors: outputIssues }, null, 2));
       } else {
-        console.log('\n', chalk.red('✗'), `Validation found ${errorCount} error(s) and ${warningCount} warning(s):`);
-        
-        issues.forEach(issue => {
+        console.log(
+          '\n',
+          chalk.red('✗'),
+          `Validation found ${errorCount} error(s) and ${warningCount} warning(s):`
+        );
+
+        issues.forEach((issue) => {
           let displayPath = issue.path; // Path to display
           let displayMessage = issue.message; // Message to display
 
           // Check for invalid_union and try to get a more specific message
-          if (issue.code === 'invalid_union' && issue.unionErrors && issue.unionErrors.length > 0) {
+          if (
+            issue.code === 'invalid_union' &&
+            issue.unionErrors &&
+            issue.unionErrors.length > 0
+          ) {
             // Prefer the first error from the first union branch
             const firstBranchErrors = issue.unionErrors[0]?.issues;
             if (firstBranchErrors && firstBranchErrors.length > 0) {
               const specificIssue = firstBranchErrors[0];
-              
+
               // If the specific nested issue path is longer (more specific) than the union's path,
               // assume it already contains the full path information needed. Otherwise, stick to the union path.
               if (specificIssue.path.length > issue.path.length) {
-                 displayPath = specificIssue.path;
+                displayPath = specificIssue.path;
               } // else: displayPath remains the original issue.path (path to the union)
-              
+
               displayMessage = specificIssue.message;
             }
           }
@@ -309,10 +336,14 @@ async function validateSpec(
           const formattedValue = formatValueForCli(valueContext);
           const severity = getIssueSeverity(issue); // Keep using original issue for severity
 
-          const severitySymbol = severity === 'error' ? chalk.red('• Error') : chalk.yellow('▲ Warning');
-          const pathColor = severity === 'error' ? chalk.redBright : chalk.yellowBright;
+          const severitySymbol =
+            severity === 'error'
+              ? chalk.red('• Error')
+              : chalk.yellow('▲ Warning');
+          const pathColor =
+            severity === 'error' ? chalk.redBright : chalk.yellowBright;
 
-          // --- Build Output String --- 
+          // --- Build Output String ---
           let outputLines = [];
           // Severity and Path
           outputLines.push(`\n${severitySymbol} ${pathColor(pathString)}`);
@@ -323,33 +354,44 @@ async function validateSpec(
             outputLines.push(`  Spec:     ${chalk.blue.underline(specLink)}`);
           }
           // Value context
-          if (valueContext !== undefined || displayMessage.toLowerCase().includes('invalid')) {
-             if (formattedValue.includes('\n')) {
-                 outputLines.push(`  Value:`);
-                 outputLines.push(formattedValue.startsWith('  ') ? formattedValue : `  ${formattedValue}`); 
-             } else {
-                 outputLines.push(`  Value:    ${formattedValue}`);
-             }
+          if (
+            valueContext !== undefined ||
+            displayMessage.toLowerCase().includes('invalid')
+          ) {
+            if (formattedValue.includes('\n')) {
+              outputLines.push(`  Value:`);
+              outputLines.push(
+                formattedValue.startsWith('  ')
+                  ? formattedValue
+                  : `  ${formattedValue}`
+              );
+            } else {
+              outputLines.push(`  Value:    ${formattedValue}`);
+            }
           }
           // Expected/Received
           if ('expected' in issue) {
-            outputLines.push(`  Expected: ${chalk.cyan(String(issue.expected))}`);
+            outputLines.push(
+              `  Expected: ${chalk.cyan(String(issue.expected))}`
+            );
           }
           if ('received' in issue && issue.received !== undefined) {
-             outputLines.push(`  Received: ${chalk.magenta(String(issue.received))}`);
+            outputLines.push(
+              `  Received: ${chalk.magenta(String(issue.received))}`
+            );
           }
-          // --- Print Combined Output --- 
+          // --- Print Combined Output ---
           console.log(outputLines.join('\n'));
         });
       }
-      
+
       // Exit with error code 1 only if there are actual errors
       // If only warnings, exit code could be 0 (configurable later?)
       if (errorCount > 0) {
-         process.exit(1);
+        process.exit(1);
       } else {
-         // Decide on exit code for warnings only. For now, let's keep 0 for simplicity.
-         // process.exit(0); 
+        // Decide on exit code for warnings only. For now, let's keep 0 for simplicity.
+        // process.exit(0);
       }
     }
   } catch (err) {
@@ -367,7 +409,10 @@ async function validateSpec(
  * Runs the interactive CLI wizard
  * @returns User selected options and file path
  */
-async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOptions }> {
+async function runInteractiveMode(): Promise<{
+  filePath: string;
+  options: CLIOptions;
+}> {
   const answers = await inquirer.prompt([
     {
       type: 'input',
@@ -382,25 +427,25 @@ async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOpt
           return 'File must be YAML or JSON';
         }
         return true;
-      }
+      },
     },
     {
       type: 'confirm',
       name: 'strict',
       message: '🔍 Enable strict validation?',
-      default: false
+      default: false,
     },
     {
       type: 'confirm',
       name: 'allowFutureOASVersions',
       message: '🔄 Allow future OpenAPI versions?',
-      default: false
+      default: false,
     },
     {
       type: 'confirm',
       name: 'requireRateLimitHeaders',
       message: '⚡ Require rate limiting headers?',
-      default: false
+      default: false,
     },
     {
       type: 'list',
@@ -408,20 +453,20 @@ async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOpt
       message: '📊 Output format:',
       choices: [
         { name: 'Pretty (human readable)', value: 'pretty' },
-        { name: 'JSON', value: 'json' }
-      ]
+        { name: 'JSON', value: 'json' },
+      ],
     },
     {
       type: 'confirm',
       name: 'saveConfig',
       message: '💾 Save these settings as default?',
-      default: false
+      default: false,
     },
     {
       type: 'confirm',
       name: 'cacheEnabled',
       message: '💾 Enable validation caching?',
-      default: true
+      default: true,
     },
     {
       type: 'number',
@@ -433,8 +478,8 @@ async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOpt
           return 'Cache size must be between 1 and 1000';
         }
         return true;
-      }
-    }
+      },
+    },
   ]);
 
   if (answers.saveConfig) {
@@ -445,10 +490,10 @@ async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOpt
       format: answers.format,
       cache: {
         enabled: answers.cacheEnabled,
-        maxSize: answers.cacheSize
-      }
+        maxSize: answers.cacheSize,
+      },
     };
-    
+
     await fs.promises.writeFile(
       '.oas-validate.json',
       JSON.stringify(config, null, 2)
@@ -464,8 +509,8 @@ async function runInteractiveMode(): Promise<{ filePath: string; options: CLIOpt
       requireRateLimitHeaders: answers.requireRateLimitHeaders,
       format: answers.format,
       cacheEnabled: answers.cacheEnabled,
-      cacheSize: answers.cacheSize
-    }
+      cacheSize: answers.cacheSize,
+    },
   };
 }
 
@@ -478,7 +523,9 @@ export async function runCLI(args: string[]): Promise<void> {
 
   const program = new Command()
     .name('oas-validate')
-    .description('Modern OpenAPI Specification validator with enhanced reporting')
+    .description(
+      'Modern OpenAPI Specification validator with enhanced reporting'
+    )
     .version(packageJson.version)
     .argument('[file]', 'OpenAPI specification file (YAML or JSON)')
     .option('-s, --strict', 'Enable strict validation mode')
@@ -502,7 +549,7 @@ export async function runCLI(args: string[]): Promise<void> {
       requireRateLimitHeaders: false,
       format: 'pretty',
       cacheEnabled: true,
-      cacheSize: 100
+      cacheSize: 100,
     };
 
     // Load config file if specified
@@ -516,10 +563,11 @@ export async function runCLI(args: string[]): Promise<void> {
       ...options,
       strict: opts.strict ?? options.strict,
       allowFutureOASVersions: opts.future ?? options.allowFutureOASVersions,
-      requireRateLimitHeaders: opts.rateLimits ?? options.requireRateLimitHeaders,
+      requireRateLimitHeaders:
+        opts.rateLimits ?? options.requireRateLimitHeaders,
       format: opts.json ? 'json' : options.format,
       cacheEnabled: opts.noCache !== true,
-      cacheSize: opts.cacheSize
+      cacheSize: opts.cacheSize,
     };
 
     if (opts.interactive || !file) {
@@ -529,7 +577,10 @@ export async function runCLI(args: string[]): Promise<void> {
       await validateSpec(file, options);
     }
   } catch (err) {
-    console.error(chalk.red('\n❌ Error:'), err instanceof Error ? err.message : String(err));
+    console.error(
+      chalk.red('\n❌ Error:'),
+      err instanceof Error ? err.message : String(err)
+    );
     process.exit(1);
   }
 }

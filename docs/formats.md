@@ -148,7 +148,7 @@ const customFormatValidator = (value: string) => {
 // Use in validation options
 const result = validateOpenAPI(spec, {
   customFormats: {
-    "my-format": customFormatValidator,
+    'my-format': customFormatValidator,
   },
 });
 ```

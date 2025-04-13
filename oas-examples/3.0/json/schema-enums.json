@@ -164,7 +164,11 @@
                     "enum": ["", "", 0, 2, 2]
                   }
                 },
-                "required": ["enum *required", "enum (with default) *required", "enum (with example) *required"]
+                "required": [
+                  "enum *required",
+                  "enum (with default) *required",
+                  "enum (with example) *required"
+                ]
               }
             }
           }
@@ -209,7 +213,11 @@
                     "default": true
                   }
                 },
-                "required": ["enum *required", "enum (with default) *required", "enum (with example) *required"]
+                "required": [
+                  "enum *required",
+                  "enum (with default) *required",
+                  "enum (with example) *required"
+                ]
               }
             }
           }

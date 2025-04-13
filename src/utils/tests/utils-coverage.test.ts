@@ -7,7 +7,7 @@ describe('Utils Coverage Improvements', () => {
   describe('validateFromYaml edge cases', () => {
     test('handles empty YAML input', async () => {
       const yaml = '';
-      
+
       try {
         await validateFromYaml(yaml);
         fail('Should throw an error');
@@ -15,7 +15,7 @@ describe('Utils Coverage Improvements', () => {
         expect(error).toBeDefined();
       }
     });
-    
+
     test('handles complex parsing errors in YAML', async () => {
       const invalidYaml = `
 openapi: 3.0.0
@@ -29,7 +29,7 @@ paths:
         '200'
           description: OK
       `;
-      
+
       try {
         await validateFromYaml(invalidYaml);
         fail('Should throw an error');
@@ -37,7 +37,7 @@ paths:
         expect(error).toBeDefined();
       }
     });
-    
+
     test('validates YAML with custom options', async () => {
       const yaml = `
 openapi: 3.0.0
@@ -51,12 +51,12 @@ paths:
         '200':
           description: OK
       `;
-      
+
       const result = await validateFromYaml(yaml, { strict: true });
       expect(result.valid).toBe(true);
     });
   });
-  
+
   describe('verifyRefTargets edge cases', () => {
     test('handles circular references', () => {
       const doc = {
@@ -67,16 +67,16 @@ paths:
               type: 'object',
               properties: {
                 friend: {
-                  $ref: '#/components/schemas/User'
-                }
-              }
-            }
-          }
-        }
+                  $ref: '#/components/schemas/User',
+                },
+              },
+            },
+          },
+        },
       };
-      
+
       const resolvedRefs: string[] = [];
-      
+
       try {
         verifyRefTargets(doc, resolvedRefs);
         // Should not throw for circular references
@@ -85,7 +85,7 @@ paths:
         fail('Should not throw for circular references');
       }
     });
-    
+
     test('detects missing reference targets', () => {
       const doc = {
         openapi: '3.0.0',
@@ -95,16 +95,16 @@ paths:
               type: 'object',
               properties: {
                 address: {
-                  $ref: '#/components/schemas/Address'
-                }
-              }
-            }
-          }
-        }
+                  $ref: '#/components/schemas/Address',
+                },
+              },
+            },
+          },
+        },
       };
-      
+
       const resolvedRefs: string[] = [];
-      
+
       try {
         verifyRefTargets(doc, resolvedRefs);
         fail('Should throw for missing reference');
@@ -115,7 +115,7 @@ paths:
         }
       }
     });
-    
+
     test('handles deeply nested references', () => {
       const doc = {
         openapi: '3.0.0',
@@ -132,30 +132,30 @@ paths:
                       comments: {
                         type: 'array',
                         items: {
-                          $ref: '#/components/schemas/Comment'
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+                          $ref: '#/components/schemas/Comment',
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
             Comment: {
               type: 'object',
               properties: {
                 text: {
-                  type: 'string'
-                }
-              }
-            }
-          }
-        }
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
       };
-      
+
       const resolvedRefs: string[] = [];
-      
+
       verifyRefTargets(doc, resolvedRefs);
       expect(resolvedRefs).toContain('#/components/schemas/Comment');
     });
   });
-}); 
+});

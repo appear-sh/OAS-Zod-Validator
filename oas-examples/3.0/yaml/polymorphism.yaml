@@ -90,7 +90,8 @@ paths:
   '/any-of-with-type':
     post:
       summary: anyOf With Type
-      description: AnyOf's with a top level type parameter should not render that
+      description:
+        AnyOf's with a top level type parameter should not render that
         type outside of their options
       requestBody:
         content:
@@ -509,7 +510,8 @@ paths:
   '/one-of-with-type':
     post:
       summary: One Of With Type
-      description: OneOf's with a top level type parameter should not render that
+      description:
+        OneOf's with a top level type parameter should not render that
         type outside of their options
       requestBody:
         content:

@@ -2,7 +2,8 @@ openapi: 3.0.0
 info:
   version: 1.0.0
   title: Petstore simple w/o tags
-  description: This ia variant of `petstore-simple` except that there are no `tags`
+  description:
+    This ia variant of `petstore-simple` except that there are no `tags`
     configured.
 servers:
   - url: https://httpbin.org

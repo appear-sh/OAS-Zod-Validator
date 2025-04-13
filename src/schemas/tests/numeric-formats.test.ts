@@ -1,6 +1,13 @@
 import { validateOpenAPI } from '../../index.js';
 import { z } from 'zod';
-import { getNumericFormatDescription, isValidNumericLiteral, safeParseNumeric, createNumericSchema, validateNumericFormat, createNumericSchemaWithValidations } from '../numeric-formats.js';
+import {
+  getNumericFormatDescription,
+  isValidNumericLiteral,
+  safeParseNumeric,
+  createNumericSchema,
+  validateNumericFormat,
+  createNumericSchemaWithValidations,
+} from '../numeric-formats.js';
 
 import { describe, test, expect, vi } from 'vitest';
 describe('Numeric Format Validation', () => {
@@ -14,9 +21,9 @@ describe('Numeric Format Validation', () => {
           TestInteger: {
             type: 'integer',
             format,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     test('validates int32 format', () => {
@@ -25,58 +32,66 @@ describe('Numeric Format Validation', () => {
       const minInt32 = -2147483648;
 
       // Valid cases
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestInteger: {
-              type: 'integer',
-              format: 'int32',
-              example: maxInt32
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: true }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestInteger: {
+                type: 'integer',
+                format: 'int32',
+                example: maxInt32,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: true }));
 
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestInteger: {
-              type: 'integer',
-              format: 'int32',
-              example: minInt32
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: true }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestInteger: {
+                type: 'integer',
+                format: 'int32',
+                example: minInt32,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: true }));
 
       // Invalid cases
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestInteger: {
-              type: 'integer',
-              format: 'int32',
-              example: maxInt32 + 1
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: false }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestInteger: {
+                type: 'integer',
+                format: 'int32',
+                example: maxInt32 + 1,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: false }));
 
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestInteger: {
-              type: 'integer',
-              format: 'int32',
-              example: minInt32 - 1
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: false }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestInteger: {
+                type: 'integer',
+                format: 'int32',
+                example: minInt32 - 1,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: false }));
     });
 
     test('validates int64 format', () => {
@@ -85,45 +100,51 @@ describe('Numeric Format Validation', () => {
       const minInt64 = Number.MIN_SAFE_INTEGER;
 
       // Valid cases
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestInteger: {
-              type: 'integer',
-              format: 'int64',
-              example: maxInt64
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: true }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestInteger: {
+                type: 'integer',
+                format: 'int64',
+                example: maxInt64,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: true }));
 
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestInteger: {
-              type: 'integer',
-              format: 'int64',
-              example: minInt64
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: true }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestInteger: {
+                type: 'integer',
+                format: 'int64',
+                example: minInt64,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: true }));
 
       // Invalid cases - beyond safe integer range
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestInteger: {
-              type: 'integer',
-              format: 'int64',
-              example: '9223372036854775808' // Beyond MAX_SAFE_INTEGER
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: false }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestInteger: {
+                type: 'integer',
+                format: 'int64',
+                example: '9223372036854775808', // Beyond MAX_SAFE_INTEGER
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: false }));
     });
   });
 
@@ -137,99 +158,111 @@ describe('Numeric Format Validation', () => {
           TestNumber: {
             type: 'number',
             format,
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     test('validates float format', () => {
       const spec = createNumberSchema('float');
 
       // Valid cases
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'float',
-              example: 3.14
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: true }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'float',
+                example: 3.14,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: true }));
 
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'float',
-              example: -3.14e38
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: true }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'float',
+                example: -3.14e38,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: true }));
 
       // Invalid cases
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'float',
-              example: '3.14' // String instead of number
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: false }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'float',
+                example: '3.14', // String instead of number
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: false }));
     });
 
     test('validates double format', () => {
       const spec = createNumberSchema('double');
 
       // Valid cases
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'double',
-              example: 3.141592653589793
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: true }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'double',
+                example: 3.141592653589793,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: true }));
 
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'double',
-              example: -2.2250738585072014e-308
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: true }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'double',
+                example: -2.2250738585072014e-308,
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: true }));
 
       // Invalid cases
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'double',
-              example: '3.141592653589793' // String instead of number
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: false }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'double',
+                example: '3.141592653589793', // String instead of number
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: false }));
     });
   });
 
@@ -247,47 +280,53 @@ describe('Numeric Format Validation', () => {
               minimum: 0,
               maximum: 100,
               multipleOf: 0.5,
-              example: 99.5
-            }
-          }
-        }
+              example: 99.5,
+            },
+          },
+        },
       };
 
       // Valid case
-      expect(validateOpenAPI(spec)).toEqual(expect.objectContaining({ valid: true }));
+      expect(validateOpenAPI(spec)).toEqual(
+        expect.objectContaining({ valid: true })
+      );
 
       // Invalid cases
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'double',
-              minimum: 0,
-              maximum: 100,
-              multipleOf: 0.5,
-              example: 100.1 // Beyond maximum
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: false }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'double',
+                minimum: 0,
+                maximum: 100,
+                multipleOf: 0.5,
+                example: 100.1, // Beyond maximum
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: false }));
 
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'double',
-              minimum: 0,
-              maximum: 100,
-              multipleOf: 0.5,
-              example: 99.7 // Not a multiple of 0.5
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: false }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'double',
+                minimum: 0,
+                maximum: 100,
+                multipleOf: 0.5,
+                example: 99.7, // Not a multiple of 0.5
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: false }));
     });
 
     test('validates exclusive ranges', () => {
@@ -304,49 +343,55 @@ describe('Numeric Format Validation', () => {
               minimum: 0,
               exclusiveMaximum: true,
               maximum: 100,
-              example: 50
-            }
-          }
-        }
+              example: 50,
+            },
+          },
+        },
       };
 
       // Valid case
-      expect(validateOpenAPI(spec)).toEqual(expect.objectContaining({ valid: true }));
+      expect(validateOpenAPI(spec)).toEqual(
+        expect.objectContaining({ valid: true })
+      );
 
       // Invalid cases - boundary values
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'double',
-              exclusiveMinimum: true,
-              minimum: 0,
-              exclusiveMaximum: true,
-              maximum: 100,
-              example: 0 // Equal to minimum (exclusive)
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: false }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'double',
+                exclusiveMinimum: true,
+                minimum: 0,
+                exclusiveMaximum: true,
+                maximum: 100,
+                example: 0, // Equal to minimum (exclusive)
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: false }));
 
-      expect(validateOpenAPI({
-        ...spec,
-        components: {
-          schemas: {
-            TestNumber: {
-              type: 'number',
-              format: 'double',
-              exclusiveMinimum: true,
-              minimum: 0,
-              exclusiveMaximum: true,
-              maximum: 100,
-              example: 100 // Equal to maximum (exclusive)
-            }
-          }
-        }
-      })).toEqual(expect.objectContaining({ valid: false }));
+      expect(
+        validateOpenAPI({
+          ...spec,
+          components: {
+            schemas: {
+              TestNumber: {
+                type: 'number',
+                format: 'double',
+                exclusiveMinimum: true,
+                minimum: 0,
+                exclusiveMaximum: true,
+                maximum: 100,
+                example: 100, // Equal to maximum (exclusive)
+              },
+            },
+          },
+        })
+      ).toEqual(expect.objectContaining({ valid: false }));
     });
   });
 });
@@ -372,29 +417,44 @@ describe('Numeric Utilities', () => {
   });
 
   test('safeParseNumeric returns null for invalid values', () => {
-    expect(safeParseNumeric("42")).toBe(null);
+    expect(safeParseNumeric('42')).toBe(null);
     expect(safeParseNumeric(null)).toBe(null);
   });
 });
 
 describe('Numeric Schema with Additional Validations', () => {
   test('validates number within min and max for int32', () => {
-    const schema = createNumericSchemaWithValidations({ format: 'int32', minimum: 10, maximum: 100 });
+    const schema = createNumericSchemaWithValidations({
+      format: 'int32',
+      minimum: 10,
+      maximum: 100,
+    });
     expect(schema.safeParse(50).success).toBe(true);
   });
 
   test('rejects number below minimum for int32', () => {
-    const schema = createNumericSchemaWithValidations({ format: 'int32', minimum: 10, maximum: 100 });
+    const schema = createNumericSchemaWithValidations({
+      format: 'int32',
+      minimum: 10,
+      maximum: 100,
+    });
     expect(schema.safeParse(5).success).toBe(false);
   });
 
   test('rejects number above maximum for int32', () => {
-    const schema = createNumericSchemaWithValidations({ format: 'int32', minimum: 10, maximum: 100 });
+    const schema = createNumericSchemaWithValidations({
+      format: 'int32',
+      minimum: 10,
+      maximum: 100,
+    });
     expect(schema.safeParse(150).success).toBe(false);
   });
 
   test('validates multipleOf constraint', () => {
-    const schema = createNumericSchemaWithValidations({ format: 'int32', multipleOf: 5 });
+    const schema = createNumericSchemaWithValidations({
+      format: 'int32',
+      multipleOf: 5,
+    });
     expect(schema.safeParse(25).success).toBe(true);
     expect(schema.safeParse(26).success).toBe(false);
   });
@@ -408,7 +468,9 @@ describe('Direct Numeric Format Validation', () => {
     expect(validateNumericFormat('int32', 2147483648)).toBe(false);
   });
   test('returns false for invalid int64', () => {
-    expect(validateNumericFormat('int64', Number.MAX_SAFE_INTEGER + 1)).toBe(false);
+    expect(validateNumericFormat('int64', Number.MAX_SAFE_INTEGER + 1)).toBe(
+      false
+    );
   });
   test('returns false for float with Infinity', () => {
     expect(validateNumericFormat('float', Infinity)).toBe(false);
@@ -424,7 +486,9 @@ describe('Direct Numeric Format Validation', () => {
 describe('Get Numeric Format Description', () => {
   test('int64 description', () => {
     const desc = getNumericFormatDescription('int64');
-    expect(desc).toBe(`64-bit integer (range: ${Number.MIN_SAFE_INTEGER} to ${Number.MAX_SAFE_INTEGER})`);
+    expect(desc).toBe(
+      `64-bit integer (range: ${Number.MIN_SAFE_INTEGER} to ${Number.MAX_SAFE_INTEGER})`
+    );
   });
   test('float description', () => {
     const desc = getNumericFormatDescription('float');
@@ -442,12 +506,20 @@ describe('Get Numeric Format Description', () => {
 
 describe('Exclusive Numeric Boundaries', () => {
   test('rejects value equal to minimum when exclusiveMinimum is true', () => {
-    const schema = createNumericSchemaWithValidations({ format: 'int32', minimum: 10, exclusiveMinimum: true });
+    const schema = createNumericSchemaWithValidations({
+      format: 'int32',
+      minimum: 10,
+      exclusiveMinimum: true,
+    });
     expect(schema.safeParse(10).success).toBe(false);
     expect(schema.safeParse(11).success).toBe(true);
   });
   test('rejects value equal to maximum when exclusiveMaximum is true', () => {
-    const schema = createNumericSchemaWithValidations({ format: 'int32', maximum: 100, exclusiveMaximum: true });
+    const schema = createNumericSchemaWithValidations({
+      format: 'int32',
+      maximum: 100,
+      exclusiveMaximum: true,
+    });
     expect(schema.safeParse(100).success).toBe(false);
     expect(schema.safeParse(99).success).toBe(true);
   });
@@ -462,7 +534,7 @@ describe('Create Numeric Schema', () => {
 
   test('invalid parsing for int32 schema with string input', () => {
     const schema = createNumericSchema('int32');
-    const result = schema.safeParse("20");
+    const result = schema.safeParse('20');
     expect(result.success).toBe(false);
   });
-}); 
+});

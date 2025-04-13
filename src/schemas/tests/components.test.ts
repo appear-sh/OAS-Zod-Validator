@@ -9,9 +9,9 @@ describe('Components Object Validation', () => {
           type: 'object',
           properties: {
             id: { type: 'integer' },
-            name: { type: 'string' }
-          }
-        }
+            name: { type: 'string' },
+          },
+        },
       },
       responses: {
         NotFound: {
@@ -21,12 +21,12 @@ describe('Components Object Validation', () => {
               schema: {
                 type: 'object',
                 properties: {
-                  message: { type: 'string' }
-                }
-              }
-            }
-          }
-        }
+                  message: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
       },
       parameters: {
         skipParam: {
@@ -34,62 +34,62 @@ describe('Components Object Validation', () => {
           in: 'query',
           schema: {
             type: 'integer',
-            minimum: 0
-          }
-        }
+            minimum: 0,
+          },
+        },
       },
       examples: {
         user: {
           value: {
             id: 1,
-            name: 'Test User'
-          }
-        }
+            name: 'Test User',
+          },
+        },
       },
       requestBodies: {
         UserBody: {
           content: {
             'application/json': {
               schema: {
-                $ref: '#/components/schemas/User'
-              }
-            }
-          }
-        }
+                $ref: '#/components/schemas/User',
+              },
+            },
+          },
+        },
       },
       headers: {
         'X-Rate-Limit': {
           description: 'Rate limit header',
           schema: {
-            type: 'integer'
-          }
-        }
+            type: 'integer',
+          },
+        },
       },
       securitySchemes: {
         basicAuth: {
           type: 'http',
-          scheme: 'basic'
-        }
+          scheme: 'basic',
+        },
       },
       links: {
         UserComments: {
           operationId: 'getUserComments',
           parameters: {
-            userId: '$response.body#/id'
-          }
-        }
+            userId: '$response.body#/id',
+          },
+        },
       },
       callbacks: {
         myWebhook: {
           '{$request.body#/callbackUrl}': {
             post: {
               requestBody: {
-                $ref: '#/components/requestBodies/WebhookEvent'
-              }
-            }
-          }
-        }
-      }
+                $ref: '#/components/requestBodies/WebhookEvent',
+              },
+            },
+          },
+        },
+      },
     };
 
     expect(() => ComponentsObject.parse(components)).not.toThrow();
@@ -97,7 +97,7 @@ describe('Components Object Validation', () => {
 
   test('validates empty components object', () => {
     const components = {
-      schemas: {}
+      schemas: {},
     };
     expect(() => ComponentsObject.parse(components)).not.toThrow();
   });
@@ -105,8 +105,8 @@ describe('Components Object Validation', () => {
   test('validates partial components object', () => {
     const partialComponents = {
       schemas: {
-        Simple: { type: 'string' }
-      }
+        Simple: { type: 'string' },
+      },
     };
     expect(() => ComponentsObject.parse(partialComponents)).not.toThrow();
   });

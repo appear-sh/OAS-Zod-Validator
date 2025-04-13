@@ -28,21 +28,21 @@ npm install oas-zod-validator
 ## Quick Start
 
 ```typescript
-import { validateOpenAPI } from "oas-zod-validator";
+import { validateOpenAPI } from 'oas-zod-validator';
 
 // Validate an OpenAPI spec (JSON or YAML)
 const result = validateOpenAPI({
-  openapi: "3.0.0",
+  openapi: '3.0.0',
   info: {
-    title: "My API",
-    version: "1.0.0",
+    title: 'My API',
+    version: '1.0.0',
   },
   paths: {
-    "/hello": {
+    '/hello': {
       get: {
         responses: {
-          "200": {
-            description: "Success",
+          '200': {
+            description: 'Success',
           },
         },
       },
@@ -51,9 +51,9 @@ const result = validateOpenAPI({
 });
 
 if (result.valid) {
-  console.log("✅ Valid OpenAPI specification");
+  console.log('✅ Valid OpenAPI specification');
 } else {
-  console.error("❌ Validation errors:", result.errors);
+  console.error('❌ Validation errors:', result.errors);
 }
 ```
 
@@ -97,11 +97,11 @@ const resultWithLargeCache = validateOpenAPI(spec, {
 });
 
 // Reset the cache manually
-import { resetCache } from "oas-zod-validator";
+import { resetCache } from 'oas-zod-validator';
 resetCache();
 
 // Configure the global cache
-import { configureCache } from "oas-zod-validator";
+import { configureCache } from 'oas-zod-validator';
 configureCache({ maxSize: 2000 });
 ```
 

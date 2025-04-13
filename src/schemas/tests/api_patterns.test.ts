@@ -24,16 +24,22 @@ describe('API Design Patterns', () => {
                           type: 'object',
                           required: ['op', 'path'],
                           properties: {
-                            op: { type: 'string', enum: ['create', 'update', 'delete'] },
+                            op: {
+                              type: 'string',
+                              enum: ['create', 'update', 'delete'],
+                            },
                             path: { type: 'string' },
-                            value: { type: 'object', additionalProperties: true }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+                            value: {
+                              type: 'object',
+                              additionalProperties: true,
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
             responses: {
               '200': {
@@ -52,19 +58,19 @@ describe('API Design Patterns', () => {
                             properties: {
                               status: { type: 'integer' },
                               path: { type: 'string' },
-                              error: { type: 'string' }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                              error: { type: 'string' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec);
@@ -82,18 +88,18 @@ describe('API Design Patterns', () => {
               {
                 name: 'page',
                 in: 'query',
-                schema: { type: 'integer', minimum: 1 }
+                schema: { type: 'integer', minimum: 1 },
               },
               {
                 name: 'per_page',
                 in: 'query',
-                schema: { type: 'integer', minimum: 1, maximum: 100 }
+                schema: { type: 'integer', minimum: 1, maximum: 100 },
               },
               {
                 name: 'sort',
                 in: 'query',
-                schema: { type: 'string', enum: ['asc', 'desc'] }
-              }
+                schema: { type: 'string', enum: ['asc', 'desc'] },
+              },
             ],
             responses: {
               '200': {
@@ -101,18 +107,18 @@ describe('API Design Patterns', () => {
                 headers: {
                   'X-Total-Count': {
                     description: 'Total number of resources',
-                    schema: { type: 'integer' }
+                    schema: { type: 'integer' },
                   },
-                  'Link': {
+                  Link: {
                     description: 'Pagination links',
-                    schema: { type: 'string' }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+                    schema: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     };
 
     const result = validateOpenAPI(spec);

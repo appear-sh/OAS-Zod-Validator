@@ -12318,7 +12318,16 @@
       "MaritalStatus": {
         "type": "string",
         "description": "Marital status",
-        "enum": ["SINGLE", "ENGAGED", "MARRIED", "DIVORCED", "REMARRIED", "SEPARATED", "WIDOWED", "CAPTAINS_WOMAN"]
+        "enum": [
+          "SINGLE",
+          "ENGAGED",
+          "MARRIED",
+          "DIVORCED",
+          "REMARRIED",
+          "SEPARATED",
+          "WIDOWED",
+          "CAPTAINS_WOMAN"
+        ]
       },
       "MaterialHeader": {
         "type": "object",

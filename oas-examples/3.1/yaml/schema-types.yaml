@@ -12,7 +12,8 @@ tags:
   - name: Strings
     description: 'Showcasing handling and support for `type: string` schemas.'
   - name: Numbers
-    description: 'Showcasing handling and support for `type: integer` and `type: number`
+    description:
+      'Showcasing handling and support for `type: integer` and `type: number`
       schemas.'
   - name: Booleans
     description: 'Showcasing handling and support for `type: boolean` schemas.'
@@ -27,7 +28,8 @@ tags:
   - name: Circular references
     description: Showcasing handling and support for circular references (`$ref` pointers).
   - name: ReadMe-flavors
-    description: Showcasing handling and support for various ReadMe-flavored schema
+    description:
+      Showcasing handling and support for various ReadMe-flavored schema
       additions.
   - name: Quirks
     description: Showcasing handling and support for various schema type quirks.
@@ -36,7 +38,8 @@ paths:
     post:
       operationId: string_schemaSupport
       summary: String support
-      description: "Support and handling of `type: string` schemas.\n\n\U0001F4DA
+      description:
+        "Support and handling of `type: string` schemas.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -51,7 +54,8 @@ paths:
                   type: string
                 description (markdown):
                   type: string
-                  description: 'This is a string with a **markdown** description:
+                  description:
+                    'This is a string with a **markdown** description:
                     [link](ref:action-object)'
                 title:
                   type: string
@@ -69,7 +73,8 @@ paths:
                   default:
                 default (required):
                   type: string
-                  description: This string has a `default` of `default value` and
+                  description:
+                    This string has a `default` of `default value` and
                     is required.
                   default: default value
                 nullable:
@@ -100,7 +105,8 @@ paths:
                   default: available
                 enum (with empty option):
                   type: string
-                  description: This enum has a an empty string (`""`) as one of its
+                  description:
+                    This enum has a an empty string (`""`) as one of its
                     available options.
                   enum:
                     - ''
@@ -109,7 +115,8 @@ paths:
                     - sold
                 enum (with empty option and empty default):
                   type: string
-                  description: This enum has a an empty string (`""`) as its only
+                  description:
+                    This enum has a an empty string (`""`) as its only
                     available option, and that same value is set as its `default`.
                   enum:
                     - ''
@@ -121,7 +128,8 @@ paths:
     put:
       operationId: string_formatSupport
       summary: '`format` data types'
-      description: "Handling of `format` data types on `type: string` schemas.\n\n\U0001F4DA
+      description:
+        "Handling of `format` data types on `type: string` schemas.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types)\n\n*
         [3.1.0 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#dataTypes)"
       tags:
@@ -154,7 +162,8 @@ paths:
                   pattern: "(\\d{4})-(\\d{2})-(\\d{2})"
                 date-time:
                   type: string
-                  description: Unsupported due to the varying ways that `date-time`
+                  description:
+                    Unsupported due to the varying ways that `date-time`
                     is utilized in API definitions for representing dates, the [lack
                     of wide browser support for the input](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local#Browser_compatibility),
                     and that it's not [RFC 3339](https://tools.ietf.org/html/rfc3339)
@@ -166,7 +175,8 @@ paths:
                   format: html
                 json:
                   type: string
-                  description: This is a special ReadMe data type to render a `<textarea>`
+                  description:
+                    This is a special ReadMe data type to render a `<textarea>`
                     to be parsed as JSON
                   format: json
                 string:
@@ -177,7 +187,8 @@ paths:
                   format: password
                 'password (minLength: 5, maxLength: 20)':
                   type: string
-                  description: 'This `format: password` input has a `minLength` and
+                  description:
+                    'This `format: password` input has a `minLength` and
                     `maxLength` configured.'
                   format: password
                   minLength: 5
@@ -194,7 +205,8 @@ paths:
     post:
       operationId: string_topLevel
       summary: Top-level payloads
-      description: "Handling of a `requestBody` payload that's a single `type: string`.\n\n\U0001F4DA
+      description:
+        "Handling of a `requestBody` payload that's a single `type: string`.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types)\n\n*
         [3.1.0 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#dataTypes)"
       tags:
@@ -207,7 +219,8 @@ paths:
     patch:
       operationId: string_topLevelJSON
       summary: Top-level payloads (JSON)
-      description: "Handling of a `requestBody` payload that's a single `type: string`
+      description:
+        "Handling of a `requestBody` payload that's a single `type: string`
         but `format: json`.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3
         Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types)\n\n*
         [3.1.0 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#dataTypes)"
@@ -223,7 +236,8 @@ paths:
     post:
       operationId: number_schemaSupport
       summary: Number support
-      description: "Support and handling of `type: integer` and `type: number` schemas.\n\n\U0001F4DA
+      description:
+        "Support and handling of `type: integer` and `type: number` schemas.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -238,7 +252,8 @@ paths:
                   type: integer
                 integer (markdown description):
                   type: integer
-                  description: 'This is an `integer` with a **markdown** description:
+                  description:
+                    'This is an `integer` with a **markdown** description:
                     [link](ref:action-object)'
                 integer (title):
                   type: integer
@@ -264,7 +279,8 @@ paths:
                   nullable: true
                 integer (minimum / maximum):
                   type: integer
-                  description: This integer has a `minimum` of `100` and `maximum`
+                  description:
+                    This integer has a `minimum` of `100` and `maximum`
                     of `999`.
                   minimum: 100
                   maximum: 999
@@ -272,7 +288,8 @@ paths:
                   type: number
                 number (markdown description):
                   type: number
-                  description: 'This is a `number` with a **markdown** description:
+                  description:
+                    'This is a `number` with a **markdown** description:
                     [link](ref:action-object)'
                 number (title):
                   type: number
@@ -304,7 +321,8 @@ paths:
     put:
       operationId: number_formatSupport
       summary: '`format` data types'
-      description: "Handling `format` data types on `type: integer` and `type: number`
+      description:
+        "Handling `format` data types on `type: integer` and `type: number`
         schemas.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3 Data
         Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types)\n\n*
         [3.1.0 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#dataTypes)"
@@ -333,7 +351,8 @@ paths:
                   format: int32
                 'integer (format: int32, multipleOf: 2)':
                   type: integer
-                  description: 'This `integer` input has `multipleOf: 2` set on itself
+                  description:
+                    'This `integer` input has `multipleOf: 2` set on itself
                     to control the increment/decrement value set.'
                   format: int32
                   multipleOf: 2
@@ -355,7 +374,8 @@ paths:
     patch:
       operationId: number_topLevel
       summary: Top-level payloads
-      description: "Handling of a `requestBody` payload that's a single `type: integer`.\n\n\U0001F4DA
+      description:
+        "Handling of a `requestBody` payload that's a single `type: integer`.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types)\n\n*
         [3.1.0 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#dataTypes)"
       tags:
@@ -370,7 +390,8 @@ paths:
     post:
       operationId: boolean_schemaSupport
       summary: Boolean support
-      description: "Support and handling of `type: boolean` schemas.\n\n\U0001F4DA
+      description:
+        "Support and handling of `type: boolean` schemas.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -385,7 +406,8 @@ paths:
                   type: boolean
                 description (markdown):
                   type: boolean
-                  description: 'This is a `boolean` with a **markdown** description:
+                  description:
+                    'This is a `boolean` with a **markdown** description:
                     [link](ref:action-object)'
                 title:
                   type: boolean
@@ -402,7 +424,8 @@ paths:
                   description: This boolean has a `default` of `false`.
                   default: false
                 inferred from enum:
-                  description: Though this is missing a `type` declaration it should
+                  description:
+                    Though this is missing a `type` declaration it should
                     be treated as `boolean` because it contains an enum of `true`
                     and `false`.
                   enum:
@@ -414,7 +437,8 @@ paths:
     patch:
       operationId: boolean_topLevel
       summary: Top-level payloads
-      description: "Handling of a `requestBody` payload that's a single `type: boolean`.\n\n\U0001F4DA
+      description:
+        "Handling of a `requestBody` payload that's a single `type: boolean`.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types)\n\n*
         [3.1.0 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#dataTypes)"
       tags:
@@ -428,7 +452,8 @@ paths:
     post:
       operationId: array_schemaSupport
       summary: Array support
-      description: "Support and handling of `type: array` schemas.\n\n\U0001F4DA OpenAPI
+      description:
+        "Support and handling of `type: array` schemas.\n\n\U0001F4DA OpenAPI
         specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -444,7 +469,8 @@ paths:
                   items: {}
                 with markdown description:
                   type: array
-                  description: 'This is an `array` with a **markdown** description:
+                  description:
+                    'This is an `array` with a **markdown** description:
                     [link](ref:action-object)'
                   items: {}
                 with title:
@@ -518,7 +544,8 @@ paths:
     post:
       operationId: array_topLevelObjects
       summary: Top-level payloads (objects)
-      description: "Handling of a `requestBody` payload that's a `type: array` composed
+      description:
+        "Handling of a `requestBody` payload that's a `type: array` composed
         of objects.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3 Data
         Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types)\n\n*
         [3.1.0 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#dataTypes)"
@@ -549,7 +576,8 @@ paths:
     patch:
       operationId: array_topLevelPrimitives
       summary: Top-level payloads (primitives)
-      description: "Handling of a `requestBody` payload that's a `type: array` composed
+      description:
+        "Handling of a `requestBody` payload that's a `type: array` composed
         of primitives.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3
         Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#data-types)\n\n*
         [3.1.0 Data Types](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#dataTypes)"
@@ -566,7 +594,8 @@ paths:
     post:
       operationId: object_schemaSupport
       summary: Object support
-      description: "Support and handling of `type: object` schemas.\n\n\U0001F4DA
+      description:
+        "Support and handling of `type: object` schemas.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -615,7 +644,8 @@ paths:
                       items:
                         type: string
                 object (without an explicit `type`):
-                  description: 'Though this object is missing an explicit `type: object`
+                  description:
+                    'Though this object is missing an explicit `type: object`
                     property it should still be recognized as an object because it
                     has `properties`.'
                   properties:
@@ -630,14 +660,16 @@ paths:
                   additionalProperties: true
                 object (without `properties`):
                   type: object
-                  description: 'Because this object is missing a `properties` declaration
+                  description:
+                    'Because this object is missing a `properties` declaration
                     we should treat it as if `additionalProperties: true` were present
                     on it so the enduser can still use it with the form.'
   '/anything/null':
     post:
       operationId: null_schemaSupport
       summary: Null support
-      description: "Support and handling of `type: null` schemas.\n\n\U0001F4DA OpenAPI
+      description:
+        "Support and handling of `type: null` schemas.\n\n\U0001F4DA OpenAPI
         specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -654,7 +686,8 @@ paths:
     post:
       operationId: mixed_schemaSupport
       summary: Mixed support
-      description: "Support and handling of mixed `type: [...]` schemas.\n\n\U0001F4DA
+      description:
+        "Support and handling of mixed `type: [...]` schemas.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -689,7 +722,8 @@ paths:
     post:
       operationId: circular_handling
       summary: Nested circular $ref
-      description: "Handling of a nested `$ref` that recursively references itself.\n\n\U0001F4DA
+      description:
+        "Handling of a nested `$ref` that recursively references itself.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Reference Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#referenceObject)\n\n*
         [3.1.0 Reference Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#referenceObject)"
       tags:
@@ -705,7 +739,8 @@ paths:
     patch:
       operationId: circular_topLevel
       summary: Top-level circular $ref
-      description: "Handling of a top-level request body `$ref` that recursively references
+      description:
+        "Handling of a top-level request body `$ref` that recursively references
         itself.\n\n\U0001F4DA OpenAPI specification references:\n\n* [3.0.3 Reference
         Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#referenceObject)\n\n*
         [3.1.0 Reference Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#referenceObject)"
@@ -756,7 +791,8 @@ paths:
     post:
       operationId: quirks_missingType
       summary: Missing schema type
-      description: "Handling cases for when `type` is missing from a schema.\n\n\U0001F4DA
+      description:
+        "Handling cases for when `type` is missing from a schema.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -768,19 +804,22 @@ paths:
               type: object
               properties:
                 missing type:
-                  description: Though this request body property is missing a `type`
+                  description:
+                    Though this request body property is missing a `type`
                     declaration we should stil render a `string` input box so that
                     the user can interact with it.
                   default: default value
                 missing type (on completely empty schema): {}
                 implicit array:
-                  description: "This array property is missing an explicit `type:
+                  description:
+                    "This array property is missing an explicit `type:
                     array` but since it has an `items` declaration we're implicitly
                     treating it as an array."
                   items:
                     type: integer
                 implicit object:
-                  description: "This object property is missing an explicit `type:
+                  description:
+                    "This object property is missing an explicit `type:
                     object` but since it has an `properties` declaration we're implicitly
                     treating it as an object."
                   properties:
@@ -791,7 +830,8 @@ paths:
     post:
       operationId: quirks_incompatibleNestedAllOf
       summary: Incompatible nested allOf schemas
-      description: "Handling cases for when a nested `allOf` cannot be merged together.\n\n\U0001F4DA
+      description:
+        "Handling cases for when a nested `allOf` cannot be merged together.\n\n\U0001F4DA
         OpenAPI specification references:\n\n* [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
         [3.1.0 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#schemaObject)"
       tags:
@@ -811,7 +851,8 @@ paths:
                     - type: string
                     - type: integer
                 compatible:
-                  description: Unlike the `incompatible` property above this `allOf`
+                  description:
+                    Unlike the `incompatible` property above this `allOf`
                     consists of two objects that **can** be merged.
                   allOf:
                     - type: object
@@ -826,7 +867,8 @@ paths:
     put:
       operationId: quirks_entirelyIncompatibleAllOf
       summary: Incompatible allOf schemas on a root requestBody
-      description: "When an `allOf` sits at the top of a request body schema and it
+      description:
+        "When an `allOf` sits at the top of a request body schema and it
         cannot be merged, we're unable to render out anything for an input because
         there's no usable schema for us.\n\n\U0001F4DA OpenAPI specification references:\n\n*
         [3.0.3 Schema Object](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md#schemaObject)\n\n*
@@ -843,9 +885,11 @@ paths:
         required: true
     patch:
       operationId: quirks_partiallyUsableIncompatibleAllOf
-      summary: Incompatible allOf schemas on a root requestBody (with other schema
+      summary:
+        Incompatible allOf schemas on a root requestBody (with other schema
         properties)
-      description: "Like `quirks_entirelyIncompatibleAllOf`, when we're to merge an
+      description:
+        "Like `quirks_entirelyIncompatibleAllOf`, when we're to merge an
         `allOf` together we eliminate it, however this schema here has additional
         properties (`description`) alongside that `allOf` so it's not a wholly empty
         schema and we can use it. Unfortunately since we don't have any of the real

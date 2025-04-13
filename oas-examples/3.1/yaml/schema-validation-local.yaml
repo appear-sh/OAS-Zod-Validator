@@ -129,7 +129,8 @@ paths:
         required: false
     get:
       summary: Number validation
-      description: The parameter schemas contained within this operation have their
+      description:
+        The parameter schemas contained within this operation have their
         own individual JSON Schema dialects specified with the [$schema](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#specifying-schema-dialects)
         property.
       responses:
@@ -173,7 +174,8 @@ paths:
         required: false
       - in: query
         name: complex-pattern-required
-        description: oas 3.1.0, which defaults to json schema v2020, provides the unicode
+        description:
+          oas 3.1.0, which defaults to json schema v2020, provides the unicode
           flag to the input tooltip regex validation. This means that the following
           regex will not work without the escaped curly braces
         schema:
@@ -182,7 +184,8 @@ paths:
         required: true
     get:
       summary: String validation
-      description: The parameter schemas contained within this operation have their
+      description:
+        The parameter schemas contained within this operation have their
         own individual JSON Schema dialects specified with the [$schema](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#specifying-schema-dialects)
         property.
       responses:
@@ -344,7 +347,8 @@ paths:
         required: false
     get:
       summary: Formats defined by JSON Schema
-      description: The parameter schemas contained within this operation have their
+      description:
+        The parameter schemas contained within this operation have their
         own individual JSON Schema dialects specified with the [$schema](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#specifying-schema-dialects)
         property.
       responses:
@@ -405,7 +409,8 @@ paths:
         required: false
     get:
       summary: Formats defined by OAS
-      description: The parameter schemas contained within this operation have their
+      description:
+        The parameter schemas contained within this operation have their
         own individual JSON Schema dialects specified with the [$schema](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#specifying-schema-dialects)
         property.
       responses:
@@ -429,7 +434,8 @@ paths:
         required: false
     get:
       summary: Booleans
-      description: The parameter schemas contained within this operation have their
+      description:
+        The parameter schemas contained within this operation have their
         own individual JSON Schema dialects specified with the [$schema](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md#specifying-schema-dialects)
         property.
       responses:

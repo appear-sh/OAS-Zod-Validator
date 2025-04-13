@@ -16,7 +16,7 @@ describe('YAML Validation', () => {
               '200':
                 description: OK
     `;
-    
+
     const result = validateFromYaml(yaml);
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
@@ -36,10 +36,10 @@ describe('YAML Validation', () => {
                 description: OK
             invalid-indent
     `;
-    
+
     // Now errors are thrown, not returned in result
     expect(() => validateFromYaml(yaml)).toThrow(YAMLParseError);
-    
+
     try {
       validateFromYaml(yaml);
     } catch (error) {
@@ -52,18 +52,12 @@ describe('YAML Validation', () => {
   });
 
   test('handles non-object YAML content', () => {
-    const inputs = [
-      'just a string',
-      '42',
-      'true',
-      '[]',
-      'null'
-    ];
-    
-    inputs.forEach(input => {
+    const inputs = ['just a string', '42', 'true', '[]', 'null'];
+
+    inputs.forEach((input) => {
       expect(() => validateFromYaml(input)).toThrow(SchemaValidationError);
     });
-    
+
     // Test specific error attributes
     try {
       validateFromYaml('just a string');
@@ -79,11 +73,11 @@ describe('YAML Validation', () => {
 
   test('handles invalid input types', () => {
     const numberInput = 42;
-    
+
     expect(() => {
       validateFromYaml(numberInput as unknown as string);
     }).toThrow(SchemaValidationError);
-    
+
     try {
       validateFromYaml(numberInput as unknown as string);
     } catch (error) {
@@ -113,26 +107,26 @@ describe('YAML Validation', () => {
           Success:
             description: Successful response
     `;
-    
+
     const result = validateFromYaml(yaml, { strict: true });
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
   });
 
   test('handles empty or invalid input', () => {
-    const inputs = [
-      '',
-      ' ',
-      '\n',
-    ];
-    
-    inputs.forEach(input => {
+    const inputs = ['', ' ', '\n'];
+
+    inputs.forEach((input) => {
       expect(() => validateFromYaml(input)).toThrow(SchemaValidationError);
     });
-    
+
     // Special cases for null/undefined that should be handled separately
-    expect(() => validateFromYaml(null as unknown as string)).toThrow(SchemaValidationError);
-    expect(() => validateFromYaml(undefined as unknown as string)).toThrow(SchemaValidationError);
+    expect(() => validateFromYaml(null as unknown as string)).toThrow(
+      SchemaValidationError
+    );
+    expect(() => validateFromYaml(undefined as unknown as string)).toThrow(
+      SchemaValidationError
+    );
   });
 
   test('validates YAML with future OpenAPI versions', () => {
@@ -143,7 +137,7 @@ describe('YAML Validation', () => {
         version: 1.0.0
       paths: {}
     `;
-    
+
     const result = validateFromYaml(yaml, { allowFutureOASVersions: true });
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
@@ -159,9 +153,9 @@ describe('YAML Validation', () => {
         *invalid-anchor
         /test: {}
     `;
-    
+
     expect(() => validateFromYaml(invalidYaml)).toThrow(YAMLParseError);
-    
+
     try {
       validateFromYaml(invalidYaml);
     } catch (error) {
@@ -174,16 +168,9 @@ describe('YAML Validation', () => {
   });
 
   test('handles non-string inputs', () => {
-    const inputs = [
-      undefined,
-      null,
-      123,
-      {},
-      [],
-      true
-    ];
-    
-    inputs.forEach(input => {
+    const inputs = [undefined, null, 123, {}, [], true];
+
+    inputs.forEach((input) => {
       // @ts-expect-error Testing invalid input types
       expect(() => validateFromYaml(input)).toThrow(SchemaValidationError);
     });
@@ -197,18 +184,21 @@ describe('YAML Validation', () => {
         version: 1.0.0
       paths: {}
     `;
-    
+
     // With allowFutureOASVersions, it should pass
-    const result1 = validateFromYaml(yaml, { allowFutureOASVersions: true, strict: true });
+    const result1 = validateFromYaml(yaml, {
+      allowFutureOASVersions: true,
+      strict: true,
+    });
     const result2 = validateFromYaml(yaml, { allowFutureOASVersions: true });
-    
+
     expect(result1.valid).toBe(true);
     expect(result2.valid).toBe(true);
-    
+
     // Without allowFutureOASVersions, it should return an invalid result
     const result3 = validateFromYaml(yaml, { strict: true });
     const result4 = validateFromYaml(yaml, {});
-    
+
     expect(result3.valid).toBe(false);
     expect(result3.errors).toBeDefined();
     expect(result4.valid).toBe(false);
@@ -236,10 +226,10 @@ describe('YAML Validation', () => {
       `
         !invalid
         openapi: 3.0.0
-      `
+      `,
     ];
 
-    invalidYamls.forEach(yaml => {
+    invalidYamls.forEach((yaml) => {
       expect(() => validateFromYaml(yaml)).toThrow();
     });
   });
@@ -247,17 +237,20 @@ describe('YAML Validation', () => {
   test('provides specific error messages for different error types', () => {
     // Test non-string error message
     const numberInput = 42;
-    expect(() => validateFromYaml(numberInput as unknown as string))
-      .toThrow('Input must be a string');
+    expect(() => validateFromYaml(numberInput as unknown as string)).toThrow(
+      'Input must be a string'
+    );
 
     // Test YAML parsing error message
     const invalidYaml = ']invalid[';
-    expect(() => validateFromYaml(invalidYaml))
-      .toThrow(/Failed to parse YAML\/JSON/);
+    expect(() => validateFromYaml(invalidYaml)).toThrow(
+      /Failed to parse YAML\/JSON/
+    );
 
     // Test custom error handling
     const arrayYaml = '- item1\n- item2';
-    expect(() => validateFromYaml(arrayYaml))
-      .toThrow('YAML must contain an OpenAPI object');
+    expect(() => validateFromYaml(arrayYaml)).toThrow(
+      'YAML must contain an OpenAPI object'
+    );
   });
 });

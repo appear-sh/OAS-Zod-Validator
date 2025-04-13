@@ -10,7 +10,10 @@ export class FileError extends OpenAPIValidatorError {
   constructor(
     message: string,
     options: {
-      code: ErrorCode.FILE_READ_ERROR | ErrorCode.INVALID_YAML | ErrorCode.INVALID_JSON;
+      code:
+        | ErrorCode.FILE_READ_ERROR
+        | ErrorCode.INVALID_YAML
+        | ErrorCode.INVALID_JSON;
       filePath?: string;
       cause?: Error;
       context?: Record<string, unknown>;
@@ -20,7 +23,7 @@ export class FileError extends OpenAPIValidatorError {
       code: options.code,
       source: options.filePath,
       cause: options.cause,
-      context: options.context
+      context: options.context,
     });
     this.filePath = options.filePath;
   }
@@ -42,7 +45,7 @@ export class YAMLParseError extends FileError {
       code: ErrorCode.INVALID_YAML,
       filePath: options.filePath,
       cause: options.cause,
-      context: options.context
+      context: options.context,
     });
   }
 }
@@ -63,7 +66,7 @@ export class JSONParseError extends FileError {
       code: ErrorCode.INVALID_JSON,
       filePath: options.filePath,
       cause: options.cause,
-      context: options.context
+      context: options.context,
     });
   }
-} 
+}

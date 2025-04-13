@@ -270,12 +270,12 @@ format: date-time  # Correct format name
 Example with error tracking service:
 
 ```typescript
-import * as Sentry from "@sentry/node";
+import * as Sentry from '@sentry/node';
 
 try {
   const result = validateOpenAPI(spec);
   if (!result.valid) {
-    Sentry.captureException(new Error("OpenAPI Validation Failed"), {
+    Sentry.captureException(new Error('OpenAPI Validation Failed'), {
       extra: {
         errors: result.errors,
       },

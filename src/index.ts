@@ -1,42 +1,40 @@
-import { validateOpenAPI, ValidationOptions, ValidationResult } from './schemas/validator.js';
+import {
+  validateOpenAPI,
+  ValidationOptions,
+  ValidationResult,
+} from './schemas/validator.js';
 import { validateFromYaml } from './utils/validateFromYaml.js';
-import { getValidationCache, CacheOptions, ValidationCache } from './utils/cache.js';
+import {
+  getValidationCache,
+  CacheOptions,
+  ValidationCache,
+} from './utils/cache.js';
 import { verifyRefTargets } from './utils/refResolver.js';
 
 // Core validation functions
-export {
-  validateOpenAPI,
-  validateFromYaml,
-  verifyRefTargets
-};
+export { validateOpenAPI, validateFromYaml, verifyRefTargets };
 
 // Cache functionality
-export {
-  getValidationCache
-};
+export { getValidationCache };
 
 // Types
-export type {
-  ValidationOptions,
-  ValidationResult,
-  CacheOptions
-};
+export type { ValidationOptions, ValidationResult, CacheOptions };
 
 // Re-export types that consumers might need
 export type { OpenAPIObject } from './schemas/openapi.js';
 export type { OpenAPIObject31 } from './schemas/openapi31.js';
 
 // Export memory utilities
-export { 
-  getMemoryUsageMB, 
-  trackMemoryUsage, 
-  MemoryOptions, 
-  DEFAULT_MEMORY_OPTIONS 
+export {
+  getMemoryUsageMB,
+  trackMemoryUsage,
+  MemoryOptions,
+  DEFAULT_MEMORY_OPTIONS,
 } from './utils/memoryUtils.js';
 
 /**
  * Configure the global validation cache
- * 
+ *
  * @param options - Cache configuration options
  */
 export function configureCache(options: CacheOptions): void {

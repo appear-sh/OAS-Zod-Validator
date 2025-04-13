@@ -47,13 +47,13 @@ const advancedExample = () => {
   const result = validateOpenAPI(spec, {
     strict: true,
     strictRules: {
-      requireRateLimitHeaders: true
-    }
+      requireRateLimitHeaders: true,
+    },
   } as ExtendedValidationOptions);
 
   if (!result.valid && result.errors) {
     console.error('Validation Errors:');
-    result.errors.issues.forEach(issue => {
+    result.errors.issues.forEach((issue) => {
       console.error(`- Path: ${issue.path.join('.')}`);
       console.error(`  Message: ${issue.message}`);
       console.error('');
@@ -70,13 +70,15 @@ const securityExample = () => {
   const result = validateOpenAPI(spec, {
     strict: true,
     strictRules: {
-      requireRateLimitHeaders: true
-    }
+      requireRateLimitHeaders: true,
+    },
   });
 
   if (!result.valid && result.errors) {
     // Group errors by code
-    const errorsByType = result.errors.issues.reduce<Record<string, z.ZodIssue[]>>((acc, issue) => {
+    const errorsByType = result.errors.issues.reduce<
+      Record<string, z.ZodIssue[]>
+    >((acc, issue) => {
       const type = issue.code;
       if (!acc[type]) {
         acc[type] = [];
@@ -88,7 +90,7 @@ const securityExample = () => {
     // Print grouped errors
     Object.entries(errorsByType).forEach(([type, issues]) => {
       console.error(`\n${type} Errors:`);
-      issues.forEach(issue => {
+      issues.forEach((issue) => {
         console.error(`- ${issue.path.join('.')}: ${issue.message}`);
       });
     });
@@ -102,7 +104,7 @@ const customErrorHandlingExample = () => {
 
   try {
     const result = validateOpenAPI(spec, {
-      strict: true
+      strict: true,
     } as ExtendedValidationOptions);
 
     if (!result.valid && result.errors) {
@@ -113,25 +115,32 @@ const customErrorHandlingExample = () => {
 
         if ('expected' in issue) details.push(`Expected: ${issue.expected}`);
         if ('received' in issue) details.push(`Received: ${issue.received}`);
-        if ('validation' in issue) details.push(`Validation: ${issue.validation}`);
+        if ('validation' in issue)
+          details.push(`Validation: ${issue.validation}`);
 
         return {
           location,
           message: issue.message,
           details: details.join(', '),
-          code: issue.code
+          code: issue.code,
         };
       };
 
       const formattedErrors = result.errors.issues.map(formatError);
 
       // Output as structured error report
-      console.error(JSON.stringify({
-        valid: false,
-        timestamp: new Date().toISOString(),
-        errorCount: formattedErrors.length,
-        errors: formattedErrors
-      }, null, 2));
+      console.error(
+        JSON.stringify(
+          {
+            valid: false,
+            timestamp: new Date().toISOString(),
+            errorCount: formattedErrors.length,
+            errors: formattedErrors,
+          },
+          null,
+          2
+        )
+      );
     }
   } catch (error) {
     console.error('Fatal validation error:', error);
@@ -144,11 +153,11 @@ const batchValidationExample = async () => {
   const specs = [
     { name: 'basic', path: join(__dirname, 'basic.yaml') },
     { name: 'advanced', path: join(__dirname, 'advanced.yaml') },
-    { name: 'security', path: join(__dirname, 'security.yaml') }
+    { name: 'security', path: join(__dirname, 'security.yaml') },
   ];
 
   const results = await Promise.all(
-    specs.map(async spec => {
+    specs.map(async (spec) => {
       try {
         const content = yaml.load(readFileSync(spec.path, 'utf8'));
         const result = validateOpenAPI(content, { strict: true });
@@ -156,14 +165,16 @@ const batchValidationExample = async () => {
           name: spec.name,
           valid: result.valid,
           errors: result.errors?.issues || [],
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
       } catch (error) {
         return {
           name: spec.name,
           valid: false,
-          errors: [{ message: `Failed to process: ${(error as Error).message}` }],
-          timestamp: new Date().toISOString()
+          errors: [
+            { message: `Failed to process: ${(error as Error).message}` },
+          ],
+          timestamp: new Date().toISOString(),
         };
       }
     })
@@ -173,10 +184,10 @@ const batchValidationExample = async () => {
   const report = {
     summary: {
       total: results.length,
-      valid: results.filter(r => r.valid).length,
-      invalid: results.filter(r => !r.valid).length
+      valid: results.filter((r) => r.valid).length,
+      invalid: results.filter((r) => !r.valid).length,
     },
-    results: results
+    results: results,
   };
 
   console.log(JSON.stringify(report, null, 2));
@@ -200,4 +211,4 @@ const runExamples = async () => {
   await batchValidationExample();
 };
 
-runExamples().catch(console.error); 
+runExamples().catch(console.error);

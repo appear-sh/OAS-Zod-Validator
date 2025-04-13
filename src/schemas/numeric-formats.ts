@@ -11,10 +11,12 @@ const INT64_MAX = Number.MAX_SAFE_INTEGER;
 const isInteger = (n: number): boolean => Number.isInteger(n);
 
 // Helper function to check if a number is within int32 range
-const isInt32 = (n: number): boolean => isInteger(n) && n >= INT32_MIN && n <= INT32_MAX;
+const isInt32 = (n: number): boolean =>
+  isInteger(n) && n >= INT32_MIN && n <= INT32_MAX;
 
 // Helper function to check if a number is within int64 range
-const isInt64 = (n: number): boolean => isInteger(n) && n >= INT64_MIN && n <= INT64_MAX;
+const isInt64 = (n: number): boolean =>
+  isInteger(n) && n >= INT64_MIN && n <= INT64_MAX;
 
 // Helper function to check if a number is a valid float
 const isFloat = (n: number): boolean => {
@@ -38,7 +40,10 @@ export function isMultipleOf(value: number, multipleOf: number): boolean {
 }
 
 // Enhanced numeric format validation
-export const validateNumericFormat = (format: string | undefined, value: number): boolean => {
+export const validateNumericFormat = (
+  format: string | undefined,
+  value: number
+): boolean => {
   switch (format) {
     case 'int32':
       return isInt32(value);
@@ -56,15 +61,16 @@ export const validateNumericFormat = (format: string | undefined, value: number)
 // Zod schema for numeric format validation
 export const _createNumericSchema = (format: string | undefined) => {
   let schema;
-  
+
   // Create a base preprocessor that safely converts values to numbers
   const preprocessor = (val: unknown) => safeParseNumeric(val);
-  
+
   switch (format) {
     case 'int32':
       schema = z.preprocess(
-        preprocessor, 
-        z.number()
+        preprocessor,
+        z
+          .number()
           .int({ message: NumericValidationErrors.integer })
           .min(INT32_MIN, { message: NumericValidationErrors.int32Range })
           .max(INT32_MAX, { message: NumericValidationErrors.int32Range })
@@ -73,8 +79,9 @@ export const _createNumericSchema = (format: string | undefined) => {
       break;
     case 'int64':
       schema = z.preprocess(
-        preprocessor, 
-        z.number()
+        preprocessor,
+        z
+          .number()
           .int({ message: NumericValidationErrors.integer })
           .min(INT64_MIN, { message: NumericValidationErrors.int64Range })
           .max(INT64_MAX, { message: NumericValidationErrors.int64Range })
@@ -83,23 +90,23 @@ export const _createNumericSchema = (format: string | undefined) => {
       break;
     case 'float':
       schema = z.preprocess(
-        preprocessor, 
-        z.number()
-          .refine(
-            (n) => Number.isFinite(n), 
-            { message: NumericValidationErrors.float }
-          )
+        preprocessor,
+        z
+          .number()
+          .refine((n) => Number.isFinite(n), {
+            message: NumericValidationErrors.float,
+          })
           .describe('32-bit floating-point')
       );
       break;
     case 'double':
       schema = z.preprocess(
-        preprocessor, 
-        z.number()
-          .refine(
-            (n) => Number.isFinite(n), 
-            { message: NumericValidationErrors.double }
-          )
+        preprocessor,
+        z
+          .number()
+          .refine((n) => Number.isFinite(n), {
+            message: NumericValidationErrors.double,
+          })
           .describe('64-bit floating-point')
       );
       break;
@@ -107,7 +114,7 @@ export const _createNumericSchema = (format: string | undefined) => {
       schema = z.preprocess(preprocessor, z.number());
       break;
   }
-  
+
   // Add a custom refinement to validate the format
   return schema.superRefine((value, ctx) => {
     createNumericValidator(format)(ctx, value);
@@ -120,7 +127,7 @@ export const _createNumericSchema = (format: string | undefined) => {
  */
 export const createNumericSchema = memoize(_createNumericSchema, {
   maxSize: 10, // Only a few formats exist
-  keyFn: (format) => String(format)
+  keyFn: (format) => String(format),
 });
 
 // Type-safe numeric format validator
@@ -129,7 +136,7 @@ export const createNumericValidator = (format: string | undefined) => {
     if (!validateNumericFormat(format, value)) {
       let message = `Invalid ${format || 'number'} format`;
       let path: (string | number)[] = [];
-      
+
       // Determine the appropriate error message and path
       if (format === 'int32') {
         message = NumericValidationErrors.int32Range;
@@ -146,11 +153,11 @@ export const createNumericValidator = (format: string | undefined) => {
       } else {
         path = ctx.path.length ? ctx.path : ['value'];
       }
-      
+
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message,
-        path
+        path,
       });
       return false;
     }
@@ -159,7 +166,9 @@ export const createNumericValidator = (format: string | undefined) => {
 };
 
 // Helper function to get numeric format description
-export const getNumericFormatDescription = (format: string | undefined): string => {
+export const getNumericFormatDescription = (
+  format: string | undefined
+): string => {
   switch (format) {
     case 'int32':
       return `32-bit integer (range: ${INT32_MIN} to ${INT32_MAX})`;
@@ -181,7 +190,7 @@ export const NumericValidationErrors = {
   float: 'Value must be a valid 32-bit floating-point number',
   double: 'Value must be a valid 64-bit floating-point number',
   integer: 'Value must be an integer',
-  finite: 'Value must be a finite number'
+  finite: 'Value must be a finite number',
 } as const;
 
 // Type for numeric format options
@@ -198,9 +207,18 @@ export type NumericFormatOptions = {
 type ValidationFn = (n: number) => boolean | string;
 
 // Create a Zod schema with all numeric validations
-export const createNumericSchemaWithValidations = (options: NumericFormatOptions): z.ZodNumber => {
-  const { format, minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf } = options;
-  
+export const createNumericSchemaWithValidations = (
+  options: NumericFormatOptions
+): z.ZodNumber => {
+  const {
+    format,
+    minimum,
+    maximum,
+    exclusiveMinimum,
+    exclusiveMaximum,
+    multipleOf,
+  } = options;
+
   // Start with base schema for the format
   const baseSchema = createNumericSchema(format);
 
@@ -208,42 +226,49 @@ export const createNumericSchemaWithValidations = (options: NumericFormatOptions
   const validations: ValidationFn[] = [];
 
   if (minimum !== undefined) {
-    validations.push(exclusiveMinimum
-      ? (n: number) => n > minimum || `Value must be greater than ${minimum}`
-      : (n: number) => n >= minimum || `Value must be greater than or equal to ${minimum}`
+    validations.push(
+      exclusiveMinimum
+        ? (n: number) => n > minimum || `Value must be greater than ${minimum}`
+        : (n: number) =>
+            n >= minimum || `Value must be greater than or equal to ${minimum}`
     );
   }
 
   if (maximum !== undefined) {
-    validations.push(exclusiveMaximum
-      ? (n: number) => n < maximum || `Value must be less than ${maximum}`
-      : (n: number) => n <= maximum || `Value must be less than or equal to ${maximum}`
+    validations.push(
+      exclusiveMaximum
+        ? (n: number) => n < maximum || `Value must be less than ${maximum}`
+        : (n: number) =>
+            n <= maximum || `Value must be less than or equal to ${maximum}`
     );
   }
 
   if (multipleOf !== undefined) {
-    validations.push(
-      (n: number) => {
-        // Use a more accurate floating-point comparison with tolerance
-        return isMultipleOf(n, multipleOf) || `Value must be a multiple of ${multipleOf}`;
-      }
-    );
+    validations.push((n: number) => {
+      // Use a more accurate floating-point comparison with tolerance
+      return (
+        isMultipleOf(n, multipleOf) ||
+        `Value must be a multiple of ${multipleOf}`
+      );
+    });
   }
 
   // Apply all validations in a single refinement
   if (validations.length > 0) {
-    const validatedSchema = baseSchema.superRefine((n: number, ctx: z.RefinementCtx) => {
-      for (const validate of validations) {
-        const result = validate(n);
-        if (typeof result === 'string') {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: result
-          });
-          return z.NEVER;
+    const validatedSchema = baseSchema.superRefine(
+      (n: number, ctx: z.RefinementCtx) => {
+        for (const validate of validations) {
+          const result = validate(n);
+          if (typeof result === 'string') {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: result,
+            });
+            return z.NEVER;
+          }
         }
       }
-    });
+    );
 
     // Cast the schema back to ZodNumber while preserving the refinements
     return validatedSchema as unknown as z.ZodNumber;
@@ -270,7 +295,7 @@ export const _safeParseNumeric = (value: unknown): number | null => {
     }
     return value;
   }
-  
+
   // Strings are not automatically converted to handle type safety requirements
   // This ensures strict validation of types in OpenAPI schemas
   return null;
@@ -291,5 +316,5 @@ export const safeParseNumeric = memoize(_safeParseNumeric, {
     if (typeof value === 'boolean') return `bool:${value}`;
     // For objects, we can just use stringified version (less common case)
     return JSON.stringify(value);
-  }
-}); 
+  },
+});

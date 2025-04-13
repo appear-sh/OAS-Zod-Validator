@@ -4,20 +4,20 @@ import type { ZodIssue } from 'zod';
 const OAS_SPEC_BASE_URL = 'https://spec.openapis.org/oas/v3.1.0#';
 
 /**
- * A map where keys represent patterns derived from ZodIssue paths 
- * (e.g., 'info.title', 'paths./users.get') and values are fragment identifiers 
+ * A map where keys represent patterns derived from ZodIssue paths
+ * (e.g., 'info.title', 'paths./users.get') and values are fragment identifiers
  * for the OpenAPI Specification document.
  */
 const specLinkMappings: Record<string, string> = {
   // Top-level fields
-  'openapi': 'oas-object',
-  'info': 'info-object',
-  'servers': 'server-object',
-  'paths': 'paths-object',
-  'components': 'components-object',
-  'security': 'security-requirement-object',
-  'tags': 'tag-object',
-  'externalDocs': 'external-documentation-object',
+  openapi: 'oas-object',
+  info: 'info-object',
+  servers: 'server-object',
+  paths: 'paths-object',
+  components: 'components-object',
+  security: 'security-requirement-object',
+  tags: 'tag-object',
+  externalDocs: 'external-documentation-object',
 
   // Info object fields
   'info.title': 'info-object',
@@ -53,9 +53,9 @@ const specLinkMappings: Record<string, string> = {
   'paths./.parameters.name': 'parameter-object',
   'paths./.parameters.in': 'parameter-object',
   'paths./.parameters.schema': 'schema-object',
-  
+
   // Schema Object (very common, might need refinement)
-  'schema': 'schema-object', // Generic fallback
+  schema: 'schema-object', // Generic fallback
   'components.schemas': 'schema-object',
   'components.parameters': 'parameter-object',
   'components.requestBodies': 'request-body-object',
@@ -66,13 +66,13 @@ const specLinkMappings: Record<string, string> = {
 
 /**
  * Tries to find a relevant OpenAPI Specification link based on a ZodIssue.
- * 
+ *
  * @param issue - The ZodIssue object.
  * @returns A URL string pointing to the relevant spec section, or undefined if no match is found.
  */
 export function getOASSpecLink(issue: ZodIssue): string | undefined {
   const pathString = issue.path.join('.');
-  
+
   // Try direct match first
   if (specLinkMappings[pathString]) {
     return OAS_SPEC_BASE_URL + specLinkMappings[pathString];
@@ -87,34 +87,51 @@ export function getOASSpecLink(issue: ZodIssue): string | undefined {
     const parts = pathString.split('.');
     if (parts.length >= 3 && parts[0] === 'paths') {
       // Check for path segments *after* the path template (parts[1])
-      
+
       // Is it within the responses part of an operation?
       const responsesIndex = parts.indexOf('responses');
-      if (responsesIndex !== -1 && responsesIndex > 1) { // Ensure 'responses' appears after the path template
+      if (responsesIndex !== -1 && responsesIndex > 1) {
+        // Ensure 'responses' appears after the path template
         // If the error path goes deeper than just 'responses' (e.g., into a specific code like '204')
         if (parts.length > responsesIndex + 1) {
-           return OAS_SPEC_BASE_URL + 'response-object'; // Error within a specific Response Object
+          return OAS_SPEC_BASE_URL + 'response-object'; // Error within a specific Response Object
         }
         return OAS_SPEC_BASE_URL + 'responses-object'; // Error at the Responses Object level
       }
-      
-      if(parts[parts.length -1] === 'schema') return OAS_SPEC_BASE_URL + 'schema-object';
-      if(parts[parts.length -1] === 'parameters') return OAS_SPEC_BASE_URL + 'parameter-object';
-      if(parts[parts.length -1] === 'requestBody') return OAS_SPEC_BASE_URL + 'request-body-object';
+
+      if (parts[parts.length - 1] === 'schema')
+        return OAS_SPEC_BASE_URL + 'schema-object';
+      if (parts[parts.length - 1] === 'parameters')
+        return OAS_SPEC_BASE_URL + 'parameter-object';
+      if (parts[parts.length - 1] === 'requestBody')
+        return OAS_SPEC_BASE_URL + 'request-body-object';
       // Don't link to responses-object here anymore, handled above
-      
+
       // Check if it looks like an operation (and not handled by responses check above)
-      if (['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'].includes(parts[2])){
-         return OAS_SPEC_BASE_URL + 'operation-object';
+      if (
+        [
+          'get',
+          'put',
+          'post',
+          'delete',
+          'options',
+          'head',
+          'patch',
+          'trace',
+        ].includes(parts[2])
+      ) {
+        return OAS_SPEC_BASE_URL + 'operation-object';
       }
       return OAS_SPEC_BASE_URL + 'path-item-object';
     }
-     return OAS_SPEC_BASE_URL + 'paths-object';
+    return OAS_SPEC_BASE_URL + 'paths-object';
   }
-  if (pathString.startsWith('components.')) return OAS_SPEC_BASE_URL + 'components-object';
-  if (pathString.includes('schema') || pathString.includes('schemas')) return OAS_SPEC_BASE_URL + 'schema-object'; // Broad fallback
-  
+  if (pathString.startsWith('components.'))
+    return OAS_SPEC_BASE_URL + 'components-object';
+  if (pathString.includes('schema') || pathString.includes('schemas'))
+    return OAS_SPEC_BASE_URL + 'schema-object'; // Broad fallback
+
   // Add more sophisticated matching logic here if needed
 
   return undefined;
-} 
+}

@@ -17,7 +17,7 @@ export interface MemoryStats {
   operationUsage: number;
 }
 
-/** 
+/**
  * Memory optimization configuration
  */
 export interface MemoryOptions {
@@ -42,9 +42,9 @@ export const DEFAULT_MEMORY_OPTIONS: Required<MemoryOptions> = {
 export function getMemoryUsageMB(): number {
   if (typeof process !== 'undefined' && process.memoryUsage) {
     const { heapUsed } = process.memoryUsage();
-    return Math.round(heapUsed / 1024 / 1024 * 100) / 100;
+    return Math.round((heapUsed / 1024 / 1024) * 100) / 100;
   }
-  
+
   // If process.memoryUsage is not available (e.g., browser environments)
   // return a default value
   return 0;
@@ -68,22 +68,25 @@ export function runGC(): void {
  * @param runGCBefore Run garbage collection before measurement
  * @returns Function result and memory stats
  */
-export function trackMemoryUsage<T>(fn: () => T, runGCBefore = false): { result: T, stats: MemoryStats } {
+export function trackMemoryUsage<T>(
+  fn: () => T,
+  runGCBefore = false
+): { result: T; stats: MemoryStats } {
   // Run GC before if requested
   if (runGCBefore) {
     runGC();
   }
-  
+
   // Measure memory before
   const heapUsedStart = getMemoryUsageMB();
-  
+
   // Run the function
   const result = fn();
-  
+
   // Measure memory after
   const heapUsedEnd = getMemoryUsageMB();
   const delta = Math.max(0, heapUsedEnd - heapUsedStart);
-  
+
   return {
     result,
     stats: {
@@ -91,13 +94,13 @@ export function trackMemoryUsage<T>(fn: () => T, runGCBefore = false): { result:
       heapUsedEnd,
       delta,
       operationUsage: delta,
-    }
+    },
   };
 }
 
 /**
  * Calculate adaptive cache size based on memory pressure
- * 
+ *
  * @param currentSize Current cache size
  * @param memoryUsageMB Current memory usage in MB
  * @param maxMemoryTargetMB Maximum memory target in MB (0 = unlimited)
@@ -105,28 +108,28 @@ export function trackMemoryUsage<T>(fn: () => T, runGCBefore = false): { result:
  */
 export function getAdaptiveCacheSize(
   currentSize: number,
-  memoryUsageMB: number, 
+  memoryUsageMB: number,
   maxMemoryTargetMB = 0
 ): number {
   // If no memory target, keep the current size
   if (maxMemoryTargetMB <= 0) {
     return currentSize;
   }
-  
+
   // If memory usage is below 60% of target, keep or increase size
   if (memoryUsageMB < maxMemoryTargetMB * 0.6) {
     return currentSize;
   }
-  
+
   // If memory usage is between 60-80% of target, keep current size
   if (memoryUsageMB < maxMemoryTargetMB * 0.8) {
     return currentSize;
   }
-  
+
   // If memory usage is above 80% of target, reduce cache size
   // Calculate reduction factor: 0.8 at 80%, down to 0.5 at 100%
-  const reductionFactor = Math.max(0.5, 1 - (memoryUsageMB / maxMemoryTargetMB));
-  
+  const reductionFactor = Math.max(0.5, 1 - memoryUsageMB / maxMemoryTargetMB);
+
   // Reduce cache size, but never below 10
   return Math.max(10, Math.floor(currentSize * reductionFactor));
-} 
+}

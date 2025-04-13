@@ -1,18 +1,22 @@
 import { z } from 'zod';
-import { validateOpenAPI, ValidationOptions, ValidationResult } from '../validator.js';
+import {
+  validateOpenAPI,
+  ValidationOptions,
+  ValidationResult,
+} from '../validator.js';
 import { ErrorCode, VersionError } from '../../errors/index.js';
 
 import { describe, test, expect, vi } from 'vitest';
 describe('Validator Coverage Improvements', () => {
   // Focus on uncovered lines 73, 86, 128-135, 162-163, 177-192
-  
+
   describe('validateRateLimitHeaders edge cases', () => {
     test('ignores rate limit headers when strictRules.requireRateLimitHeaders is false', () => {
       const doc = {
         openapi: '3.0.0',
         info: {
           title: 'Test API',
-          version: '1.0.0'
+          version: '1.0.0',
         },
         paths: {
           '/test': {
@@ -20,52 +24,53 @@ describe('Validator Coverage Improvements', () => {
               responses: {
                 '200': {
                   description: 'OK',
-                  headers: {}
-                }
-              }
-            }
-          }
-        }
+                  headers: {},
+                },
+              },
+            },
+          },
+        },
       };
-      
-      const result = validateOpenAPI(doc, { 
-        strict: true, 
-        strictRules: { requireRateLimitHeaders: false } 
+
+      const result = validateOpenAPI(doc, {
+        strict: true,
+        strictRules: { requireRateLimitHeaders: false },
       });
-      
+
       // This document should be valid even without rate limit headers
       // because requireRateLimitHeaders is false
       expect(result.valid).toBe(true);
     });
-    
+
     test('handles different response status codes', () => {
       const doc = {
         openapi: '3.0.0',
         info: {
           title: 'Test API',
-          version: '1.0.0'
+          version: '1.0.0',
         },
         paths: {
           '/test': {
             get: {
               responses: {
-                '201': { // Using a different status code
-                  description: 'Created'
+                '201': {
+                  // Using a different status code
+                  description: 'Created',
                 },
-                'default': {
-                  description: 'Error'
-                }
-              }
-            }
-          }
-        }
+                default: {
+                  description: 'Error',
+                },
+              },
+            },
+          },
+        },
       };
-      
+
       const result = validateOpenAPI(doc);
       expect(result.valid).toBe(true);
     });
   });
-  
+
   describe('createErrorMap customization', () => {
     test('handles custom error messages for non-header paths', () => {
       const doc = {
@@ -75,17 +80,17 @@ describe('Validator Coverage Improvements', () => {
             get: {
               responses: {
                 '200': {
-                  description: 'OK'
-                }
-              }
-            }
-          }
-        }
+                  description: 'OK',
+                },
+              },
+            },
+          },
+        },
       };
-      
+
       // Force custom error by triggering validation with invalid schema
-      const mockObject = {...doc, invalidField: true};
-      
+      const mockObject = { ...doc, invalidField: true };
+
       try {
         validateOpenAPI(mockObject, { strict: true });
       } catch (error) {
@@ -93,14 +98,14 @@ describe('Validator Coverage Improvements', () => {
       }
     });
   });
-  
+
   describe('validateAPIPatterns edge cases', () => {
     test('handles bulk operations with missing content', () => {
       const doc = {
         openapi: '3.0.0',
         info: {
           title: 'Test API',
-          version: '1.0.0'
+          version: '1.0.0',
         },
         paths: {
           '/resources/bulk': {
@@ -108,18 +113,18 @@ describe('Validator Coverage Improvements', () => {
               operationId: 'bulkOperation',
               requestBody: {
                 required: true,
-                content: {} // Missing application/json
+                content: {}, // Missing application/json
               },
               responses: {
                 '200': {
-                  description: 'OK'
-                }
-              }
-            }
-          }
-        }
+                  description: 'OK',
+                },
+              },
+            },
+          },
+        },
       };
-      
+
       // Should pass validation but not validate the bulk operation pattern
       // since there's no application/json content
       try {
@@ -131,13 +136,13 @@ describe('Validator Coverage Improvements', () => {
         expect(error).toBeDefined();
       }
     });
-    
+
     test('handles pagination with no parameters', () => {
       const doc = {
         openapi: '3.0.0',
         info: {
           title: 'Test API',
-          version: '1.0.0'
+          version: '1.0.0',
         },
         paths: {
           '/resources': {
@@ -145,14 +150,14 @@ describe('Validator Coverage Improvements', () => {
               // Missing parameters
               responses: {
                 '200': {
-                  description: 'OK'
-                }
-              }
-            }
-          }
-        }
+                  description: 'OK',
+                },
+              },
+            },
+          },
+        },
       };
-      
+
       // Document is valid but doesn't trigger pagination validation
       // since it has no parameters
       try {
@@ -165,7 +170,7 @@ describe('Validator Coverage Improvements', () => {
       }
     });
   });
-  
+
   describe('validateOpenAPI error handling', () => {
     test('handles null document', () => {
       try {
@@ -175,23 +180,23 @@ describe('Validator Coverage Improvements', () => {
         expect(error).toBeDefined();
       }
     });
-    
+
     test('handles non-object document', () => {
       try {
-        validateOpenAPI("not an object");
+        validateOpenAPI('not an object');
         fail('Should throw an error');
       } catch (error) {
         expect(error).toBeDefined();
       }
     });
-    
+
     test('detects version for future 3.0.x versions', () => {
       const doc = {
         openapi: '3.0.100', // Future version
         info: { title: 'Test API', version: '1.0.0' },
-        paths: {}
+        paths: {},
       };
-      
+
       try {
         validateOpenAPI(doc);
         // This should fail without allowFutureOASVersions
@@ -200,7 +205,7 @@ describe('Validator Coverage Improvements', () => {
         // Expecting error for future version
         expect(error).toBeDefined();
       }
-      
+
       try {
         // Should work with allowFutureOASVersions flag
         const result = validateOpenAPI(doc, { allowFutureOASVersions: true });
@@ -210,14 +215,14 @@ describe('Validator Coverage Improvements', () => {
         fail('Should not throw with allowFutureOASVersions: true');
       }
     });
-    
+
     test('handles completely invalid version formats', () => {
       const doc = {
         openapi: true, // Non-string version
         info: { title: 'Test API', version: '1.0.0' },
-        paths: {}
+        paths: {},
       };
-      
+
       try {
         validateOpenAPI(doc);
         fail('Should throw an error');
@@ -227,14 +232,14 @@ describe('Validator Coverage Improvements', () => {
         expect(error).toBeDefined();
       }
     });
-    
+
     test('detects OpenAPI 3.1 version', () => {
       const doc = {
         openapi: '3.1.0',
         info: { title: 'Test API', version: '1.0.0' },
-        paths: {}
+        paths: {},
       };
-      
+
       try {
         const result = validateOpenAPI(doc);
         // If validation succeeds, the test passes
@@ -245,4 +250,4 @@ describe('Validator Coverage Improvements', () => {
       }
     });
   });
-}); 
+});
