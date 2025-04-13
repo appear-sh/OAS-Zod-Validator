@@ -2,7 +2,7 @@
 'use strict';
 
 import { validateFromYaml } from './utils/validateFromYaml.js';
-import { ValidationOptions, ValidationResult } from './schemas/validator.js';
+import { ValidationOptions } from './schemas/validator.js';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
@@ -12,7 +12,7 @@ import ora from 'ora';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
-import { getIssueSeverity, Severity } from './errors/severity.js';
+import { getIssueSeverity } from './errors/severity.js';
 
 // Get package version for CLI
 const __filename = fileURLToPath(import.meta.url);
@@ -207,7 +207,7 @@ function formatValueForCli(value: any): string {
       }
       // Indent the YAML output slightly
       return chalk.dim(lines.map((l) => `  ${l}`).join('\n'));
-    } catch (e) {
+    } catch {
       return chalk.dim('[Unserializable Value]');
     }
   }
@@ -229,7 +229,7 @@ async function validateSpec(
     color: 'cyan',
   }).start();
 
-  let parsedContent: any = null; // Variable to hold the parsed spec
+  let parsedContent: unknown = null; // Variable to hold the parsed spec
 
   try {
     const fileContent = await fs.promises.readFile(filePath, 'utf8');
@@ -344,7 +344,7 @@ async function validateSpec(
             severity === 'error' ? chalk.redBright : chalk.yellowBright;
 
           // --- Build Output String ---
-          let outputLines = [];
+          const outputLines = [];
           // Severity and Path
           outputLines.push(`\n${severitySymbol} ${pathColor(pathString)}`);
           // Message

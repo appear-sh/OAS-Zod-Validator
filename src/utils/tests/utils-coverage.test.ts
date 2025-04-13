@@ -2,7 +2,7 @@ import { validateFromYaml } from '../validateFromYaml.js';
 import { verifyRefTargets } from '../verifyRefTargets.js';
 import { ReferenceError } from '../../errors/validation.js';
 
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect } from 'vitest';
 describe('Utils Coverage Improvements', () => {
   describe('validateFromYaml edge cases', () => {
     test('handles empty YAML input', async () => {
@@ -81,7 +81,7 @@ paths:
         verifyRefTargets(doc, resolvedRefs);
         // Should not throw for circular references
         expect(resolvedRefs).toContain('#/components/schemas/User');
-      } catch (error) {
+      } catch {
         fail('Should not throw for circular references');
       }
     });

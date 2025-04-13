@@ -6,7 +6,6 @@ import {
   createNumericSchema,
   isMultipleOf,
   createNumericSchemaWithValidations,
-  getNumericFormatDescription,
   NumericValidationErrors,
   safeParseNumeric,
 } from '../numeric-formats.js';
@@ -146,7 +145,7 @@ describe('Numeric Format Coverage Improvements', () => {
       const testFunc = (ctx: z.RefinementCtx, value: number) => {
         const format = 'unknown';
         if (!mockValidator(format, value)) {
-          let message = `Invalid ${format || 'number'} format`;
+          const message = `Invalid ${format || 'number'} format`;
           let path: (string | number)[] = [];
 
           // We're specifically testing this branch

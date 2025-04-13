@@ -212,7 +212,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
             if (val !== undefined) {
               try {
                 new RegExp(val);
-              } catch (e) {
+              } catch {
                 ctx.addIssue({
                   code: z.ZodIssueCode.custom,
                   message: 'Invalid regular expression pattern',
@@ -542,8 +542,8 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
                   path: ['example'],
                 });
               }
-            } catch (e) {
-              // Pattern validation is handled separately
+            } catch {
+              // Pattern validation is handled separately - ignore error here
             }
           }
         }
@@ -648,7 +648,8 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           try {
             const regex = new RegExp(schema.pattern);
             return regex.test(schema.example);
-          } catch (e) {
+          } catch {
+            // Ignore error: if pattern is invalid, it's caught elsewhere or test should fail
             return false;
           }
         }

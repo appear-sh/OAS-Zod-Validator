@@ -4,11 +4,7 @@ import {
   ValidationResult,
 } from './schemas/validator.js';
 import { validateFromYaml } from './utils/validateFromYaml.js';
-import {
-  getValidationCache,
-  CacheOptions,
-  ValidationCache,
-} from './utils/cache.js';
+import { getValidationCache, CacheOptions } from './utils/cache.js';
 import { verifyRefTargets } from './utils/refResolver.js';
 
 // Core validation functions

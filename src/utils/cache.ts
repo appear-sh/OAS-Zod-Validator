@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ValidationOptions, ValidationResult } from '../schemas/validator.js';
 import { JSONPointer } from '../types/index.js';
-import { OpenAPISpec } from '../schemas/types.js';
+// import { OpenAPISpec } from '../schemas/types.js'; // Removed unused import
 import {
   MemoryOptions,
   DEFAULT_MEMORY_OPTIONS,
@@ -234,16 +234,21 @@ export class ValidationCache {
       'index' in document
     ) {
       // For test documents, include the index directly to guarantee key uniqueness
-      return `test_doc_${(document as any).index}_${JSON.stringify(options)}`;
+      const doc = document as Record<string, unknown>;
+      return `test_doc_${doc.index}_${JSON.stringify(options)}`;
     }
 
     // Regular document handling
     const docStr =
       typeof document === 'object' && document !== null
         ? JSON.stringify({
-            openapi: (document as any).openapi,
-            info: (document as any).info?.version,
-            paths: Object.keys((document as any).paths || {}).length,
+            openapi: (document as Record<string, unknown>).openapi,
+            info: (document as Record<string, any>).info?.version,
+            paths: Object.keys(
+              ((document as Record<string, unknown>).paths as
+                | Record<string, unknown>
+                | undefined) || {}
+            ).length,
           })
         : String(document);
 

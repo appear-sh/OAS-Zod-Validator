@@ -1,6 +1,9 @@
 import { ComponentsObject } from '../components.js';
+// import { OpenAPIObject } from '../openapi.js'; // Removed unused
+// import { OpenAPIObject31 } from '../openapi31.js'; // Removed unused
+import { describe, test, expect } from 'vitest';
+// import { validateOpenAPI } from '../validator.js'; // Removed unused
 
-import { describe, test, expect, vi } from 'vitest';
 describe('Components Object Coverage Improvements', () => {
   // Focus on branch coverage for line 43
 

@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { validateOpenAPI, resetCache } from '../index.js';
-import { load } from 'js-yaml';
 
 // Get directory path for this file
 const __filename = fileURLToPath(import.meta.url);
@@ -230,7 +229,7 @@ async function runBenchmark() {
   };
 
   // Create deeply nested references - 50 levels
-  let currentLevel = deepNestedRefsSpec.components.schemas;
+  const currentLevel = deepNestedRefsSpec.components.schemas;
   for (let i = 2; i <= 50; i++) {
     currentLevel[`Level${i}`] = {
       type: 'object',

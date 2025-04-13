@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { validateOpenAPI, resetCache } from '../../index.js';
-import { load } from 'js-yaml';
 
 // Get directory path for this file
 const __filename = fileURLToPath(import.meta.url);

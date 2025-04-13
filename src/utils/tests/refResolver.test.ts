@@ -1,8 +1,9 @@
+// import { OpenAPIObject31 } from '../../schemas/openapi31.js'; // Removed unused
 import { RefResolver, verifyRefTargets } from '../refResolver.js';
 import { ReferenceError } from '../../errors/index.js';
 import { resetCache } from '../../index.js';
 
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
 describe('RefResolver', () => {
   // Reset cache before each test
   beforeEach(() => {

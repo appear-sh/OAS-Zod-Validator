@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { SchemaObject, getParentType, getRootType } from '../core.js';
 
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect } from 'vitest';
 describe('Core Schema Coverage Improvements', () => {
   // Focus on uncovered lines 75-85, 104-105, 117-118, 130-141, 155, 167, 179, 191, 203, 216-217, 229-230, 242-243, 255-256
 
@@ -194,7 +194,7 @@ describe('Core Schema Coverage Improvements', () => {
         .superRefine((val, ctx) => {
           try {
             new RegExp(val.pattern);
-          } catch (e) {
+          } catch {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: 'Invalid regex pattern validation triggered',
@@ -222,9 +222,10 @@ describe('Core Schema Coverage Improvements', () => {
   describe('SchemaObject with reference handling', () => {
     test('preprocesses reference objects correctly', () => {
       // The real SchemaObject uses a preprocessor, which we can test separately
-      const preprocessor = (data: any) => {
+      const preprocessor = (data: unknown): unknown => {
         if (typeof data === 'object' && data !== null && '$ref' in data) {
-          return { $ref: data.$ref };
+          // Type guard ensures data has $ref property here
+          return { $ref: (data as { $ref: unknown }).$ref };
         }
         return data;
       };
@@ -236,7 +237,7 @@ describe('Core Schema Coverage Improvements', () => {
 
       const processed = preprocessor(inputWithRef);
       expect(processed).toEqual({ $ref: '#/components/schemas/User' });
-      expect(Object.keys(processed)).not.toContain('description');
+      expect(Object.keys(processed as object)).not.toContain('description');
     });
   });
 });

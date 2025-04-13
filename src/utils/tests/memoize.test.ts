@@ -1,5 +1,5 @@
 import { memoize } from '../memoize.js';
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
 
 describe('memoize', () => {
   // Manual mocking approach instead of vi.fn()

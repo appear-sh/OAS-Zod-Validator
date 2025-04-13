@@ -51,8 +51,9 @@ export class RefResolver {
         createJSONPointer(ref);
         // Store the ref
         refs.push(ref);
-      } catch (error) {
-        // Always store invalid references to be handled during verification
+      } catch {
+        // If createJSONPointer fails, it's an invalid format.
+        // Still store it to throw error later during verification.
         const ref = String(obj.$ref);
         if (!refs.includes(ref)) {
           refs.push(ref);
@@ -126,7 +127,7 @@ export class RefResolver {
 
       // Queue for resolution
       this.pendingRefs.set(ref, { ref, jsonPointer, path });
-    } catch (error) {
+    } catch {
       // Throw immediately for invalid reference formats
       throw new ReferenceError(ref, `Invalid reference format: ${ref}`, {
         code: ErrorCode.INVALID_REFERENCE,

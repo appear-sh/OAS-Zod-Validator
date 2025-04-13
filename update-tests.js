@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs';
 import { glob } from 'glob';
-import path from 'path';
 
 /**
  * Updates test files to use Vitest instead of Jest

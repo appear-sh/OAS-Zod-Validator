@@ -81,7 +81,7 @@ export function createAPIURL(url: string): APIURL {
   try {
     new URL(url);
     return url as APIURL;
-  } catch (error) {
+  } catch {
     throw new Error(`Invalid URL format: ${url}`);
   }
 }

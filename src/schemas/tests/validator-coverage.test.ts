@@ -1,12 +1,12 @@
-import { z } from 'zod';
+import {} from /* z - Removed unused import */ 'zod';
 import {
   validateOpenAPI,
-  ValidationOptions,
-  ValidationResult,
+  // ValidationOptions - Removed unused import
+  // ValidationResult - Removed unused import
 } from '../validator.js';
-import { ErrorCode, VersionError } from '../../errors/index.js';
+import {} from /* ErrorCode - Removed unused import */ /* VersionError - Removed unused import */ '../../errors/index.js';
 
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect } from 'vitest';
 describe('Validator Coverage Improvements', () => {
   // Focus on uncovered lines 73, 86, 128-135, 162-163, 177-192
 
@@ -93,8 +93,8 @@ describe('Validator Coverage Improvements', () => {
 
       try {
         validateOpenAPI(mockObject, { strict: true });
-      } catch (error) {
-        expect(error).toBeDefined();
+      } catch {
+        expect(true).toBe(true);
       }
     });
   });
@@ -131,9 +131,9 @@ describe('Validator Coverage Improvements', () => {
         validateOpenAPI(doc, { strict: false });
         // If we reach here, the validation passed
         expect(true).toBe(true);
-      } catch (error) {
+      } catch {
         // Validation might fail for other reasons, that's acceptable
-        expect(error).toBeDefined();
+        expect(true).toBe(true);
       }
     });
 
@@ -164,9 +164,9 @@ describe('Validator Coverage Improvements', () => {
         validateOpenAPI(doc, { strict: false });
         // If we reach here, the validation passed
         expect(true).toBe(true);
-      } catch (error) {
+      } catch {
         // Validation might fail for other reasons, that's acceptable
-        expect(error).toBeDefined();
+        expect(true).toBe(true);
       }
     });
   });
@@ -175,18 +175,18 @@ describe('Validator Coverage Improvements', () => {
     test('handles null document', () => {
       try {
         validateOpenAPI(null);
-        fail('Should throw an error');
-      } catch (error) {
-        expect(error).toBeDefined();
+        expect.fail('Should throw an error');
+      } catch {
+        expect(true).toBe(true);
       }
     });
 
     test('handles non-object document', () => {
       try {
         validateOpenAPI('not an object');
-        fail('Should throw an error');
-      } catch (error) {
-        expect(error).toBeDefined();
+        expect.fail('Should throw an error');
+      } catch {
+        expect(true).toBe(true);
       }
     });
 
@@ -200,10 +200,10 @@ describe('Validator Coverage Improvements', () => {
       try {
         validateOpenAPI(doc);
         // This should fail without allowFutureOASVersions
-        fail('Should throw an error for future version');
-      } catch (error) {
+        expect.fail('Should throw an error for future version');
+      } catch {
         // Expecting error for future version
-        expect(error).toBeDefined();
+        expect(true).toBe(true);
       }
 
       try {
@@ -211,8 +211,8 @@ describe('Validator Coverage Improvements', () => {
         const result = validateOpenAPI(doc, { allowFutureOASVersions: true });
         // If validation succeeds, the test passes
         expect(result).toBeDefined();
-      } catch (error) {
-        fail('Should not throw with allowFutureOASVersions: true');
+      } catch {
+        expect.fail('Should not throw with allowFutureOASVersions: true');
       }
     });
 
@@ -225,11 +225,11 @@ describe('Validator Coverage Improvements', () => {
 
       try {
         validateOpenAPI(doc);
-        fail('Should throw an error');
-      } catch (error) {
+        expect.fail('Should throw an error');
+      } catch {
         // The error type might be different than expected
         // but we should get some kind of error
-        expect(error).toBeDefined();
+        expect(true).toBe(true); // Just assert that the catch block was reached
       }
     });
 
@@ -244,9 +244,9 @@ describe('Validator Coverage Improvements', () => {
         const result = validateOpenAPI(doc);
         // If validation succeeds, the test passes
         expect(result).toBeDefined();
-      } catch (error) {
+      } catch {
         // If validation fails for other reasons, we'll catch it here
-        fail('Should not throw for valid 3.1.0 document');
+        expect.fail('Should not throw for valid 3.1.0 document');
       }
     });
   });

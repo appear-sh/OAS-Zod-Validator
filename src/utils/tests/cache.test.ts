@@ -1,11 +1,8 @@
-import { getValidationCache, CacheOptions, ValidationCache } from '../cache.js';
-import {
-  ValidationResult,
-  ValidationOptions,
-} from '../../schemas/validator.js';
+import { ValidationCache } from '../cache.js';
+import { ValidationResult } from '../../schemas/validator.js';
 import { createJSONPointer } from '../../types/index.js';
 
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect } from 'vitest';
 // Create a simple test document and schema
 const testDocument = {
   openapi: '3.0.0',

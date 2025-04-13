@@ -1,6 +1,6 @@
 import { get } from 'lodash-es';
 import { ReferenceError, ErrorCode } from '../errors/index.js';
-import { JSONPointer, createJSONPointer } from '../types/index.js';
+import { createJSONPointer } from '../types/index.js';
 import { getValidationCache } from './cache.js';
 
 /**
@@ -27,10 +27,10 @@ export function verifyRefTargets(
     if ('$ref' in obj && typeof obj.$ref === 'string') {
       try {
         // Validate ref format
-        const jsonPointer = createJSONPointer(obj.$ref);
+        createJSONPointer(obj.$ref);
         // Store the string value in the refs array passed in by the caller
         refs.push(obj.$ref);
-      } catch (error) {
+      } catch {
         throw new ReferenceError(
           String(obj.$ref),
           `Invalid reference format: ${obj.$ref}`,
@@ -50,27 +50,27 @@ export function verifyRefTargets(
   refs.forEach((ref) => {
     try {
       // Validate the format again to ensure type safety
-      const jsonPointer = createJSONPointer(ref);
+      const _refPointer = createJSONPointer(ref);
 
       // Check if we have this reference target cached
-      const cachedTarget = cache.getRefTarget(jsonPointer, doc);
+      const cachedTarget = cache.getRefTarget(_refPointer, doc);
       if (cachedTarget !== undefined) {
         return; // Reference exists in cache
       }
 
-      const path = jsonPointer.substring(2).split('/');
+      const path = _refPointer.substring(2).split('/');
       const target = get(doc, path);
 
       if (!target) {
         throw new ReferenceError(
-          jsonPointer,
-          `Reference not found: ${jsonPointer}`,
+          _refPointer,
+          `Reference not found: ${_refPointer}`,
           { code: ErrorCode.REFERENCE_NOT_FOUND }
         );
       }
 
       // Cache the target for future reference lookups
-      cache.setRefTarget(jsonPointer, doc, target);
+      cache.setRefTarget(_refPointer, doc, target);
     } catch (error) {
       if (error instanceof ReferenceError) {
         throw error;

@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { validateOpenAPI, resetCache } from '../index.js';
-import { load } from 'js-yaml';
 import { getMemoryUsageMB, runGC, trackMemoryUsage } from './memoryUtils.js';
 import { getValidationCache } from './cache.js';
 
@@ -34,9 +33,9 @@ async function runMemoryBenchmark() {
   }
 
   const trainTravel = JSON.parse(fs.readFileSync(trainTravelPath, 'utf8'));
-  const discriminators = JSON.parse(
-    fs.readFileSync(discriminatorsPath, 'utf8')
-  );
+  // const discriminators = JSON.parse( // Removed unused variable
+  //   fs.readFileSync(discriminatorsPath, 'utf8')
+  // );
 
   // Helper to display memory stats
   const printMemoryStats = (

@@ -1,5 +1,5 @@
 import { validateOpenAPI } from '../../index.js';
-import { z } from 'zod';
+// import { z } from 'zod'; // Removed unused import
 import {
   getNumericFormatDescription,
   isValidNumericLiteral,
@@ -9,7 +9,7 @@ import {
   createNumericSchemaWithValidations,
 } from '../numeric-formats.js';
 
-import { describe, test, expect, vi } from 'vitest';
+import { describe, test, expect } from 'vitest'; // Removed vi
 describe('Numeric Format Validation', () => {
   describe('Integer Formats', () => {
     const createIntegerSchema = (format?: string) => ({
