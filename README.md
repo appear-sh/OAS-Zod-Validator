@@ -187,6 +187,26 @@ npm run build
 
 This project uses TypeScript with ESM modules and Vitest for testing. It follows strict coding practices and maintains high test coverage.
 
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1.  **Fork & Clone:** Fork the repository and clone it locally.
+2.  **Branch:** Create a new branch for your feature or bug fix.
+3.  **Develop:** Make your code changes. Ensure tests pass (`npm test`).
+4.  **Add a Changeset:** This project uses [Changesets](https://github.com/changesets/changesets) to manage releases and generate changelogs. If your change impacts the package (e.g., bug fix, new feature, performance improvement), you **must** add a changeset file. Run the following command:
+    ```bash
+    npm run changeset
+    ```
+    Follow the prompts:
+    - Select `oas-zod-validator` as the package.
+    - Choose the appropriate SemVer bump level (patch, minor, or major) based on your changes.
+    - Write a concise description of your change. This description will appear in the `CHANGELOG.md`.
+5.  **Commit:** Commit your code changes _and_ the generated markdown file located in the `.changeset/` directory (e.g., `.changeset/sweet-donkeys-cry.md`).
+6.  **Push & PR:** Push your branch and open a Pull Request against the `main` branch.
+
+Maintainers will handle the versioning and release process using the changeset files provided in merged Pull Requests.
+
 ## License
 
 - MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh
