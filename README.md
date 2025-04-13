@@ -2,7 +2,7 @@
 
 A robust OpenAPI Specification (OAS) validator built with Zod, providing type-safe schema validation for both OAS 3.0.x and 3.1 specifications.
 
-[![npm version](https://badge.fury.io/js/oas-zod-validator.svg)](https://badge.fury.io/js/oas-zod-validator)
+[![npm version](https://badge.fury.io/js/%40appear.sh%2Foas-zod-validator.svg)](https://www.npmjs.com/package/@appear.sh/oas-zod-validator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -216,3 +216,5 @@ Maintainers will handle the versioning and release process using the changeset f
 - X: https://x.com/tom_mkv
 - X: https://x.com/jakubriedl
 - X: https://x.com/appearapi
+
+For bug reports, feature requests, or contributions, please visit the [GitHub repository](https://github.com/appear-sh/OAS-Zod-Validator).
