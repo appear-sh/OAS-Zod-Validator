@@ -36,7 +36,10 @@
     "clean": "rimraf coverage && rimraf dist",
     "benchmark": "npm run build && node dist/utils/performance-benchmark.js",
     "benchmark:memory": "npm run build && node --expose-gc dist/utils/memory-benchmark.js",
-    "update-tests": "node update-tests.js"
+    "update-tests": "node update-tests.js",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "npm run build && changeset publish"
   },
   "keywords": [
     "openapi",
@@ -60,6 +63,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.28.1",
     "@types/chalk": "^0.4.31",
     "@types/inquirer": "^9.0.7",
     "@types/js-yaml": "^4.0.9",
