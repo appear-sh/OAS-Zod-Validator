@@ -1,9 +1,33 @@
+<!-- PROJECT LOGO -->
+<p align="center">
+  <a href="https://github.com/appear-sh/OAS-Zod-Validator">
+   <img src="" alt="Logo">
+  </a>
+
+  <h3 align="center">OAS Zod Validator</h3>
+
+  <p align="center">
+    The open-source OpenAPI Spec Validator using Zod. From Appear.
+    <br />
+    <a href="https://docs.appear.sh/resources/open-source"><strong>Learn more »</strong></a>
+    <br />
+    <br />
+    <a href="https://www.appear.sh">Appear Website</a>
+    ·
+    <a href="https://github.com/appear-sh/OAS-Zod-Validator/issues">Issues</a>
+    ·
+    <a href="https://www.appear.sh/productmap">Appear Product Map</a>
+  </p>
+</p>
+
 # OAS Zod Validator
 
 A robust OpenAPI Specification (OAS) validator built with Zod, providing type-safe schema validation for both OAS 3.0.x and 3.1 specifications.
 
 [![npm version](https://badge.fury.io/js/%40appear.sh%2Foas-zod-validator.svg)](https://www.npmjs.com/package/@appear.sh/oas-zod-validator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+<!-- ABOUT THE PROJECT -->
 
 ## Features
 
@@ -19,6 +43,8 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 - Custom format validators
 - Performance optimization with caching for large schemas
 - Realworld examples you can quickly validate for assessments
+
+<!-- GETTING STARTED -->
 
 ## NPX for on the fly spec validation in the CLI
 
@@ -197,6 +223,8 @@ npm run build
 
 This project uses TypeScript with ESM modules and Vitest for testing. It follows strict coding practices and maintains high test coverage.
 
+<!-- CONTRIBUTING -->
+
 ## Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -217,9 +245,13 @@ Contributions are welcome! Please follow these steps:
 
 Maintainers will handle the versioning and release process using the changeset files provided in merged Pull Requests.
 
+<!-- LICENSE -->
+
 ## License
 
 - MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh
+
+<!-- ACKNOWLEDGEMENTS -->
 
 ## Core maintainers
 
