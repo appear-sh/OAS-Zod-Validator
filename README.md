@@ -20,6 +20,12 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 - Performance optimization with caching for large schemas
 - Realworld examples you can quickly validate for assessments
 
+## NPX for on the fly spec validation in the CLI
+
+```bash
+npx @appear.sh/oas-zod-validator oas-validate path/to/your/spec.json
+```
+
 ## Installation
 
 ```bash
