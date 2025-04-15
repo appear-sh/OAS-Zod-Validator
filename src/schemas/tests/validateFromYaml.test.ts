@@ -65,7 +65,9 @@ describe('YAML Validation', () => {
       expect(error).toBeInstanceOf(SchemaValidationError);
       if (error instanceof SchemaValidationError) {
         expect(error.code).toBe('SCHEMA_VALIDATION');
-        expect(error.message).toContain('OpenAPI object');
+        expect(error.message).toContain(
+          'Input must be a valid OpenAPI 3.x specification object'
+        );
         expect(error.context).toBeDefined();
       }
     }
@@ -250,7 +252,7 @@ describe('YAML Validation', () => {
     // Test custom error handling
     const arrayYaml = '- item1\n- item2';
     expect(() => validateFromYaml(arrayYaml)).toThrow(
-      'YAML must contain an OpenAPI object'
+      'Input must be a valid OpenAPI 3.x specification object'
     );
   });
 });

@@ -1,7 +1,7 @@
 <!-- PROJECT LOGO -->
 <p align="center">
   <a href="https://github.com/appear-sh/OAS-Zod-Validator">
-   <img src="" alt="Logo">
+   <img src="assets/Appear-OAS-Zod-Validator-graphic.png" alt="Logo">
   </a>
 
   <h3 align="center">OAS Zod Validator</h3>
