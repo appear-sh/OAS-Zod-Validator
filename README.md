@@ -18,6 +18,7 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 - Rate limit header enforcement options
 - Custom format validators
 - Performance optimization with caching for large schemas
+- Realworld examples you can quickly validate for assessments
 
 ## Installation
 
@@ -177,6 +178,9 @@ npm install
 
 # Run tests (uses Vitest)
 npm test
+
+# Run tests in verbose mode (uses Vitest)
+VERBOSE_INTEGRATION=1 npm test
 
 # Watch mode for development
 npm run test:watch

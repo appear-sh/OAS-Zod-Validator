@@ -364,15 +364,20 @@ export function validateOpenAPI(
         resolvedRefs,
       };
     } else if (error instanceof StrictValidationError) {
+      // Attempt to preserve original ZodError if wrapped, otherwise create custom
+      const originalError =
+        error.cause instanceof z.ZodError ? error.cause : undefined;
       result = {
         valid: false,
-        errors: new z.ZodError([
-          {
-            code: z.ZodIssueCode.custom,
-            path: [],
-            message: error.message,
-          },
-        ]),
+        errors:
+          originalError ??
+          new z.ZodError([
+            {
+              code: z.ZodIssueCode.custom,
+              path: [], // Removed error.path as it doesn't exist
+              message: error.message,
+            },
+          ]),
         resolvedRefs,
       };
     } else {
