@@ -120,12 +120,12 @@ export function validateFromYaml(
         {
           code: z.ZodIssueCode.custom,
           path: [],
-          message: 'YAML must contain an OpenAPI object',
+          message: 'Input must be a valid OpenAPI 3.x specification object',
         },
       ]);
 
       throw new SchemaValidationError(
-        'YAML must contain an OpenAPI object',
+        'Input must be a valid OpenAPI 3.x specification object',
         error,
         { context: { receivedType: Array.isArray(doc) ? 'array' : typeof doc } }
       );

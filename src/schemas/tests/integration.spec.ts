@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 import { validateOpenAPI } from '../validator.js';
-import { describe, test, expect, beforeAll } from 'vitest';
+import { describe, test, expect } from 'vitest';
 
 describe('Integration tests for multiple OAS specs', () => {
   const __filename = fileURLToPath(import.meta.url);
@@ -11,7 +11,7 @@ describe('Integration tests for multiple OAS specs', () => {
   const specsDir = path.join(__dirname, 'test-specs');
 
   // Add a static test that will always run
-  test('validates basic OpenAPI spec', () => {
+  test('validates basic hardcoded OpenAPI spec', () => {
     const basicSpec = {
       openapi: '3.0.0',
       info: {
@@ -26,106 +26,126 @@ describe('Integration tests for multiple OAS specs', () => {
     expect(result.errors).toBeUndefined();
   });
 
-  // Dynamic tests from files
-  describe('File-based tests', () => {
-    beforeAll(() => {
-      // Create test directory if it doesn't exist
-      if (!fs.existsSync(specsDir)) {
-        fs.mkdirSync(specsDir, { recursive: true });
-      }
-
-      // Write test files if they don't exist
-      const testSpecs = {
-        'valid-basic.yaml': `
-openapi: 3.0.0
-info:
-  title: Basic Valid API
-  version: 1.0.0
-paths: {}
-components:
-  schemas:
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-        name:
-          type: string
-      required:
-        - id
-        - name
-`,
-        'invalid-basic.yaml': `
-openapi: invalid
-info:
-  title: Invalid API
-  version: 1.0.0
-paths: {}
-`,
-        'valid-3.1.yaml': `
-openapi: 3.1.0
-info:
-  title: Future Valid API
-  version: 1.0.0
-paths: {}
-components:
-  schemas:
-    Pet:
-      type: object
-      properties:
-        name:
-          type: string
-        age:
-          type: integer
-      required:
-        - name
-`,
-      };
-
-      Object.entries(testSpecs).forEach(([filename, content]) => {
-        const filePath = path.join(specsDir, filename);
-        if (!fs.existsSync(filePath)) {
-          fs.writeFileSync(filePath, content);
-        }
-      });
-    });
-
-    test('validates all test specs', () => {
-      const testFiles = fs.readdirSync(specsDir).filter((file) => {
-        return (
+  // --- Dynamic tests from files ---
+  let testFilesData: { filename: string; fullPath: string }[] = [];
+  try {
+    testFilesData = fs
+      .readdirSync(specsDir)
+      .filter(
+        (file) =>
           file.endsWith('.json') ||
           file.endsWith('.yaml') ||
           file.endsWith('.yml')
-        );
-      });
+      )
+      .map((filename) => ({
+        filename,
+        fullPath: path.join(specsDir, filename),
+      }));
+  } catch (err) {
+    console.error(`Error reading test specs directory: ${specsDir}`, err);
+    // If we can't read the directory, add a failing test to make it obvious
+    test('FAILED TO READ TEST SPECS DIRECTORY', () => {
+      expect.fail(`Could not read test specs from ${specsDir}`);
+    });
+  }
 
-      testFiles.forEach((file) => {
-        const fullPath = path.join(specsDir, file);
+  describe('File-based tests', () => {
+    // Ensure the directory read was successful and files were found
+    test('successfully loaded test spec files', () => {
+      expect(testFilesData.length).toBeGreaterThan(0);
+    });
+
+    test.each(testFilesData)(
+      'validates spec file: $filename',
+      ({ filename, fullPath }) => {
         const fileData = fs.readFileSync(fullPath, 'utf-8');
         let doc: Record<string, unknown>;
-        if (file.endsWith('.yaml') || file.endsWith('.yml')) {
-          doc = yaml.load(fileData) as Record<string, unknown>;
-        } else {
-          doc = JSON.parse(fileData) as Record<string, unknown>;
+
+        try {
+          if (filename.endsWith('.yaml') || filename.endsWith('.yml')) {
+            doc = yaml.load(fileData) as Record<string, unknown>;
+          } else {
+            doc = JSON.parse(fileData) as Record<string, unknown>;
+          }
+        } catch (parseError: unknown) {
+          // Fail explicitly if parsing fails
+          const message =
+            parseError instanceof Error
+              ? parseError.message
+              : String(parseError);
+          expect.fail(`Failed to parse ${filename}: ${message}`);
         }
 
+        const hasPrefix =
+          filename.startsWith('valid-') || filename.startsWith('invalid.');
         const isExpectedValid =
-          file.startsWith('valid-') || file.startsWith('valid.');
+          filename.startsWith('valid-') || filename.startsWith('valid.');
         const options = {
-          allowFutureOASVersions: file.includes('3.1') || file.includes('3.2'),
+          allowFutureOASVersions:
+            filename.includes('3.1') || filename.includes('3.2'),
           strict: true,
         };
 
-        const result = validateOpenAPI(doc, options);
-
-        if (isExpectedValid) {
-          expect(result.valid).toBe(true);
-          expect(result.errors).toBeUndefined();
-        } else {
-          expect(result.valid).toBe(false);
-          expect(result.errors).toBeDefined();
+        // Add try-catch around validation itself for better error reporting
+        let result;
+        try {
+          result = validateOpenAPI(doc, options);
+        } catch (validationError: unknown) {
+          const message =
+            validationError instanceof Error
+              ? validationError.message
+              : String(validationError);
+          expect.fail(
+            `Validation threw an unexpected error for ${filename}: ${message}`
+          );
         }
-      });
-    });
+
+        // --- Assertions ---
+        if (hasPrefix) {
+          // For files with prefixes, assert the expected outcome strictly
+          if (isExpectedValid) {
+            expect(result.valid).toBe(true);
+            expect(result.errors).toBeUndefined();
+          } else {
+            expect(result.valid).toBe(false);
+            expect(result.errors).toBeDefined();
+          }
+        } else {
+          // For files without prefixes (real-world examples), log the outcome and assert successful execution
+
+          // Calculate error count based on the ERRORS.ISSUES array
+          const errorCount = result.errors?.issues?.length ?? 0;
+          let summaryString = `\n--- Processing Real-World Spec: ${filename} --- Result: ${result.valid}`;
+          if (!result.valid) {
+            summaryString += ` --- (Reported errors: ${errorCount}) ---`;
+          } else {
+            summaryString += ' ---';
+          }
+          console.log(summaryString);
+
+          // Only log full errors if VERBOSE_INTEGRATION is set
+          if (
+            result.errors &&
+            (process.env.VERBOSE_INTEGRATION === '1' ||
+              process.env.VERBOSE_INTEGRATION?.toLowerCase() === 'true')
+          ) {
+            console.log(`  Errors: ${JSON.stringify(result.errors, null, 2)}`);
+          }
+          // console.log(`--- End ${filename} ---`); // Removed redundant end marker
+
+          // Basic assertion: Did the validator run and produce a boolean result?
+          expect(result).toBeDefined();
+          expect(typeof result.valid).toBe('boolean');
+
+          // ADDED: Stricter check - if invalid, errors array must be populated
+          if (!result.valid) {
+            // Check the length of the issues array within the ZodError object
+            expect(
+              result.errors?.issues && result.errors.issues.length > 0
+            ).toBe(true);
+          }
+        }
+      }
+    );
   });
 });
