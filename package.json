@@ -22,6 +22,7 @@
     "!dist/**/*.test.*",
     "!dist/**/*.spec.*",
     "!dist/**/tests/**",
+    "assets/",
     "README.md"
   ],
   "scripts": {
