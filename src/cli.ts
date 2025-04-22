@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-import { validateFromYaml } from './utils/validateFromYaml.js';
-import { ValidationOptions } from './schemas/validator.js';
+import { ValidationOptions, validateOpenAPI } from './schemas/validator.js';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
@@ -10,9 +9,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ora from 'ora';
 import { fileURLToPath } from 'url';
-import yaml from 'js-yaml';
+import * as YAML from 'yaml';
+import jsYaml from 'js-yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
 import { getIssueSeverity } from './errors/severity.js';
+import * as jsonc from 'jsonc-parser';
+import { getLocationFromJsonAst } from './utils/locationUtils.js';
+import { Range } from './types/location.js';
 
 // Get package version for CLI
 const __filename = fileURLToPath(import.meta.url);
@@ -194,19 +197,18 @@ function formatValueForCli(value: any): string {
   }
   if (typeof value === 'object' && value !== null) {
     try {
-      // Use YAML dump for potentially better readability of structures
-      const yamlString = yaml.dump(value, {
+      // Use js-yaml dump for CLI display formatting
+      const yamlString = jsYaml.dump(value, {
         indent: 2,
         lineWidth: 80,
         skipInvalid: true,
       });
       const lines = yamlString.split('\n');
       if (lines.length > 10 || yamlString.length > 300) {
-        // Limit output size
         return chalk.dim('{ /* Large object/array */ }');
       }
-      // Indent the YAML output slightly
-      return chalk.dim(lines.map((l) => `  ${l}`).join('\n'));
+      // Add string type annotation for parameter 'l'
+      return chalk.dim(lines.map((l: string) => `  ${l}`).join('\n'));
     } catch {
       return chalk.dim('[Unserializable Value]');
     }
@@ -216,30 +218,51 @@ function formatValueForCli(value: any): string {
 }
 
 /**
- * Validates an OpenAPI specification file
- * @param filePath - Path to the specification file
- * @param cliOptions - Validation options
+ * Primary validation logic called by CLI
+ * @param filePath - Path to the OpenAPI spec file
+ * @param cliOptions - Processed CLI options
  */
 async function validateSpec(
   filePath: string,
   cliOptions: CLIOptions
 ): Promise<void> {
   const spinner = ora({
-    text: 'Validating OpenAPI specification...',
-    color: 'cyan',
+    text: `Validating ${chalk.blueBright(filePath)}...`,
+    spinner: 'dots',
   }).start();
 
-  let parsedContent: unknown = null; // Variable to hold the parsed spec
+  let parsedContent: unknown = null;
+  let jsonAst: jsonc.Node | undefined = undefined;
+  let yamlDoc: YAML.Document.Parsed | undefined = undefined;
+  let fileContent = '';
 
   try {
-    const fileContent = await fs.promises.readFile(filePath, 'utf8');
+    fileContent = await fs.promises.readFile(filePath, 'utf8');
 
-    // Parse the content once for context retrieval
     try {
-      if (path.extname(filePath).toLowerCase().startsWith('.y')) {
-        parsedContent = yaml.load(fileContent);
+      const isYaml = path.extname(filePath).toLowerCase().startsWith('.y');
+      if (isYaml) {
+        yamlDoc = YAML.parseDocument(fileContent);
+        if (yamlDoc.errors.length > 0) {
+          const firstError = yamlDoc.errors[0];
+          // Access line number correctly using index 0
+          const errorLine = firstError.linePos?.[0]?.line ?? 'unknown';
+          throw new Error(
+            `YAML parsing error: ${firstError.message} at line ${errorLine}`
+          );
+        }
+        parsedContent = yamlDoc.toJS();
       } else {
-        parsedContent = JSON.parse(fileContent);
+        const parseErrors: jsonc.ParseError[] = [];
+        jsonAst = jsonc.parseTree(fileContent, parseErrors);
+
+        if (parseErrors.length > 0) {
+          const firstError = parseErrors[0];
+          throw new Error(
+            `JSON parsing error at offset ${firstError.offset}, length ${firstError.length}: ${jsonc.printParseErrorCode(firstError.error)}`
+          );
+        }
+        parsedContent = jsonc.parse(fileContent);
       }
     } catch (parseErr) {
       spinner.fail('Failed to parse input file');
@@ -263,8 +286,8 @@ async function validateSpec(
       },
     };
 
-    // For now, we'll assume it works with the string, but we have parsedContent for context.
-    const result = validateFromYaml(fileContent, validationOptions);
+    // Validate the plain JS object
+    const result = validateOpenAPI(parsedContent, validationOptions);
 
     if (result.valid) {
       spinner.succeed('Validation successful! ✨');
@@ -282,7 +305,17 @@ async function validateSpec(
       let warningCount = 0;
 
       const issues = result.errors?.issues || [];
-      issues.forEach((issue) => {
+
+      const issuesWithLocation = issues.map((issue) => {
+        let location: Range | undefined = undefined;
+        if (jsonAst) {
+          location = getLocationFromJsonAst(fileContent, jsonAst, issue.path);
+        }
+
+        return { ...issue, location };
+      });
+
+      issuesWithLocation.forEach((issue) => {
         const severity = getIssueSeverity(issue);
         if (severity === 'error') {
           errorCount++;
@@ -292,8 +325,7 @@ async function validateSpec(
       });
 
       if (cliOptions.format === 'json') {
-        // Include severity in JSON output
-        const outputIssues = issues.map((issue) => ({
+        const outputIssues = issuesWithLocation.map((issue) => ({
           ...issue,
           severity: getIssueSeverity(issue),
         }));
@@ -305,36 +337,37 @@ async function validateSpec(
           `Validation found ${errorCount} error(s) and ${warningCount} warning(s):`
         );
 
-        issues.forEach((issue) => {
-          let displayPath = issue.path; // Path to display
-          let displayMessage = issue.message; // Message to display
+        issuesWithLocation.forEach((issue) => {
+          let displayPath = issue.path;
+          let displayMessage = issue.message;
 
-          // Check for invalid_union and try to get a more specific message
           if (
             issue.code === 'invalid_union' &&
             issue.unionErrors &&
             issue.unionErrors.length > 0
           ) {
-            // Prefer the first error from the first union branch
             const firstBranchErrors = issue.unionErrors[0]?.issues;
             if (firstBranchErrors && firstBranchErrors.length > 0) {
               const specificIssue = firstBranchErrors[0];
 
-              // If the specific nested issue path is longer (more specific) than the union's path,
-              // assume it already contains the full path information needed. Otherwise, stick to the union path.
               if (specificIssue.path.length > issue.path.length) {
                 displayPath = specificIssue.path;
-              } // else: displayPath remains the original issue.path (path to the union)
+              }
 
               displayMessage = specificIssue.message;
             }
           }
 
-          const pathString = displayPath.join('.'); // Use potentially updated path
-          const specLink = getOASSpecLink(issue); // Keep using original issue for link lookup
-          const valueContext = getValueFromPath(parsedContent, displayPath); // Use potentially updated path
+          const pathString = displayPath.join('.');
+          const specLink = getOASSpecLink(issue);
+          const valueContext = getValueFromPath(parsedContent, displayPath);
           const formattedValue = formatValueForCli(valueContext);
-          const severity = getIssueSeverity(issue); // Keep using original issue for severity
+          const severity = getIssueSeverity(issue);
+
+          let locationString = '';
+          if (issue.location?.start) {
+            locationString = chalk.cyan(` L${issue.location.start.line}`);
+          }
 
           const severitySymbol =
             severity === 'error'
@@ -345,15 +378,15 @@ async function validateSpec(
 
           // --- Build Output String ---
           const outputLines = [];
-          // Severity and Path
-          outputLines.push(`\n${severitySymbol} ${pathColor(pathString)}`);
-          // Message
+          // --- Append locationString to the path line ---
+          outputLines.push(
+            `\n${severitySymbol} ${pathColor(pathString)}${locationString}`
+          );
+          // --- <<< MODIFICATION END >>> ---
           outputLines.push(`  Message:  ${chalk.white(displayMessage)}`);
-          // Spec Link
           if (specLink) {
             outputLines.push(`  Spec:     ${chalk.blue.underline(specLink)}`);
           }
-          // Value context
           if (
             valueContext !== undefined ||
             displayMessage.toLowerCase().includes('invalid')
@@ -369,7 +402,6 @@ async function validateSpec(
               outputLines.push(`  Value:    ${formattedValue}`);
             }
           }
-          // Expected/Received
           if ('expected' in issue) {
             outputLines.push(
               `  Expected: ${chalk.cyan(String(issue.expected))}`
@@ -380,13 +412,10 @@ async function validateSpec(
               `  Received: ${chalk.magenta(String(issue.received))}`
             );
           }
-          // --- Print Combined Output ---
           console.log(outputLines.join('\n'));
         });
       }
 
-      // Exit with error code 1 only if there are actual errors
-      // If only warnings, exit code could be 0 (configurable later?)
       if (errorCount > 0) {
         process.exit(1);
       } else {
