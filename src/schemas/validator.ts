@@ -22,6 +22,13 @@ import {
   MemoryOptions,
 } from '../utils/cache.js';
 import { memoize } from '../utils/memoize.js';
+import * as jsonc from 'jsonc-parser';
+import * as YAML from 'yaml';
+import {
+  getLocationFromJsonAst,
+  getLocationFromYamlAst,
+} from '../utils/locationUtils.js';
+import { Range, LocatedZodIssue } from '../types/location.js';
 
 /**
  * Options for validating OpenAPI specifications
@@ -401,4 +408,132 @@ export function validateOpenAPI(
 
     return result;
   }
+}
+
+/**
+ * Result of OpenAPI validation with potentially located issues.
+ */
+export interface LocatedValidationResult
+  extends Omit<ValidationResult, 'errors'> {
+  errors?: z.ZodError<LocatedZodIssue>;
+}
+
+/**
+ * Validates an OpenAPI specification document provided as a string.
+ * Automatically detects JSON or YAML and provides line/column numbers for errors.
+ *
+ * @param content - The OpenAPI document content as a string.
+ * @param options - Validation options.
+ * @returns Validation result with located errors.
+ */
+export function validateOpenAPIDocument(
+  content: string,
+  options: ValidationOptions = {}
+): LocatedValidationResult {
+  let parsedContent: unknown;
+  let fileType: 'json' | 'yaml';
+  let rootNode: jsonc.Node | undefined;
+  let yamlDoc: YAML.Document.Parsed | undefined;
+  const parseErrors: jsonc.ParseError[] = [];
+
+  // Try parsing as JSON first
+  try {
+    // Use parseTree to get AST for location mapping
+    rootNode = jsonc.parseTree(content, parseErrors);
+    if (parseErrors.length > 0) {
+      // Check if errors are actual structural errors or just comments
+      const structuralErrors = parseErrors.filter(
+        (e) => e.error !== jsonc.ParseErrorCode.InvalidCommentToken
+      );
+      if (structuralErrors.length > 0) {
+        throw new Error(`JSON parsing failed: ${structuralErrors[0].error}`);
+      }
+      // If only non-structural errors, proceed but maybe warn?
+    }
+    // Use regular parse for the object Zod will validate
+    // Allow trailing commas as jsonc handles them
+    parsedContent = jsonc.parse(content, [], { allowTrailingComma: true });
+    fileType = 'json';
+  } catch /* No variable needed */ {
+    // If JSON parsing fails, try YAML
+    try {
+      yamlDoc = YAML.parseDocument(content, { strict: false }); // Use non-strict mode potentially?
+      if (yamlDoc.errors.length > 0) {
+        // Simplify: Report only the first YAML parse error message
+        return {
+          valid: false,
+          errors: new z.ZodError([
+            {
+              code: z.ZodIssueCode.custom,
+              path: [],
+              message: `YAML parsing failed: ${yamlDoc.errors[0].message}`,
+            },
+          ]),
+          resolvedRefs: [],
+        };
+      }
+      parsedContent = yamlDoc.toJS();
+      fileType = 'yaml';
+    } catch (yamlError) {
+      // If both fail, return a generic parsing error
+      return {
+        valid: false,
+        errors: new z.ZodError([
+          {
+            code: z.ZodIssueCode.custom,
+            path: [],
+            message:
+              yamlError instanceof Error
+                ? `Failed to parse as JSON or YAML: ${yamlError.message}`
+                : 'Failed to parse as JSON or YAML',
+          },
+        ]),
+        resolvedRefs: [],
+      };
+    }
+  }
+
+  // Now validate the parsed content using the existing function
+  const validationResult = validateOpenAPI(parsedContent, options);
+
+  // If validation failed, augment errors with location
+  if (!validationResult.valid && validationResult.errors) {
+    const locatedIssues: LocatedZodIssue[] = validationResult.errors.issues.map(
+      (issue) => {
+        let range: Range | undefined;
+        try {
+          if (fileType === 'json' && rootNode) {
+            range = getLocationFromJsonAst(content, rootNode, issue.path);
+          } else if (fileType === 'yaml' && yamlDoc) {
+            range = getLocationFromYamlAst(content, yamlDoc, issue.path);
+          }
+        } catch (locationError) {
+          // Log location finding errors during development?
+          console.error(
+            `Error getting location for path ${issue.path.join('.')}:`,
+            locationError
+          );
+        }
+
+        // Create new issue object with range
+        const locatedIssue: LocatedZodIssue = { ...issue };
+        if (range) {
+          locatedIssue.range = range;
+        }
+        return locatedIssue;
+      }
+    );
+
+    // Return result with located issues
+    return {
+      valid: false,
+      // Create a new ZodError instance with the augmented issues
+      errors: new z.ZodError(locatedIssues),
+      resolvedRefs: validationResult.resolvedRefs,
+    };
+  }
+
+  // If validation passed or no errors, return the original result
+  // (We need to cast the errors type even if undefined/empty for return type)
+  return validationResult as LocatedValidationResult;
 }

@@ -1,3 +1,5 @@
+import { ZodIssue } from 'zod';
+
 /**
  * Represents a 1-based line and column position in a source file.
  */
@@ -14,3 +16,10 @@ export interface Range {
   start: Position;
   end: Position;
 }
+
+/**
+ * Represents a ZodIssue augmented with optional location information.
+ */
+export type LocatedZodIssue = ZodIssue & {
+  range?: Range;
+};

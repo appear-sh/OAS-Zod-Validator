@@ -2,19 +2,35 @@ import {
   validateOpenAPI,
   ValidationOptions,
   ValidationResult,
+  validateOpenAPIDocument,
+  LocatedValidationResult,
 } from './schemas/validator.js';
 import { validateFromYaml } from './utils/validateFromYaml.js';
 import { getValidationCache, CacheOptions } from './utils/cache.js';
 import { verifyRefTargets } from './utils/refResolver.js';
+import { Position, Range, LocatedZodIssue } from './types/location.js';
 
 // Core validation functions
-export { validateOpenAPI, validateFromYaml, verifyRefTargets };
+export {
+  validateOpenAPI,
+  validateFromYaml,
+  verifyRefTargets,
+  validateOpenAPIDocument,
+};
 
 // Cache functionality
 export { getValidationCache };
 
 // Types
-export type { ValidationOptions, ValidationResult, CacheOptions };
+export type {
+  ValidationOptions,
+  ValidationResult,
+  CacheOptions,
+  LocatedValidationResult,
+  LocatedZodIssue,
+  Position,
+  Range,
+};
 
 // Re-export types that consumers might need
 export type { OpenAPIObject } from './schemas/openapi.js';
