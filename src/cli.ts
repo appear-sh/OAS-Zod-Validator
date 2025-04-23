@@ -14,7 +14,10 @@ import jsYaml from 'js-yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
 import { getIssueSeverity } from './errors/severity.js';
 import * as jsonc from 'jsonc-parser';
-import { getLocationFromJsonAst } from './utils/locationUtils.js';
+import {
+  getLocationFromJsonAst,
+  getLocationFromYamlAst,
+} from './utils/locationUtils.js';
 import { Range } from './types/location.js';
 
 // Get package version for CLI
@@ -310,6 +313,8 @@ async function validateSpec(
         let location: Range | undefined = undefined;
         if (jsonAst) {
           location = getLocationFromJsonAst(fileContent, jsonAst, issue.path);
+        } else if (yamlDoc) {
+          location = getLocationFromYamlAst(fileContent, yamlDoc, issue.path);
         }
 
         return { ...issue, location };
