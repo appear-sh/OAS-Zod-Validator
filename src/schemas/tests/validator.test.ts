@@ -3238,7 +3238,7 @@ paths: {}
     expect(issues?.length).toBeGreaterThan(0); // Check there are errors
 
     // Check that *some* issue has location, even if not the most specific one
-    expect(issues?.some(issue => issue.range)).toBe(true);
+    expect(issues?.some((issue) => issue.range)).toBe(true);
 
     // Remove the specific .find() and related assertions
     // const typeIssue = issues?.find(
@@ -3275,7 +3275,7 @@ paths:
     expect(issues?.length).toBeGreaterThan(0); // Check there are errors
 
     // Check that *some* issue has location, even if not the most specific one
-    expect(issues?.some(issue => issue.range)).toBe(true);
+    expect(issues?.some((issue) => issue.range)).toBe(true);
 
     // Remove the specific .find() and related assertions
     //  const typeIssue = issues?.find(
