@@ -47,13 +47,6 @@ export function getLocationFromJsonAst(
   try {
     const node = jsonc.findNodeAtLocation(rootNode, path);
 
-    console.log(
-      `DEBUG: getLocationFromJsonAst - Path: [${path.join(', ')}], Found node:`,
-      node
-        ? { offset: node.offset, length: node.length, type: node.type }
-        : 'undefined'
-    );
-
     if (node) {
       const start = offsetToPosition(content, node.offset);
       // For end position, use offset + length
