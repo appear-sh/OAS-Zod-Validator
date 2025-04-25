@@ -1,5 +1,11 @@
 # @appear.sh/oas-zod-validator
 
+## 1.2.0
+
+### Minor Changes
+
+- f4e771c: Added source mapping functionality for errors in both CLI and programmatic usage.
+
 ## 1.1.1
 
 ### Patch Changes
