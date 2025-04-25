@@ -1,6 +1,6 @@
 {
   "name": "@appear.sh/oas-zod-validator",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "OpenAPI Specification validator built with Zod",
   "type": "module",
   "main": "./dist/index.js",
