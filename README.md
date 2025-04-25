@@ -55,7 +55,7 @@ npx @appear.sh/oas-zod-validator path/to/your/spec.json
 ## Installation
 
 ```bash
-npm install oas-zod-validator
+npm install @appear.sh/oas-zod-validator
 ```
 
 ## Quick Start
