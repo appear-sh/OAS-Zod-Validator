@@ -1,5 +1,11 @@
 # @appear.sh/oas-zod-validator
 
+## 1.3.0
+
+### Minor Changes
+
+- 15251ca: overhaul build process with tsup for iproved esm/cjs output and bundler compatibility for NextJS and Vite
+
 ## 1.2.0
 
 ### Minor Changes
