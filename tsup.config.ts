@@ -10,4 +10,4 @@ export default defineConfig({
   bundle: true, // Bundle dependencies
   treeshake: true,
   minify: false, // Keep builds readable for now
-}); 
+});
