@@ -3,22 +3,24 @@
   "version": "1.2.0",
   "description": "OpenAPI Specification validator built with Zod",
   "type": "module",
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
     "oas-validate": "./dist/cli.js"
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
-    "dist/cli.{js,d.ts}",
-    "dist/index.{js,d.ts}",
-    "dist/schemas/*.{js,d.ts}",
-    "dist/utils/*.{js,d.ts}",
+    "dist/cli.{js,d.ts,cjs}",
+    "dist/index.{js,d.ts,cjs}",
+    "dist/schemas/*.{js,d.ts,cjs}",
+    "dist/utils/*.{js,d.ts,cjs}",
     "!dist/**/*.test.*",
     "!dist/**/*.spec.*",
     "!dist/**/tests/**",
@@ -26,7 +28,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc && chmod +x dist/cli.js",
+    "build": "tsup",
     "prepublishOnly": "npm run build",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
@@ -90,6 +92,7 @@
     "prettier": "^3.5.3",
     "rimraf": "^5.0.1",
     "ts-node": "^10.9.2",
+    "tsup": "^8.4.0",
     "typescript-eslint": "^8.29.1",
     "vitest": "^1.6.1"
   }
