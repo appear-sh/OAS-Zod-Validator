@@ -162,7 +162,30 @@ export const PathItemObject = z
         })
       )
       .optional(),
-    parameters: z.array(z.union([ParameterObject, ReferenceObject])).optional(),
+    parameters: z
+      .array(z.union([ParameterObject, ReferenceObject]))
+      .optional()
+      .refine(
+        (params) => {
+          if (!params) return true;
+          // Check for duplicate parameter names+locations
+          const seen = new Set();
+          for (const param of params) {
+            // Skip reference objects as their content is validated elsewhere,
+            // and we are concerned with duplicates in *this* specific list.
+            if ('$ref' in param) continue;
+
+            const key = `${param.in}:${param.name}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+          }
+          return true;
+        },
+        {
+          message:
+            'Duplicate parameters with same name and location are not allowed at the Path Item level',
+        }
+      ),
   })
   .and(ExtensibleObject)
   .refine(
@@ -201,34 +224,6 @@ export const PathsObject: z.ZodType<
           'Path must follow pattern of /segment or /{param} with no empty segments',
       }),
     PathItemObject
-  )
-  .refine(
-    (paths) => {
-      // Check for path parameter consistency and uniqueness
-      const pathParams = new Map();
-
-      for (const path of Object.keys(paths)) {
-        const matches = path.match(/\{([^}]+)\}/g);
-        if (matches) {
-          for (const match of matches) {
-            // Check if this parameter name has been seen before
-            if (pathParams.has(match)) {
-              // If seen in a different path, it's a duplicate across paths
-              if (pathParams.get(match) !== path) {
-                return false;
-              }
-            } else {
-              pathParams.set(match, path);
-            }
-          }
-        }
-      }
-
-      return true;
-    },
-    {
-      message: 'Path parameters must be unique across all paths',
-    }
   )
   .refine(
     (paths) => {
