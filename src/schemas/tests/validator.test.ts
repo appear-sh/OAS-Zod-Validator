@@ -716,7 +716,9 @@ describe('Rate Limit Header Validation', () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
-    expect(result.errors?.issues[0].message).toContain('Rate limiting headers');
+    expect(result.errors?.issues[0].message).toBe(
+      'Rate limiting headers are required in strict mode'
+    );
   });
 
   test('skips rate limit header validation when strict is false', () => {
@@ -751,6 +753,183 @@ describe('Rate Limit Header Validation', () => {
 
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
+  });
+
+  describe('Operation ID Uniqueness', () => {
+    test('should pass validation if all operationIds are unique in strict mode', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/items': {
+            get: {
+              operationId: 'getItems',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/items/{id}': {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItemById',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should fail validation if operationIds are duplicated in strict mode (simple case)', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/items': {
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/items/{id}': {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(1); // Expect 1 issue for 2 occurrences
+
+      const duplicateIssue = result.errors?.issues.find(
+        (issue) =>
+          issue.path.join('.') === 'paths./items/{id}.get.operationId' &&
+          issue.message.includes("Duplicate operationId 'getItem'")
+      );
+      expect(duplicateIssue).toBeDefined();
+    });
+
+    // Original test for three duplicates, expecting two issues
+    test('should fail validation if operationIds are duplicated in strict mode (multiple duplicates)', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/items': {
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/items/{id}': {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/other/{otherId}': {
+            parameters: [
+              {
+                name: 'otherId',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, { strict: true });
+
+      // if (result.errors) {
+      //   console.log(
+      //     '[Test Log] Issues for multiple duplicates:',
+      //     JSON.stringify(result.errors.issues, null, 2)
+      //   );
+      // }
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(2); // Expect 2 issues for 3 occurrences
+
+      const duplicateIssue1 = result.errors?.issues.find(
+        (issue) =>
+          issue.path.join('.') === 'paths./items/{id}.get.operationId' && // Path for the 2nd occurrence
+          issue.message.includes("Duplicate operationId 'getItem'")
+      );
+      expect(duplicateIssue1).toBeDefined();
+
+      const duplicateIssue2 = result.errors?.issues.find(
+        (issue) =>
+          issue.path.join('.') === 'paths./other/{otherId}.get.operationId' && // Adjusted path
+          issue.message.includes("Duplicate operationId 'getItem'")
+      );
+      expect(duplicateIssue2).toBeDefined();
+    });
+
+    test('should not check operationId uniqueness if strict mode is not enabled', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/items': {
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/items/{id}': {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      // Note: strict: false (or omitted)
+      const result = validateOpenAPI(spec);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
   });
 });
 
@@ -2987,7 +3166,9 @@ describe('Error Map Handling', () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
-    expect(result.errors?.issues[0].message).toContain('Rate limiting headers');
+    expect(result.errors?.issues[0].message).toBe(
+      'Rate limiting headers are required in strict mode'
+    );
   });
 
   test('handles custom error message for non-headers path', () => {
@@ -3286,5 +3467,950 @@ paths:
     //     issue.code === z.ZodIssueCode.invalid_enum_value // Zod detects it as invalid enum for 'type'
     // );
     // expect(typeIssue).toBeDefined(); // Check the specific error exists
+  });
+});
+
+describe('Reference Target Verification Error Handling', () => {
+  test('handles circular references', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: { title: 'Test API', version: '1.0.0' },
+      components: {
+        schemas: {
+          User: {
+            type: 'object',
+            properties: {
+              profile: { $ref: '#/components/schemas/Profile' },
+            },
+          },
+          Profile: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              // This makes it circular with User if User also references Profile in a way that forms a loop.
+              // For this test, let's ensure User -> Profile -> User (or similar)
+              // The RefResolver is expected to handle this without error if the refs are valid pointers.
+              details: { $ref: '#/components/schemas/User' },
+            },
+          },
+        },
+      },
+      paths: {
+        '/users': {
+          get: {
+            responses: {
+              '200': {
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/User' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    // verifyRefTargets (used by validateOpenAPI in strict mode) should handle circular refs without error
+    // if the references themselves are valid pointers to existing parts of the document.
+    // Therefore, the document should still be considered valid from this perspective.
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+    // We expect resolvedRefs to contain the involved schemas, even if circular.
+    expect(result.resolvedRefs).toContain('#/components/schemas/User');
+    expect(result.resolvedRefs).toContain('#/components/schemas/Profile');
+  });
+});
+
+// New tests for Parameter Uniqueness
+describe('Parameter Uniqueness (Strict Mode)', () => {
+  const baseSpecWithoutParams = {
+    openapi: '3.0.0',
+    info: { title: 'Test API for Parameter Uniqueness', version: '1.0.0' },
+    paths: {},
+  };
+
+  const strictOptions: ValidationOptions = { strict: true };
+
+  const createParam = (
+    name: string,
+    loc: 'query' | 'path' | 'header' | 'cookie',
+    isRequired?: boolean,
+    description?: string
+  ) => {
+    const param: any = {
+      name,
+      in: loc,
+      description: description || `Parameter ${name} in ${loc}`,
+    };
+    if (loc === 'path') {
+      param.required = true;
+      param.schema = { type: 'string' }; // Path params need a schema
+    } else if (isRequired !== undefined) {
+      param.required = isRequired;
+    }
+    if (!param.schema) {
+      // Ensure all params have a schema for basic validity
+      param.schema = { type: 'string' };
+    }
+    return param;
+  };
+
+  describe('Path Item Parameters', () => {
+    test('should pass with unique inline path parameters', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test': {
+            parameters: [
+              createParam('id', 'query'),
+              createParam('name', 'query'),
+            ],
+            get: { responses: { '200': { description: 'OK' } } },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should fail with duplicate inline path parameters (name and in)', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test': {
+            parameters: [
+              createParam('id', 'query'),
+              createParam('id', 'query'), // Duplicate
+            ],
+            get: { responses: { '200': { description: 'OK' } } },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(1);
+      const issue = result.errors?.issues[0];
+      expect(issue?.message).toBe(
+        'Duplicate parameters with same name and location are not allowed at the Path Item level'
+      );
+      expect(issue?.path).toEqual(['paths', '/test', 'parameters']); // Updated path
+    });
+
+    test('should pass with unique path parameters including a $ref', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        components: {
+          parameters: {
+            NameParam: createParam('name', 'query', false, 'Shared Name Param'),
+          },
+        },
+        paths: {
+          '/test': {
+            parameters: [
+              createParam('id', 'query'),
+              { $ref: '#/components/parameters/NameParam' },
+            ],
+            get: { responses: { '200': { description: 'OK' } } },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should fail if $ref in path parameters resolves to a duplicate of an inline parameter', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        components: {
+          parameters: {
+            IdParam: createParam('id', 'query', false, 'Shared ID Param'),
+          },
+        },
+        paths: {
+          '/test': {
+            parameters: [
+              createParam('id', 'query'), // Inline
+              { $ref: '#/components/parameters/IdParam' }, // Ref to same name+in
+            ],
+            get: { responses: { '200': { description: 'OK' } } },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(1);
+      const issue = result.errors?.issues[0];
+      // The checkResolvedParameterListUniqueness is on the resolved list.
+      // The second 'id' in 'query' (from $ref) would be the duplicate.
+      expect(issue?.message).toContain(
+        "Duplicate parameter found: name 'id' in 'query'"
+      );
+      // The path points to the location in the *original* parameters array that, after resolution, caused the problem.
+      // In this specific implementation of checkResolvedParameterListUniqueness, it points to the index within the *resolved* list.
+      // Path might be ['paths', '/test', 'parameters', 1] if the resolved list is [inlineId, resolvedRefId]
+      expect(issue?.path).toEqual(['paths', '/test', 'parameters', 1]);
+    });
+
+    test('should fail if two $refs in path parameters resolve to parameters with the same name+in', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        components: {
+          parameters: {
+            Param1: createParam('common', 'query', false, 'Common Param 1'),
+            Param2: createParam(
+              'common',
+              'query',
+              false,
+              'Common Param 2 also'
+            ),
+          },
+        },
+        paths: {
+          '/test': {
+            parameters: [
+              { $ref: '#/components/parameters/Param1' },
+              { $ref: '#/components/parameters/Param2' },
+            ],
+            get: { responses: { '200': { description: 'OK' } } },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(1);
+      const issue = result.errors?.issues[0];
+      expect(issue?.message).toContain(
+        "Duplicate parameter found: name 'common' in 'query'"
+      );
+      expect(issue?.path).toEqual(['paths', '/test', 'parameters', 1]); // Points to the second $ref
+    });
+  });
+
+  describe('Operation Parameters', () => {
+    test('should pass with unique inline operation parameters', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test': {
+            get: {
+              parameters: [
+                createParam('id', 'query'),
+                createParam('name', 'query'),
+              ],
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should fail with duplicate inline operation parameters', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test': {
+            get: {
+              parameters: [
+                createParam('id', 'query'),
+                createParam('id', 'query'), // Duplicate
+              ],
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(1);
+      const issue = result.errors?.issues[0];
+      expect(issue?.message).toBe(
+        'Duplicate parameters with same name and location are not allowed'
+      );
+      expect(issue?.path).toEqual(['paths', '/test', 'get', 'parameters']); // Updated path
+    });
+
+    test('should fail if $ref in operation parameters resolves to duplicate an inline one', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        components: {
+          parameters: {
+            IdParam: createParam('id', 'query'),
+          },
+        },
+        paths: {
+          '/test': {
+            get: {
+              parameters: [
+                createParam('id', 'query'), // Inline
+                { $ref: '#/components/parameters/IdParam' }, // Ref
+              ],
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(1);
+      const issue = result.errors?.issues[0];
+      expect(issue?.message).toContain(
+        "Duplicate parameter found: name 'id' in 'query'"
+      );
+      expect(issue?.path).toEqual(['paths', '/test', 'get', 'parameters', 1]);
+    });
+  });
+
+  describe('Combined Path Item and Operation Parameters', () => {
+    test('should pass with no parameters defined anywhere', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test': { get: { responses: { '200': { description: 'OK' } } } },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should pass with unique path params and no operation params', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test': {
+            parameters: [createParam('id', 'path')],
+            get: { responses: { '200': { description: 'OK' } } },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should pass with unique op params and no path params', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test': {
+            get: {
+              parameters: [createParam('id', 'path')],
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should pass with unique, non-overlapping path and op (inline) params', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test/{id}': {
+            // Path template implies path param 'id'
+            parameters: [createParam('id', 'path')], // Defining 'id' path param
+            get: {
+              parameters: [createParam('limit', 'query')],
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      if (!result.valid)
+        console.log(JSON.stringify(result.errors?.issues, null, 2));
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should pass when operation (inline) overrides path item (inline) param', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test': {
+            parameters: [createParam('id', 'query', false, 'Path ID')],
+            get: {
+              parameters: [
+                createParam('id', 'query', true, 'Operation ID, overriding'),
+              ],
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should pass when operation ($ref) overrides path item (inline) param', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        components: {
+          parameters: {
+            OpIdParam: createParam('id', 'query', true, 'Op ID via $ref'),
+          },
+        },
+        paths: {
+          '/test': {
+            parameters: [createParam('id', 'query', false, 'Path ID')],
+            get: {
+              parameters: [{ $ref: '#/components/parameters/OpIdParam' }],
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should fail if path item params resolve to duplicates after op params override others', () => {
+      // Path has P1(id, query), P2(id, query, $ref)
+      // Op has P3(name, query) - this is fine
+      // Expected: P1 and P2 from path are duplicates.
+      const spec = {
+        ...baseSpecWithoutParams,
+        components: {
+          parameters: {
+            IdParamRef: createParam('id', 'query', false, 'ID via $ref'),
+          },
+        },
+        paths: {
+          '/test': {
+            parameters: [
+              createParam('id', 'query', false, 'Inline Path ID'),
+              { $ref: '#/components/parameters/IdParamRef' }, // Duplicate of inline path ID
+            ],
+            get: {
+              parameters: [createParam('name', 'query')], // Non-conflicting op param
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(1);
+      const issue = result.errors?.issues[0];
+      expect(issue?.message).toContain(
+        "Duplicate parameter found: name 'id' in 'query'"
+      );
+      expect(issue?.path).toEqual(['paths', '/test', 'parameters', 1]); // Error from path params list
+    });
+
+    test('should fail if operation params resolve to duplicates, regardless of path params', () => {
+      // Path has P1(id, query)
+      // Op has P2(name, query, $ref), P3(name, query, inline)
+      // Expected: P2 and P3 from op are duplicates.
+      const spec = {
+        ...baseSpecWithoutParams,
+        components: {
+          parameters: {
+            NameParamRef: createParam('name', 'query', false, 'Name via $ref'),
+          },
+        },
+        paths: {
+          '/test': {
+            parameters: [createParam('id', 'query')], // Non-conflicting path param
+            get: {
+              parameters: [
+                { $ref: '#/components/parameters/NameParamRef' },
+                createParam('name', 'query', false, 'Inline Op Name'), // Duplicate of resolved $ref
+              ],
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(1);
+      const issue = result.errors?.issues[0];
+      expect(issue?.message).toContain(
+        "Duplicate parameter found: name 'name' in 'query'"
+      );
+      expect(issue?.path).toEqual(['paths', '/test', 'get', 'parameters', 1]); // Error from op params list
+    });
+
+    test('should pass with unique path parameter defined in path string and used in operation', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test/{id}': {
+            // Path template defines 'id'
+            get: {
+              parameters: [createParam('id', 'path')], // Operation defines 'id' as path param
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      if (!result.valid)
+        console.log(JSON.stringify(result.errors?.issues, null, 2));
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should pass with unique path param (defined at path item) and unique op param (query)', () => {
+      const spec = {
+        ...baseSpecWithoutParams,
+        paths: {
+          '/test/{id}': {
+            parameters: [createParam('id', 'path')], // Path item defines 'id'
+            get: {
+              parameters: [createParam('limit', 'query')], // Op defines 'limit'
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, strictOptions);
+      if (!result.valid)
+        console.log(JSON.stringify(result.errors?.issues, null, 2));
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+  });
+});
+
+// New tests for Path Ambiguity
+describe('Path Ambiguity (Strict Mode)', () => {
+  const baseSpecForPathAmbiguity = {
+    openapi: '3.0.0',
+    info: { title: 'Test API for Path Ambiguity', version: '1.0.0' },
+    // components are not strictly needed for these tests but can be included if a test involves $refs for path items (not typical)
+  };
+
+  const strictOptions: ValidationOptions = { strict: true };
+
+  // Redefine createParam helper for this suite, ensuring path params are correctly formed.
+  const createParam = (
+    name: string,
+    loc: 'query' | 'path' | 'header' | 'cookie',
+    isRequired?: boolean,
+    description?: string
+  ) => {
+    const param: any = {
+      name,
+      in: loc,
+      description: description || `Parameter ${name} in ${loc}`,
+    };
+    if (loc === 'path') {
+      param.required = true;
+      param.schema = { type: 'string' }; // Path params need a schema and must be required
+    } else {
+      if (isRequired !== undefined) {
+        param.required = isRequired;
+      }
+      param.schema = { type: 'string' }; // All params need a schema for these tests
+    }
+    return param;
+  };
+
+  test('should pass with no paths defined', () => {
+    const spec = {
+      ...baseSpecForPathAmbiguity,
+      paths: {},
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('should pass with unique, non-ambiguous paths', () => {
+    const spec = {
+      ...baseSpecForPathAmbiguity,
+      paths: {
+        '/users': { get: { responses: { '200': { description: 'OK' } } } },
+        '/users/{id}': {
+          parameters: [createParam('id', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+        '/products': { get: { responses: { '200': { description: 'OK' } } } },
+        '/products/{productId}/items/{itemId}': {
+          parameters: [
+            createParam('productId', 'path'),
+            createParam('itemId', 'path'),
+          ],
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+      },
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('should fail with simple ambiguous paths: /foo/{id} and /foo/{name}', () => {
+    const spec = {
+      ...baseSpecForPathAmbiguity,
+      paths: {
+        '/foo/{id}': {
+          parameters: [createParam('id', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+        '/foo/{name}': {
+          parameters: [createParam('name', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        }, // Ambiguous
+      },
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.issues.length).toBe(1);
+    const issue = result.errors?.issues[0];
+    expect(issue?.message).toContain('Ambiguous path templates found');
+    expect(issue?.message).toContain('/foo/{id}');
+    expect(issue?.message).toContain('/foo/{name}');
+    expect(issue?.message).toContain('Normalized form: /foo/{#PARAM#}');
+    expect(issue?.path).toEqual(['paths']);
+  });
+
+  test('should fail with multi-segment ambiguous paths', () => {
+    const spec = {
+      ...baseSpecForPathAmbiguity,
+      paths: {
+        '/resources/{resourceId}/items/{itemId}': {
+          parameters: [
+            createParam('resourceId', 'path'),
+            createParam('itemId', 'path'),
+          ],
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+        '/resources/{category}/items/{itemCode}': {
+          parameters: [
+            createParam('category', 'path'),
+            createParam('itemCode', 'path'),
+          ],
+          get: { responses: { '200': { description: 'OK' } } },
+        }, // Ambiguous
+      },
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.issues.length).toBe(1);
+    const issue = result.errors?.issues[0];
+    expect(issue?.message).toContain('Ambiguous path templates found');
+    expect(issue?.message).toContain('/resources/{resourceId}/items/{itemId}');
+    expect(issue?.message).toContain('/resources/{category}/items/{itemCode}');
+    expect(issue?.message).toContain(
+      'Normalized form: /resources/{#PARAM#}/items/{#PARAM#}'
+    );
+    expect(issue?.path).toEqual(['paths']);
+  });
+
+  test('should pass with paths that differ by literal segments', () => {
+    const spec = {
+      ...baseSpecForPathAmbiguity,
+      paths: {
+        '/foo/bar': { get: { responses: { '200': { description: 'OK' } } } },
+        '/foo/baz': { get: { responses: { '200': { description: 'OK' } } } },
+      },
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('should pass for /foo/bar and /foo/{id} as they are not structurally identical templates', () => {
+    const spec = {
+      ...baseSpecForPathAmbiguity,
+      paths: {
+        '/foo/bar': { get: { responses: { '200': { description: 'OK' } } } },
+        '/foo/{id}': {
+          parameters: [createParam('id', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+      },
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    // This specific check for template ambiguity should pass.
+    // Routing conflicts between specific literals and parameterized segments are a separate concern for server implementers.
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('should fail with multiple sets of ambiguous paths', () => {
+    const spec = {
+      ...baseSpecForPathAmbiguity,
+      paths: {
+        '/set1/{a}': {
+          parameters: [createParam('a', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+        '/set1/{b}': {
+          parameters: [createParam('b', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        }, // Ambiguous with previous
+        '/data/{x}/info/{y}': {
+          parameters: [createParam('x', 'path'), createParam('y', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+        '/data/{alpha}/info/{beta}': {
+          parameters: [
+            createParam('alpha', 'path'),
+            createParam('beta', 'path'),
+          ],
+          get: { responses: { '200': { description: 'OK' } } },
+        }, // Ambiguous with previous
+        '/unique/path': {
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+      },
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.issues.length).toBe(2); // Two sets of ambiguities
+
+    const issue1 = result.errors?.issues.find((issue) =>
+      issue.message.includes('/set1/')
+    );
+    expect(issue1).toBeDefined();
+    expect(issue1?.message).toContain('Normalized form: /set1/{#PARAM#}');
+
+    const issue2 = result.errors?.issues.find((issue) =>
+      issue.message.includes('/data/')
+    );
+    expect(issue2).toBeDefined();
+    expect(issue2?.message).toContain(
+      'Normalized form: /data/{#PARAM#}/info/{#PARAM#}'
+    );
+  });
+
+  test('should correctly normalize paths with multiple similar-looking but distinct params', () => {
+    const spec = {
+      ...baseSpecForPathAmbiguity,
+      paths: {
+        // Path 1: A literal path that happens to contain hyphens and the word "id"
+        '/item/special-report-id/details': {
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+        // Path 2: A path with a standard parameter
+        '/item/{itemId}/details': {
+          parameters: [createParam('itemId', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+      },
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    if (!result.valid && result.errors) {
+      console.log(
+        "[Test Debug] Errors for 'should correctly normalize paths with multiple similar-looking but distinct params':",
+        JSON.stringify(result.errors.issues, null, 2)
+      );
+    }
+    // Path 1 normalizes to itself: '/item/special-report-id/details'
+    // Path 2 normalizes to: '/item/{#PARAM#}/details'
+    // These are distinct and should not be flagged as ambiguous.
+    // The validator should also find both path strings valid by other rules.
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('should identify ambiguity even with complex parameter names', () => {
+    const spec = {
+      ...baseSpecForPathAmbiguity,
+      paths: {
+        '/entity/{param-with-hyphens_123}': {
+          parameters: [createParam('param-with-hyphens_123', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+        '/entity/{another_param.With.Dots}': {
+          parameters: [createParam('another_param.With.Dots', 'path')],
+          get: { responses: { '200': { description: 'OK' } } },
+        }, // Ambiguous
+      },
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.issues.length).toBe(1);
+    const issue = result.errors?.issues[0];
+    expect(issue?.message).toContain('Normalized form: /entity/{#PARAM#}');
+    expect(issue?.message).toContain('{param-with-hyphens_123}');
+    expect(issue?.message).toContain('{another_param.With.Dots}');
+  });
+});
+
+// New tests for Tag Uniqueness
+describe('Tag Uniqueness (Strict Mode)', () => {
+  const baseSpecForTagUniqueness = {
+    openapi: '3.0.0',
+    info: { title: 'Test API for Tag Uniqueness', version: '1.0.0' },
+    paths: {
+      '/test': { get: { responses: { '200': { description: 'OK' } } } },
+    }, // Minimal valid paths object
+  };
+
+  const strictOptions: ValidationOptions = { strict: true };
+
+  test('should pass if no tags are defined', () => {
+    const spec = {
+      ...baseSpecForTagUniqueness,
+      // no tags array
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('should pass with an empty tags array', () => {
+    const spec = {
+      ...baseSpecForTagUniqueness,
+      tags: [],
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('should pass with unique tag names', () => {
+    const spec = {
+      ...baseSpecForTagUniqueness,
+      tags: [
+        { name: 'pets', description: 'Pet operations' },
+        { name: 'store', description: 'Store operations' },
+        { name: 'users', description: 'User operations' },
+      ],
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('should fail with duplicate tag names', () => {
+    const spec = {
+      ...baseSpecForTagUniqueness,
+      tags: [
+        { name: 'pets', description: 'Pet operations' },
+        { name: 'store', description: 'Store operations' },
+        { name: 'pets', description: 'Duplicate pet operations' }, // Duplicate name
+      ],
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.issues.length).toBe(1);
+    const issue = result.errors?.issues[0];
+    expect(issue?.message).toBe(
+      'Duplicate tag name found: "pets". Tag names MUST be unique.'
+    );
+    expect(issue?.path).toEqual(['tags', 2, 'name']); // Points to the name of the 3rd tag object (index 2)
+  });
+
+  test('should fail with multiple duplicate tag names', () => {
+    const spec = {
+      ...baseSpecForTagUniqueness,
+      tags: [
+        { name: 'pets', description: 'Pet ops 1' },
+        { name: 'store', description: 'Store ops 1' },
+        { name: 'pets', description: 'Pet ops 2' }, // Duplicate 'pets'
+        { name: 'users', description: 'User ops' },
+        { name: 'store', description: 'Store ops 2' }, // Duplicate 'store'
+      ],
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(result.errors?.issues.length).toBe(2); // Two duplicate names found
+
+    const petsIssue = result.errors?.issues.find((issue) =>
+      issue.message.includes('"pets"')
+    );
+    expect(petsIssue).toBeDefined();
+    expect(petsIssue?.path).toEqual(['tags', 2, 'name']); // Points to the second 'pets' tag
+
+    const storeIssue = result.errors?.issues.find((issue) =>
+      issue.message.includes('"store"')
+    );
+    expect(storeIssue).toBeDefined();
+    expect(storeIssue?.path).toEqual(['tags', 4, 'name']); // Points to the second 'store' tag
+  });
+
+  test('should produce an issue if a tag object in the array is not a valid object or misses name (though main schema should catch this first)', () => {
+    const spec1 = {
+      ...baseSpecForTagUniqueness,
+      tags: [
+        { name: 'validTag' },
+        null, // Invalid entry
+      ],
+    };
+    // This test primarily ensures validateTagUniqueness is robust.
+    // The main Zod schema for OpenAPIObject (which includes TagObject validation) should catch `null` more specifically.
+    // Our validateTagUniqueness will report it as 'Invalid tag object found'.
+    const result1 = validateOpenAPI(spec1, strictOptions);
+    expect(result1.valid).toBe(false);
+    expect(result1.errors).toBeDefined();
+
+    // Depending on whether Zod's array item validation or our custom check hits first for `null`:
+    const nullIssue = result1.errors?.issues.find(
+      (i) =>
+        i.path.join('.') === 'tags.1' &&
+        i.message.includes('Invalid tag object')
+    );
+    const zodArrayItemIssue = result1.errors?.issues.find(
+      (i) =>
+        i.path.join('.') === 'tags.1' &&
+        i.message.includes('Expected object, received null')
+    );
+    expect(nullIssue || zodArrayItemIssue).toBeDefined();
+
+    const spec2 = {
+      ...baseSpecForTagUniqueness, // Corrected to use baseSpecForTagUniqueness
+      tags: [
+        { description: 'Tag without name' }, // Invalid tag object (missing name)
+      ],
+    };
+    const result2 = validateOpenAPI(spec2, strictOptions);
+    expect(result2.valid).toBe(false);
+    expect(result2.errors).toBeDefined();
+    const missingNameIssue = result2.errors?.issues.find(
+      (i) =>
+        i.path.join('.') === 'tags.0.name' && i.message.includes('Required')
+    ); // Zod schema error
+    const invalidTagObjectIssue = result2.errors?.issues.find(
+      (i) =>
+        i.path.join('.') === 'tags.0' &&
+        i.message.includes('Invalid tag object')
+    ); // Our function's error
+    expect(missingNameIssue || invalidTagObjectIssue).toBeDefined();
+  });
+
+  test('tag names are case-sensitive for uniqueness check', () => {
+    const spec = {
+      ...baseSpecForTagUniqueness,
+      tags: [
+        { name: 'Pets', description: 'Pet operations' },
+        { name: 'pets', description: 'Lowercase pet operations' }, // Different by case, so unique
+      ],
+    };
+    const result = validateOpenAPI(spec, strictOptions);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
   });
 });

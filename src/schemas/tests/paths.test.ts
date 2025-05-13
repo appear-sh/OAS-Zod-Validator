@@ -57,20 +57,25 @@ describe('Paths Schema Validation', () => {
       expect(() => OperationObject.parse(operation)).not.toThrow();
     });
 
-    test('rejects operation with invalid operationId', () => {
-      const operation = {
-        operationId: 'create-user', // Contains hyphen
-        responses: {
-          '200': {
-            description: 'OK',
-          },
-        },
+    test('operationId allows hyphens and other characters, but not empty if present', () => {
+      const validOperation = {
+        operationId: 'create-user-v1',
+        responses: { '200': { description: 'OK' } },
       };
+      expect(() => OperationObject.parse(validOperation)).not.toThrow();
 
-      expect(() => OperationObject.parse(operation)).toThrow();
-      expect(() => OperationObject.parse(operation)).toThrow(
-        /operationId must start with lowercase letter and contain only alphanumeric characters/
+      const emptyOperationId = {
+        operationId: '',
+        responses: { '200': { description: 'OK' } },
+      };
+      expect(() => OperationObject.parse(emptyOperationId)).toThrow(
+        /operationId, if present, must not be empty/
       );
+
+      const noOperationId = {
+        responses: { '200': { description: 'OK' } },
+      };
+      expect(() => OperationObject.parse(noOperationId)).not.toThrow();
     });
 
     test('rejects operation with too many parameters', () => {
@@ -263,7 +268,9 @@ describe('Paths Schema Validation', () => {
     });
 
     test('rejects paths with duplicate path parameters', () => {
-      // This test specifically targets the branch in line 129
+      // This test specifically targets the branch in line 129 (this comment is now outdated as the refine was removed)
+      // UPDATE: This test now effectively checks if path parameters used in URLs are defined,
+      // as the original refine for global placeholder uniqueness was removed.
       const pathsWithDuplicateParams = {
         '/users/{id}/posts': {
           get: {
@@ -273,7 +280,8 @@ describe('Paths Schema Validation', () => {
           },
         },
         '/posts/{id}': {
-          // Duplicate {id} parameter across paths
+          // Duplicate {id} parameter across paths (this was the intent for the removed refine)
+          // Now, this structure will fail because {id} is used but not defined in parameters array for these PathItemObjects.
           get: {
             responses: {
               '200': { description: 'Get post' },
@@ -284,7 +292,7 @@ describe('Paths Schema Validation', () => {
 
       expect(() => PathsObject.parse(pathsWithDuplicateParams)).toThrow();
       expect(() => PathsObject.parse(pathsWithDuplicateParams)).toThrow(
-        /Path parameters must be unique/
+        /All path parameters in the URL must be defined in the parameters section/ // Updated expected message
       );
     });
 
