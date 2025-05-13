@@ -359,16 +359,28 @@ export function validateOpenAPI(
           // Assert pathItemValue to a type that is known to include 'parameters' and operation methods.
           // This assumes that if pathItemValue is not a $ref, it conforms to a structure similar to z.infer<typeof PathItemObject from paths.ts>.
           // A more robust solution might involve ensuring PathItem from './types.js' is sufficiently detailed.
-          const pathItem = pathItemValue as { 
-            parameters?: ParameterOrReference[]; 
-            get?: Operation; put?: Operation; post?: Operation; delete?: Operation; 
-            options?: Operation; head?: Operation; patch?: Operation; trace?: Operation; 
+          const pathItem = pathItemValue as {
+            parameters?: ParameterOrReference[];
+            get?: Operation;
+            put?: Operation;
+            post?: Operation;
+            delete?: Operation;
+            options?: Operation;
+            head?: Operation;
+            patch?: Operation;
+            trace?: Operation;
             [key: string]: any; // Allow other properties common in PathItemObject
           };
 
           const methods = [
-            'get', 'put', 'post', 'delete', 
-            'options', 'head', 'patch', 'trace'
+            'get',
+            'put',
+            'post',
+            'delete',
+            'options',
+            'head',
+            'patch',
+            'trace',
           ] as const;
           for (const method of methods) {
             const operation = pathItem[method]; // Operation type is already { parameters?: ... }
@@ -665,12 +677,12 @@ function validateOperationIdUniqueness(doc: OpenAPISpec): z.ZodIssue[] {
 type ResolvedParameter = z.infer<typeof ParameterObjectSchema>;
 
 // Type for an item in a parameters array, which can be a ParameterObject or a ReferenceObject
-const ParameterOrReferenceSchema = z.union([
+const _ParameterOrReferenceSchema = z.union([
   ParameterObjectSchema,
   ReferenceObjectSchema,
 ]);
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type ParameterOrReference = z.infer<typeof ParameterOrReferenceSchema>;
+
+type ParameterOrReference = z.infer<typeof _ParameterOrReferenceSchema>;
 
 /**
  * Checks a list of RESOLVED parameters for uniqueness based on 'name' and 'in'.
@@ -712,7 +724,8 @@ function checkResolvedParameterListUniqueness(
       issues.push({
         code: z.ZodIssueCode.custom,
         path: [...baseErrorPath, i],
-        message: 'Encountered an invalid or unresolved parameter object during uniqueness check.',
+        message:
+          'Encountered an invalid or unresolved parameter object during uniqueness check.',
       });
     }
   }
@@ -745,7 +758,7 @@ function collectAndValidateOperationParameters(
 
   const resolveParameter = (
     paramOrRef: ParameterOrReference,
-    doc: OpenAPISpec,
+    doc: OpenAPISpec
   ): ResolvedParameter | null => {
     if (!('$ref' in paramOrRef)) {
       // It's already a ParameterObject, ensure it fits our ResolvedParameter type definition
@@ -807,9 +820,11 @@ function collectAndValidateOperationParameters(
   }
 
   allIssues = allIssues.concat(
-    checkResolvedParameterListUniqueness(
-      resolvedPathItemParams, ['paths', pathKey, 'parameters']
-    )
+    checkResolvedParameterListUniqueness(resolvedPathItemParams, [
+      'paths',
+      pathKey,
+      'parameters',
+    ])
   );
 
   const resolvedOperationParams: ResolvedParameter[] = [];
@@ -820,17 +835,24 @@ function collectAndValidateOperationParameters(
     }
   }
   allIssues = allIssues.concat(
-    checkResolvedParameterListUniqueness(
-      resolvedOperationParams, ['paths', pathKey, method, 'parameters']
-    )
+    checkResolvedParameterListUniqueness(resolvedOperationParams, [
+      'paths',
+      pathKey,
+      method,
+      'parameters',
+    ])
   );
 
   // If no internal duplication issues found in the *resolved* lists,
   // then the override logic can be applied.
   if (allIssues.length === 0) {
     const effectiveParametersMap = new Map<string, ResolvedParameter>();
-    resolvedPathItemParams.forEach(p => effectiveParametersMap.set(`${p.in}:${p.name}`, p));
-    resolvedOperationParams.forEach(p => effectiveParametersMap.set(`${p.in}:${p.name}`, p)); // Override logic
+    resolvedPathItemParams.forEach((p) =>
+      effectiveParametersMap.set(`${p.in}:${p.name}`, p)
+    );
+    resolvedOperationParams.forEach((p) =>
+      effectiveParametersMap.set(`${p.in}:${p.name}`, p)
+    ); // Override logic
 
     // The `effectiveParametersMap.values()` now represents the final unique list.
     // No further duplication check is needed on this merged list itself due to:
@@ -877,7 +899,7 @@ function validatePathAmbiguity(doc: OpenAPISpec): z.ZodIssue[] {
         path: ['paths'], // General path for this type of document-wide issue
         message: `Ambiguous path templates found. The following paths are structurally equivalent: ${originalPaths.join(', ')}. Normalized form: ${normalized}`,
       });
-      // Optionally, create an issue for each specific conflicting path as well, 
+      // Optionally, create an issue for each specific conflicting path as well,
       // though a single issue listing all conflicts for a given normalized form is often sufficient.
       // For example:
       // originalPaths.forEach(op => {
@@ -908,7 +930,11 @@ function validateTagUniqueness(doc: OpenAPISpec): z.ZodIssue[] {
   const encounteredTagNames = new Set<string>();
   for (let i = 0; i < doc.tags.length; i++) {
     const tagObject = doc.tags[i];
-    if (typeof tagObject === 'object' && tagObject !== null && typeof tagObject.name === 'string') {
+    if (
+      typeof tagObject === 'object' &&
+      tagObject !== null &&
+      typeof tagObject.name === 'string'
+    ) {
       const tagName = tagObject.name;
       if (encounteredTagNames.has(tagName)) {
         issues.push({
