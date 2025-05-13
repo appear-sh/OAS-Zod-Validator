@@ -63,10 +63,7 @@ const BaseOperationObject = z
     description: z.string().optional(),
     operationId: z
       .string()
-      .regex(/^[a-z][a-zA-Z0-9]*$/, {
-        message:
-          'operationId must start with lowercase letter and contain only alphanumeric characters',
-      })
+      .min(1, { message: 'operationId, if present, must not be empty' })
       .optional(),
     parameters: z
       .array(z.union([ParameterObject, ReferenceObject]))

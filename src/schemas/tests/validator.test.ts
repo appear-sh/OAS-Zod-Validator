@@ -716,7 +716,9 @@ describe('Rate Limit Header Validation', () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
-    expect(result.errors?.issues[0].message).toContain('Rate limiting headers');
+    expect(result.errors?.issues[0].message).toBe(
+      'Rate limiting headers are required in strict mode'
+    );
   });
 
   test('skips rate limit header validation when strict is false', () => {
@@ -751,6 +753,183 @@ describe('Rate Limit Header Validation', () => {
 
     expect(result.valid).toBe(true);
     expect(result.errors).toBeUndefined();
+  });
+
+  describe('Operation ID Uniqueness', () => {
+    test('should pass validation if all operationIds are unique in strict mode', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/items': {
+            get: {
+              operationId: 'getItems',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/items/{id}': {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItemById',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
+
+    test('should fail validation if operationIds are duplicated in strict mode (simple case)', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/items': {
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/items/{id}': {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, { strict: true });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(1); // Expect 1 issue for 2 occurrences
+
+      const duplicateIssue = result.errors?.issues.find(
+        (issue) =>
+          issue.path.join('.') === 'paths./items/{id}.get.operationId' &&
+          issue.message.includes("Duplicate operationId 'getItem'")
+      );
+      expect(duplicateIssue).toBeDefined();
+    });
+
+    // Original test for three duplicates, expecting two issues
+    test('should fail validation if operationIds are duplicated in strict mode (multiple duplicates)', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/items': {
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/items/{id}': {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/other/{otherId}': {
+            parameters: [
+              {
+                name: 'otherId',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      const result = validateOpenAPI(spec, { strict: true });
+
+      // if (result.errors) {
+      //   console.log(
+      //     '[Test Log] Issues for multiple duplicates:',
+      //     JSON.stringify(result.errors.issues, null, 2)
+      //   );
+      // }
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.errors?.issues.length).toBe(2); // Expect 2 issues for 3 occurrences
+
+      const duplicateIssue1 = result.errors?.issues.find(
+        (issue) =>
+          issue.path.join('.') === 'paths./items/{id}.get.operationId' && // Path for the 2nd occurrence
+          issue.message.includes("Duplicate operationId 'getItem'")
+      );
+      expect(duplicateIssue1).toBeDefined();
+
+      const duplicateIssue2 = result.errors?.issues.find(
+        (issue) =>
+          issue.path.join('.') === 'paths./other/{otherId}.get.operationId' && // Adjusted path
+          issue.message.includes("Duplicate operationId 'getItem'")
+      );
+      expect(duplicateIssue2).toBeDefined();
+    });
+
+    test('should not check operationId uniqueness if strict mode is not enabled', () => {
+      const spec = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: {
+          '/items': {
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+          '/items/{id}': {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            get: {
+              operationId: 'getItem',
+              responses: { '200': { description: 'OK' } },
+            },
+          },
+        },
+      };
+      // Note: strict: false (or omitted)
+      const result = validateOpenAPI(spec);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toBeUndefined();
+    });
   });
 });
 
@@ -2987,7 +3166,9 @@ describe('Error Map Handling', () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
-    expect(result.errors?.issues[0].message).toContain('Rate limiting headers');
+    expect(result.errors?.issues[0].message).toBe(
+      'Rate limiting headers are required in strict mode'
+    );
   });
 
   test('handles custom error message for non-headers path', () => {

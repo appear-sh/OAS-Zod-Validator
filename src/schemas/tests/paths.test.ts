@@ -57,20 +57,25 @@ describe('Paths Schema Validation', () => {
       expect(() => OperationObject.parse(operation)).not.toThrow();
     });
 
-    test('rejects operation with invalid operationId', () => {
-      const operation = {
-        operationId: 'create-user', // Contains hyphen
-        responses: {
-          '200': {
-            description: 'OK',
-          },
-        },
+    test('operationId allows hyphens and other characters, but not empty if present', () => {
+      const validOperation = {
+        operationId: 'create-user-v1',
+        responses: { '200': { description: 'OK' } },
       };
+      expect(() => OperationObject.parse(validOperation)).not.toThrow();
 
-      expect(() => OperationObject.parse(operation)).toThrow();
-      expect(() => OperationObject.parse(operation)).toThrow(
-        /operationId must start with lowercase letter and contain only alphanumeric characters/
+      const emptyOperationId = {
+        operationId: '',
+        responses: { '200': { description: 'OK' } },
+      };
+      expect(() => OperationObject.parse(emptyOperationId)).toThrow(
+        /operationId, if present, must not be empty/
       );
+
+      const noOperationId = {
+        responses: { '200': { description: 'OK' } },
+      };
+      expect(() => OperationObject.parse(noOperationId)).not.toThrow();
     });
 
     test('rejects operation with too many parameters', () => {

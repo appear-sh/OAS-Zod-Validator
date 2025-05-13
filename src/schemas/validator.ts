@@ -324,6 +324,15 @@ export function validateOpenAPI(
     if (options.strict) {
       verifyRefTargets(parsed, resolvedRefs);
 
+      const operationIdIssues = validateOperationIdUniqueness(parsed);
+      if (operationIdIssues.length > 0) {
+        throw new SchemaValidationError(
+          'Duplicate operationId(s) found. operationId MUST be unique across all operations.',
+          new z.ZodError(operationIdIssues),
+          { context: { strict: true } }
+        );
+      }
+
       const apiPatternsError = validateAPIPatterns(parsed);
       if (apiPatternsError) {
         throw new SchemaValidationError(
@@ -536,4 +545,62 @@ export function validateOpenAPIDocument(
   // If validation passed or no errors, return the original result
   // (We need to cast the errors type even if undefined/empty for return type)
   return validationResult as LocatedValidationResult;
+}
+
+/**
+ * Validates that all operationIds within the document are unique.
+ * @param doc The OpenAPI document to validate.
+ * @returns An array of ZodIssue objects if duplicates are found, otherwise an empty array.
+ */
+function validateOperationIdUniqueness(doc: OpenAPISpec): z.ZodIssue[] {
+  const issues: z.ZodIssue[] = [];
+  const encounteredOperationIds = new Set<string>();
+
+  if (doc.paths) {
+    for (const [pathKey, pathItemValue] of Object.entries(doc.paths)) {
+      // Ensure pathItemValue is an object and not a reference before proceeding
+      if (
+        !pathItemValue ||
+        typeof pathItemValue !== 'object' ||
+        '$ref' in pathItemValue
+      ) {
+        continue;
+      }
+      const pathItem = pathItemValue as Omit<PathItem, '$ref'>; // Type assertion after check
+
+      const methods = [
+        'get',
+        'put',
+        'post',
+        'delete',
+        'options',
+        'head',
+        'patch',
+        'trace',
+      ] as const;
+
+      for (const method of methods) {
+        const operation = pathItem[method];
+
+        if (
+          operation &&
+          typeof operation === 'object' &&
+          'operationId' in operation &&
+          typeof operation.operationId === 'string' &&
+          operation.operationId
+        ) {
+          if (encounteredOperationIds.has(operation.operationId)) {
+            issues.push({
+              code: z.ZodIssueCode.custom,
+              path: ['paths', pathKey, method, 'operationId'],
+              message: `Duplicate operationId '${operation.operationId}' found. operationId MUST be unique across all operations.`,
+            });
+          } else {
+            encounteredOperationIds.add(operation.operationId);
+          }
+        }
+      }
+    }
+  }
+  return issues;
 }
