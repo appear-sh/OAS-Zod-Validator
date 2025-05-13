@@ -1,5 +1,11 @@
 # @appear.sh/oas-zod-validator
 
+## 1.4.0
+
+### Minor Changes
+
+- 9fb9d50: Significantly improves strict mode by adding and refining several key uniqueness validations as per OpenAPI Specification requirements
+
 ## 1.3.0
 
 ### Minor Changes
