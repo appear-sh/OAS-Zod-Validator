@@ -344,10 +344,14 @@ async function validateSpec(
         );
 
         issuesWithLocation.forEach((issue) => {
-          let displayPath = (issue.path as unknown as (string | number)[]);
+          let displayPath = issue.path as unknown as (string | number)[];
           let displayMessage = issue.message;
 
-          if (issue.code === 'invalid_union' && Array.isArray((issue as any).errors) && (issue as any).errors.length > 0) {
+          if (
+            issue.code === 'invalid_union' &&
+            Array.isArray((issue as any).errors) &&
+            (issue as any).errors.length > 0
+          ) {
             const firstBranch = ((issue as any).errors[0] as any[]) || [];
             const specificIssue = firstBranch[0];
             if (specificIssue && Array.isArray(specificIssue.path)) {
