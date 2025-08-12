@@ -83,34 +83,9 @@ const BaseType = z.object({
   type: z.enum(['apiKey', 'http', 'oauth2', 'openIdConnect']),
 });
 
-export const SecuritySchemeObject = z.any().superRefine((val, ctx) => {
-  const base = BaseType.safeParse(val);
-  if (!base.success) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Invalid security scheme',
-    });
-    return;
-  }
-  let parsed;
-  switch (base.data.type) {
-    case 'apiKey':
-      parsed = ApiKeyScheme.safeParse(val);
-      break;
-    case 'http':
-      parsed = HttpScheme.safeParse(val);
-      break;
-    case 'oauth2':
-      parsed = OAuth2Scheme.safeParse(val);
-      break;
-    case 'openIdConnect':
-      parsed = OpenIdScheme.safeParse(val);
-      break;
-  }
-  if (!parsed?.success) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'Invalid security scheme',
-    });
-  }
-});
+export const SecuritySchemeObject = z.discriminatedUnion('type', [
+  ApiKeyScheme,
+  HttpScheme,
+  OAuth2Scheme,
+  OpenIdScheme,
+]);
