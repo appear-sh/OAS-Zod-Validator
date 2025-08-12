@@ -311,10 +311,11 @@ async function validateSpec(
 
       const issuesWithLocation = issues.map((issue) => {
         let location: Range | undefined = undefined;
+        const pathArr = issue.path as unknown as (string | number)[];
         if (jsonAst) {
-          location = getLocationFromJsonAst(fileContent, jsonAst, issue.path);
+          location = getLocationFromJsonAst(fileContent, jsonAst, pathArr);
         } else if (yamlDoc) {
-          location = getLocationFromYamlAst(fileContent, yamlDoc, issue.path);
+          location = getLocationFromYamlAst(fileContent, yamlDoc, pathArr);
         }
 
         return { ...issue, location };
@@ -343,29 +344,28 @@ async function validateSpec(
         );
 
         issuesWithLocation.forEach((issue) => {
-          let displayPath = issue.path;
+          let displayPath = (issue.path as unknown as (string | number)[]);
           let displayMessage = issue.message;
 
-          if (
-            issue.code === 'invalid_union' &&
-            issue.unionErrors &&
-            issue.unionErrors.length > 0
-          ) {
-            const firstBranchErrors = issue.unionErrors[0]?.issues;
-            if (firstBranchErrors && firstBranchErrors.length > 0) {
-              const specificIssue = firstBranchErrors[0];
-
-              if (specificIssue.path.length > issue.path.length) {
-                displayPath = specificIssue.path;
+          if (issue.code === 'invalid_union' && Array.isArray((issue as any).errors) && (issue as any).errors.length > 0) {
+            const firstBranch = ((issue as any).errors[0] as any[]) || [];
+            const specificIssue = firstBranch[0];
+            if (specificIssue && Array.isArray(specificIssue.path)) {
+              if (specificIssue.path.length > (issue.path as any[]).length) {
+                displayPath = specificIssue.path as (string | number)[];
               }
-
-              displayMessage = specificIssue.message;
+              displayMessage = specificIssue.message ?? displayMessage;
             }
           }
 
-          const pathString = displayPath.join('.');
+          const pathString = (displayPath as (string | number)[])
+            .map((p) => String(p))
+            .join('.');
           const specLink = getOASSpecLink(issue);
-          const valueContext = getValueFromPath(parsedContent, displayPath);
+          const valueContext = getValueFromPath(
+            parsedContent,
+            displayPath as (string | number)[]
+          );
           const formattedValue = formatValueForCli(valueContext);
           const severity = getIssueSeverity(issue);
 
