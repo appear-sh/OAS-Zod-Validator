@@ -142,6 +142,8 @@ export const PathItemObject = z
     head: OperationObject.optional(),
     patch: OperationObject.optional(),
     trace: OperationObject.optional(),
+    // Non-standard extension to support GraphQL-style operations
+    query: OperationObject.optional(),
     servers: z
       .array(
         z.object({
@@ -200,6 +202,7 @@ export const PathItemObject = z
         'head',
         'patch',
         'trace',
+        'query',
       ];
       return operations.some((op) => op in pathItem);
     },
@@ -254,6 +257,7 @@ export const PathsObject: z.ZodType<
           'head',
           'patch',
           'trace',
+          'query',
         ] as const;
         for (const op of operations) {
           const operation = pathItem[op];

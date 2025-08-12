@@ -79,9 +79,10 @@ const OpenIdScheme = z.object({
   description: z.string().optional(),
 });
 
-const BaseType = z.object({
-  type: z.enum(['apiKey', 'http', 'oauth2', 'openIdConnect']),
-});
+// Retained for context documentation; not used with discriminated union
+// const _BaseType = z.object({
+//   type: z.enum(['apiKey', 'http', 'oauth2', 'openIdConnect']),
+// });
 
 export const SecuritySchemeObject = z.discriminatedUnion('type', [
   ApiKeyScheme,
