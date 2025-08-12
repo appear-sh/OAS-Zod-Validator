@@ -8,7 +8,7 @@ import {
   ExampleReferenceObject,
   RequestBodyReferenceObject,
   HeaderReferenceObject,
-  SecuritySchemeReferenceObject,
+  // SecuritySchemeReferenceObject,
   LinkReferenceObject,
   CallbackReferenceObject,
 } from './reference.js';

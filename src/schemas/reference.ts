@@ -15,81 +15,61 @@ export const ReferenceObject = z
 // Context-specific $ref validators
 export const SchemaReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/schemas\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/schemas\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
 export const ResponseReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/responses\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/responses\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
 export const ParameterReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/parameters\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/parameters\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
 export const ExampleReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/examples\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/examples\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
 export const RequestBodyReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/requestBodies\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/requestBodies\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
 export const HeaderReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/headers\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/headers\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
 export const SecuritySchemeReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/securitySchemes\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/securitySchemes\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
 export const LinkReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/links\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/links\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
 export const CallbackReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/callbacks\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/callbacks\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
 export const PathItemReferenceObject = z
   .object({
-    $ref: z
-      .string()
-      .regex(/^#\/components\/pathItems\/[A-Za-z0-9._-]+$/),
+    $ref: z.string().regex(/^#\/components\/pathItems\/[A-Za-z0-9._-]+$/),
   })
   .strict();
 
