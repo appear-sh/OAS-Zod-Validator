@@ -29,7 +29,8 @@ export class SchemaValidationError extends OpenAPIValidatorError {
    * Get a formatted representation of the validation errors
    */
   getFormattedErrors(): string {
-    return this.zodError.errors
+    const issues = (this.zodError as z.ZodError).issues ?? this.zodError.errors;
+    return (issues as z.ZodIssue[])
       .map((err) => {
         const path = err.path.join('.');
         return `${path}: ${err.message}`;

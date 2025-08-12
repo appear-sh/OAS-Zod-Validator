@@ -1,9 +1,45 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for adyen-stored-value-api.json > Validation Runtime Error - adyen-stored-value-api.json 1`] = `
+{
+  "details": "Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for adyen-stored-value-api.json 1\` mismatched",
+  "error": "Validation threw an unexpected error for adyen-stored-value-api.json",
+  "stack": "Error: Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for adyen-stored-value-api.json 1\` mismatched
+    at createMismatchError (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1420:17)
+    at SnapshotClient.assert (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1517:13)
+    at Proxy.<anonymous> (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/vitest/dist/vendor/vi.YFlodzP_.js:234:29)
+    at Proxy.methodWrapper (/Users/thomaspeterson/Projects/oas-zod-validator/node_modules/chai/lib/chai/utils/addMethod.js:57:25)
+    at /Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/tests/validation.snapshot.spec.ts:66:34
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:510:146
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:909:15)",
+}
+`;
+
 exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for adyen-stored-value-api.json 1`] = `
 {
   "resolvedRefs": [],
   "valid": true,
+}
+`;
+
+exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for dflight-uav-api.json > Validation Runtime Error - dflight-uav-api.json 1`] = `
+{
+  "details": "Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for dflight-uav-api.json 1\` mismatched",
+  "error": "Validation threw an unexpected error for dflight-uav-api.json",
+  "stack": "Error: Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for dflight-uav-api.json 1\` mismatched
+    at createMismatchError (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1420:17)
+    at SnapshotClient.assert (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1517:13)
+    at Proxy.<anonymous> (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/vitest/dist/vendor/vi.YFlodzP_.js:234:29)
+    at Proxy.methodWrapper (/Users/thomaspeterson/Projects/oas-zod-validator/node_modules/chai/lib/chai/utils/addMethod.js:57:25)
+    at /Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/tests/validation.snapshot.spec.ts:66:34
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:510:146
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:909:15)",
 }
 `;
 
@@ -2653,6 +2689,24 @@ exports[`OpenAPI Specification Validation Snapshots > should produce a consisten
 }
 `;
 
+exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for health-id-api.json > Validation Runtime Error - health-id-api.json 1`] = `
+{
+  "details": "Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for health-id-api.json 1\` mismatched",
+  "error": "Validation threw an unexpected error for health-id-api.json",
+  "stack": "Error: Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for health-id-api.json 1\` mismatched
+    at createMismatchError (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1420:17)
+    at SnapshotClient.assert (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1517:13)
+    at Proxy.<anonymous> (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/vitest/dist/vendor/vi.YFlodzP_.js:234:29)
+    at Proxy.methodWrapper (/Users/thomaspeterson/Projects/oas-zod-validator/node_modules/chai/lib/chai/utils/addMethod.js:57:25)
+    at /Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/tests/validation.snapshot.spec.ts:66:34
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:510:146
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:909:15)",
+}
+`;
+
 exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for health-id-api.json 1`] = `
 {
   "errors": [ZodError: [
@@ -2699,6 +2753,24 @@ exports[`OpenAPI Specification Validation Snapshots > should produce a consisten
 ]],
   "resolvedRefs": [],
   "valid": false,
+}
+`;
+
+exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for medium-api.json > Validation Runtime Error - medium-api.json 1`] = `
+{
+  "details": "Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for medium-api.json 1\` mismatched",
+  "error": "Validation threw an unexpected error for medium-api.json",
+  "stack": "Error: Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for medium-api.json 1\` mismatched
+    at createMismatchError (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1420:17)
+    at SnapshotClient.assert (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1517:13)
+    at Proxy.<anonymous> (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/vitest/dist/vendor/vi.YFlodzP_.js:234:29)
+    at Proxy.methodWrapper (/Users/thomaspeterson/Projects/oas-zod-validator/node_modules/chai/lib/chai/utils/addMethod.js:57:25)
+    at /Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/tests/validation.snapshot.spec.ts:66:34
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:510:146
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:909:15)",
 }
 `;
 
@@ -2805,6 +2877,24 @@ exports[`OpenAPI Specification Validation Snapshots > should produce a consisten
 ]],
   "resolvedRefs": [],
   "valid": false,
+}
+`;
+
+exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for openai-api.json > Validation Runtime Error - openai-api.json 1`] = `
+{
+  "details": "Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for openai-api.json 1\` mismatched",
+  "error": "Validation threw an unexpected error for openai-api.json",
+  "stack": "Error: Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for openai-api.json 1\` mismatched
+    at createMismatchError (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1420:17)
+    at SnapshotClient.assert (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1517:13)
+    at Proxy.<anonymous> (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/vitest/dist/vendor/vi.YFlodzP_.js:234:29)
+    at Proxy.methodWrapper (/Users/thomaspeterson/Projects/oas-zod-validator/node_modules/chai/lib/chai/utils/addMethod.js:57:25)
+    at /Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/tests/validation.snapshot.spec.ts:66:34
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:510:146
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:909:15)",
 }
 `;
 
@@ -4269,6 +4359,24 @@ exports[`OpenAPI Specification Validation Snapshots > should produce a consisten
 }
 `;
 
+exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for patientview-rest-api.json > Validation Runtime Error - patientview-rest-api.json 1`] = `
+{
+  "details": "Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for patientview-rest-api.json 1\` mismatched",
+  "error": "Validation threw an unexpected error for patientview-rest-api.json",
+  "stack": "Error: Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for patientview-rest-api.json 1\` mismatched
+    at createMismatchError (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1420:17)
+    at SnapshotClient.assert (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1517:13)
+    at Proxy.<anonymous> (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/vitest/dist/vendor/vi.YFlodzP_.js:234:29)
+    at Proxy.methodWrapper (/Users/thomaspeterson/Projects/oas-zod-validator/node_modules/chai/lib/chai/utils/addMethod.js:57:25)
+    at /Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/tests/validation.snapshot.spec.ts:66:34
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:510:146
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:909:15)",
+}
+`;
+
 exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for patientview-rest-api.json 1`] = `
 {
   "errors": [ZodError: [
@@ -4345,6 +4453,24 @@ exports[`OpenAPI Specification Validation Snapshots > should produce a consisten
 ]],
   "resolvedRefs": [],
   "valid": false,
+}
+`;
+
+exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for stripe-api.json > Validation Runtime Error - stripe-api.json 1`] = `
+{
+  "details": "Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for stripe-api.json 1\` mismatched",
+  "error": "Validation threw an unexpected error for stripe-api.json",
+  "stack": "Error: Snapshot \`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for stripe-api.json 1\` mismatched
+    at createMismatchError (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1420:17)
+    at SnapshotClient.assert (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/snapshot/dist/index.js:1517:13)
+    at Proxy.<anonymous> (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/vitest/dist/vendor/vi.YFlodzP_.js:234:29)
+    at Proxy.methodWrapper (/Users/thomaspeterson/Projects/oas-zod-validator/node_modules/chai/lib/chai/utils/addMethod.js:57:25)
+    at /Users/thomaspeterson/Projects/oas-zod-validator/src/schemas/tests/validation.snapshot.spec.ts:66:34
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:510:146
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///Users/thomaspeterson/Projects/oas-zod-validator/node_modules/@vitest/runner/dist/index.js:909:15)",
 }
 `;
 

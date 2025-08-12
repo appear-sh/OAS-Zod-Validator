@@ -61,7 +61,7 @@ npm install @appear.sh/oas-zod-validator
 ## Quick Start
 
 ```typescript
-import { validateOpenAPI } from 'oas-zod-validator';
+import { validateOpenAPI } from '@appear.sh/oas-zod-validator';
 
 // Validate an OpenAPI spec (JSON or YAML)
 const result = validateOpenAPI({
@@ -94,7 +94,7 @@ if (result.valid) {
 
 ```bash
 # Install globally
-npm install -g oas-zod-validator
+npm install -g @appear.sh/oas-zod-validator
 
 # Validate a spec file
 oas-validate api.yaml
@@ -130,11 +130,11 @@ const resultWithLargeCache = validateOpenAPI(spec, {
 });
 
 // Reset the cache manually
-import { resetCache } from 'oas-zod-validator';
+import { resetCache } from '@appear.sh/oas-zod-validator';
 resetCache();
 
 // Configure the global cache
-import { configureCache } from 'oas-zod-validator';
+import { configureCache } from '@appear.sh/oas-zod-validator';
 configureCache({ maxSize: 2000 });
 ```
 

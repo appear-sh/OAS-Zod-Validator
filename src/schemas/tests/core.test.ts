@@ -41,7 +41,7 @@ describe('Core Schema Types', () => {
         ReferenceObject.parse({ $ref: 'invalid' });
       } catch (error) {
         if (error instanceof z.ZodError) {
-          expect(error.errors[0].message).toContain(
+          expect(error.issues[0].message).toContain(
             'References must start with "#/"'
           );
         } else {
@@ -70,7 +70,7 @@ describe('Core Schema Types', () => {
       const result = VendorExtensible.safeParse(obj);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain(
+        expect(result.error.issues[0].message).toContain(
           'Custom extensions must start with x-'
         );
       }

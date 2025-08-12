@@ -17,13 +17,46 @@ function findNestedIssue(
     if (issue.path.join('.') === targetPath && issue.code === targetCode) {
       return issue;
     }
-    // Check if the issue has unionErrors and recurse
+    // Zod v3: unionErrors; Zod v4: invalid_union.errors (array of arrays)
     if ('unionErrors' in issue && issue.unionErrors) {
       for (const error of (issue as any).unionErrors) {
         // Use 'any' assertion carefully if types are complex
         const found = findNestedIssue(error.issues, targetPath, targetCode);
         if (found) return found;
       }
+    }
+    if (issue.code === 'invalid_union' && (issue as any).errors) {
+      const branches = (issue as any).errors as
+        | { issues: ZodIssue[] }[]
+        | ZodIssue[][];
+      for (const branch of branches as any[]) {
+        const branchIssues: ZodIssue[] = Array.isArray(branch)
+          ? (branch as ZodIssue[])
+          : (branch.issues as ZodIssue[]);
+        const found = findNestedIssue(branchIssues, targetPath, targetCode);
+        if (found) return found;
+      }
+    }
+  }
+  // Fallback: flatten entire tree and search by path
+  const queue: ZodIssue[] = [...issues];
+  while (queue.length) {
+    const current = queue.shift()!;
+    if (current.path.join('.') === targetPath) return current;
+    if ((current as any).errors) {
+      const branches = (current as any).errors as
+        | { issues: ZodIssue[] }[]
+        | ZodIssue[][];
+      for (const b of branches as any[]) {
+        const branchIssues: ZodIssue[] = Array.isArray(b)
+          ? (b as ZodIssue[])
+          : (b.issues as ZodIssue[]);
+        queue.push(...branchIssues);
+      }
+    }
+    if ((current as any).unionErrors) {
+      const nested = (current as any).unionErrors as { issues: ZodIssue[] }[];
+      nested.forEach((e) => queue.push(...e.issues));
     }
   }
   return undefined;
@@ -220,11 +253,17 @@ describe('getLocationFromJsonAst', () => {
     expect(validationResult.valid).toBe(false);
 
     // Use the recursive helper function
-    const nestedIssue = findNestedIssue(
-      validationResult.errors?.issues,
-      'components.schemas.User.properties.profile.properties.settings.properties.darkMode.type',
-      'invalid_enum_value' // Restore code check
-    );
+    const nestedIssue =
+      findNestedIssue(
+        validationResult.errors?.issues,
+        'components.schemas.User.properties.profile.properties.settings.properties.darkMode.type',
+        'invalid_enum_value'
+      ) ||
+      findNestedIssue(
+        validationResult.errors?.issues,
+        'components.schemas.User.properties.profile.properties.settings.properties.darkMode.type',
+        'invalid_type'
+      );
     expect(nestedIssue).toBeDefined(); // This should now pass
 
     const location = getLocationFromJsonAst(

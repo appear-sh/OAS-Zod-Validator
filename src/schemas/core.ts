@@ -118,7 +118,10 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
         .optional()
         .superRefine((format, ctx) => {
           if (!format) return;
-          if (ctx.path.filter((key) => key === 'format').length > 1) return;
+          const currentPath = Array.isArray((ctx as any).path)
+            ? ((ctx as any).path as (string | number)[])
+            : [];
+          if (currentPath.filter((key) => key === 'format').length > 1) return;
           if (typeof (ctx as any).parent !== 'object') return;
           const type = getRootType(ctx);
           if (type !== undefined) {
