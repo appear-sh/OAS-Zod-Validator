@@ -465,6 +465,8 @@ export function validateOpenAPI(
   } catch (error) {
     let result: ValidationResult;
 
+    // Keep Zod's original nested union structure; tests expect to traverse it.
+
     const normalizeIssues = (issues: z.ZodIssue[]): z.ZodIssue[] =>
       issues.map((iss) => {
         if (iss.code === z.ZodIssueCode.invalid_type) {
@@ -488,18 +490,23 @@ export function validateOpenAPI(
       });
 
     if (error instanceof z.ZodError) {
-      const normalized = new z.ZodError(
-        normalizeIssues((error as z.ZodError).issues as z.ZodIssue[])
+      const baseIssues = normalizeIssues(
+        (error as z.ZodError).issues as z.ZodIssue[]
       );
+      const extraStrictIssues = options.strict
+        ? validateTagUniqueness(document as any as OpenAPISlice)
+        : [];
+      const normalized = new z.ZodError([...baseIssues, ...extraStrictIssues]);
       result = {
         valid: false,
         errors: normalized,
         resolvedRefs,
       };
     } else if (error instanceof SchemaValidationError) {
-      const normalized = new z.ZodError(
-        normalizeIssues((error.zodError as z.ZodError).issues as z.ZodIssue[])
+      const baseIssues = normalizeIssues(
+        (error.zodError as z.ZodError).issues as z.ZodIssue[]
       );
+      const normalized = new z.ZodError(baseIssues);
       result = {
         valid: false,
         errors: normalized,
