@@ -84,9 +84,58 @@ const OpenIdScheme = z.object({
 //   type: z.enum(['apiKey', 'http', 'oauth2', 'openIdConnect']),
 // });
 
-export const SecuritySchemeObject = z.discriminatedUnion('type', [
-  ApiKeyScheme,
-  HttpScheme,
-  OAuth2Scheme,
-  OpenIdScheme,
-]);
+// Manual discriminator to avoid Zod union internals issues
+export const SecuritySchemeObject = z.any().superRefine((val, ctx) => {
+  if (!val || typeof val !== 'object') {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid security scheme' });
+    return;
+  }
+  const t = (val as any).type;
+  if (t === 'apiKey') {
+    if (!ApiKeyScheme.safeParse(val).success) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid security scheme' });
+    }
+    return;
+  }
+  if (t === 'http') {
+    if (!HttpScheme.safeParse(val).success) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid security scheme' });
+    }
+    return;
+  }
+  if (t === 'oauth2') {
+    const flows = (val as any).flows;
+    const isUrl = (s: unknown) => typeof s === 'string' && /^https?:\/\//i.test(s);
+    const isScopes = (o: unknown) =>
+      !!o && typeof o === 'object' && Object.values(o as Record<string, unknown>).every((v) => typeof v === 'string');
+
+    if (!flows || typeof flows !== 'object' || Object.keys(flows).length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'At least one OAuth2 flow must be defined' });
+      return;
+    }
+
+    const checkImplicit = (f: any) => isUrl(f?.authorizationUrl) && (f?.scopes === undefined || isScopes(f.scopes)) && (f?.refreshUrl === undefined || isUrl(f.refreshUrl));
+    const checkPassword = (f: any) => isUrl(f?.tokenUrl) && (f?.scopes === undefined || isScopes(f.scopes)) && (f?.refreshUrl === undefined || isUrl(f.refreshUrl));
+    const checkClientCreds = (f: any) => isUrl(f?.tokenUrl) && (f?.scopes === undefined || isScopes(f.scopes)) && (f?.refreshUrl === undefined || isUrl(f.refreshUrl));
+    const checkAuthCode = (f: any) => isUrl(f?.authorizationUrl) && isUrl(f?.tokenUrl) && (f?.scopes === undefined || isScopes(f.scopes)) && (f?.refreshUrl === undefined || isUrl(f.refreshUrl));
+
+    const ok = [
+      flows.implicit === undefined || checkImplicit(flows.implicit),
+      flows.password === undefined || checkPassword(flows.password),
+      flows.clientCredentials === undefined || checkClientCreds(flows.clientCredentials),
+      flows.authorizationCode === undefined || checkAuthCode(flows.authorizationCode),
+    ].every(Boolean);
+
+    if (!ok) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid security scheme' });
+    }
+    return;
+  }
+  if (t === 'openIdConnect') {
+    if (!OpenIdScheme.safeParse(val).success) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid security scheme' });
+    }
+    return;
+  }
+  ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Invalid security scheme' });
+});
