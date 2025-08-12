@@ -150,10 +150,12 @@ describe('Core Schema Types', () => {
         }
       });
 
-      test('rejects invalid format values', () => {
-        expect(() =>
-          SchemaObject.parse({ type: 'string', format: 'invalid' })
-        ).toThrow();
+      test('accepts unknown format values (open string)', () => {
+        const result = SchemaObject.safeParse({
+          type: 'string',
+          format: 'invalid',
+        });
+        expect(result.success).toBe(true);
       });
     });
 

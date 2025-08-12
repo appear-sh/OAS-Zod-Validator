@@ -113,8 +113,9 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           }),
         }
       ),
+      // Allow any string for format per OAS (open value), but keep type checks for known formats
       format: z
-        .union([StringFormats, NumericFormats])
+        .string()
         .optional()
         .superRefine((format, ctx) => {
           if (!format) return;
