@@ -2,9 +2,15 @@ import type { z } from 'zod';
 import type { OpenAPIObject } from './openapi.js';
 import type { OpenAPIObject31 } from './openapi31.js';
 
-export type OpenAPISpec = z.infer<
-  typeof OpenAPIObject | typeof OpenAPIObject31
->;
+export type OpenAPISpec =
+  | z.infer<typeof OpenAPIObject>
+  | z.infer<typeof OpenAPIObject31>;
+
+// Minimal structural slice used by validator logic where full inference is unavailable
+export interface OpenAPISlice {
+  paths?: Record<string, unknown>;
+  tags?: Array<{ name?: string } | unknown>;
+}
 
 export interface ValidationOptions {
   strict?: boolean;

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { SchemaObject, ReferenceObject, ExtensibleObject } from './core.js';
+import { ParameterReferenceObject } from './reference.js';
 import { RequestBodyObject, ResponseObject } from './requestResponse.js';
 
 // Enhanced Parameter Location Object
@@ -66,7 +67,7 @@ const BaseOperationObject = z
       .min(1, { message: 'operationId, if present, must not be empty' })
       .optional(),
     parameters: z
-      .array(z.union([ParameterObject, ReferenceObject]))
+      .array(z.union([ParameterObject, ParameterReferenceObject]))
       .max(50, {
         message: 'Too many parameters. Consider restructuring the API.',
       })
@@ -142,6 +143,8 @@ export const PathItemObject = z
     head: OperationObject.optional(),
     patch: OperationObject.optional(),
     trace: OperationObject.optional(),
+    // Non-standard extension to support GraphQL-style operations
+    query: OperationObject.optional(),
     servers: z
       .array(
         z.object({
@@ -163,7 +166,7 @@ export const PathItemObject = z
       )
       .optional(),
     parameters: z
-      .array(z.union([ParameterObject, ReferenceObject]))
+      .array(z.union([ParameterObject, ParameterReferenceObject]))
       .optional()
       .refine(
         (params) => {
@@ -200,6 +203,7 @@ export const PathItemObject = z
         'head',
         'patch',
         'trace',
+        'query',
       ];
       return operations.some((op) => op in pathItem);
     },
@@ -254,6 +258,7 @@ export const PathsObject: z.ZodType<
           'head',
           'patch',
           'trace',
+          'query',
         ] as const;
         for (const op of operations) {
           const operation = pathItem[op];

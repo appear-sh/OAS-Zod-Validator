@@ -1,16 +1,23 @@
 import { z } from 'zod';
-import { SchemaObject, ReferenceObject } from './core.js';
+import { SchemaObject } from './core.js';
+import {
+  SchemaReferenceObject,
+  ResponseReferenceObject,
+  ExampleReferenceObject,
+  HeaderReferenceObject,
+  LinkReferenceObject,
+} from './reference.js';
 
 // Media Type Object
 export const MediaTypeObject = z
   .object({
-    schema: z.union([SchemaObject, ReferenceObject]).optional(),
+    schema: z.union([SchemaObject, SchemaReferenceObject]).optional(),
     example: z.any().optional(),
     examples: z
       .record(
         z.string(),
         z.union([
-          ReferenceObject,
+          ExampleReferenceObject,
           z
             .object({
               summary: z.string().optional(),
@@ -40,20 +47,17 @@ export const RequestBodyObject = z
 // Response Object
 export const ResponseObject = z
   .object({
-    description: z.string({
-      required_error: 'Response description is required',
-      invalid_type_error: 'Response description must be a string',
-    }),
+    description: z.string(),
     headers: z
       .record(
         z.string(),
         z.union([
-          ReferenceObject,
+          HeaderReferenceObject,
           z.object({
             description: z.string().optional(),
             required: z.boolean().optional(),
             deprecated: z.boolean().optional(),
-            schema: z.union([SchemaObject, ReferenceObject]).optional(),
+            schema: z.union([SchemaObject, SchemaReferenceObject]).optional(),
           }),
         ])
       )
@@ -63,7 +67,7 @@ export const ResponseObject = z
       .record(
         z.string(),
         z.union([
-          ReferenceObject,
+          LinkReferenceObject,
           z
             .object({
               operationRef: z.string().optional(),
@@ -84,7 +88,7 @@ export const ResponseObject = z
 
 export const ResponsesObject = z.record(
   z.string(), // Status Code or 'default'
-  z.union([ResponseObject, ReferenceObject])
+  z.union([ResponseObject, ResponseReferenceObject])
 );
 
 export type RequestBody = z.infer<typeof RequestBodyObject>;

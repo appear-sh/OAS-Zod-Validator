@@ -138,20 +138,24 @@ export const createNumericValidator = (format: string | undefined) => {
       let path: (string | number)[] = [];
 
       // Determine the appropriate error message and path
+      const currentPath = Array.isArray((ctx as any).path)
+        ? ((ctx as any).path as (string | number)[])
+        : [];
+
       if (format === 'int32') {
         message = NumericValidationErrors.int32Range;
-        path = ctx.path.length ? ctx.path : ['format'];
+        path = currentPath.length ? currentPath : ['format'];
       } else if (format === 'int64') {
         message = NumericValidationErrors.int64Range;
-        path = ctx.path.length ? ctx.path : ['format'];
+        path = currentPath.length ? currentPath : ['format'];
       } else if (format === 'float') {
         message = NumericValidationErrors.float;
-        path = ctx.path.length ? ctx.path : ['format'];
+        path = currentPath.length ? currentPath : ['format'];
       } else if (format === 'double') {
         message = NumericValidationErrors.double;
-        path = ctx.path.length ? ctx.path : ['format'];
+        path = currentPath.length ? currentPath : ['format'];
       } else {
-        path = ctx.path.length ? ctx.path : ['value'];
+        path = currentPath.length ? currentPath : ['value'];
       }
 
       ctx.addIssue({

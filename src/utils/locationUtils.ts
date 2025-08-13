@@ -53,6 +53,80 @@ export function getLocationFromJsonAst(
       const end = offsetToPosition(content, node.offset + node.length);
       return { start, end };
     }
+    // Fallback 1: if parent is an object node, find the property node structurally
+    if (path.length > 0) {
+      const parentPath = path.slice(0, -1);
+      const lastKey = path[path.length - 1];
+      if (typeof lastKey === 'string') {
+        const parentNode = jsonc.findNodeAtLocation(rootNode, parentPath);
+        if (parentNode && Array.isArray((parentNode as any).children)) {
+          for (const child of (parentNode as any).children as jsonc.Node[]) {
+            if (
+              child.type === 'property' &&
+              Array.isArray((child as any).children)
+            ) {
+              const [keyNode, valueNode] = (child as any)
+                .children as jsonc.Node[];
+              if (keyNode && (keyNode as any).value === lastKey && valueNode) {
+                const start = offsetToPosition(content, valueNode.offset);
+                const end = offsetToPosition(
+                  content,
+                  valueNode.offset + valueNode.length
+                );
+                return { start, end };
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Fallback 2: locate the property value manually within the parent object text
+    if (path.length > 0) {
+      const parentPath = path.slice(0, -1);
+      const lastKey = path[path.length - 1];
+      if (typeof lastKey === 'string') {
+        const parentNode = jsonc.findNodeAtLocation(rootNode, parentPath);
+        if (parentNode) {
+          const sliceStart = parentNode.offset;
+          const sliceEnd = parentNode.offset + parentNode.length;
+          const sliceText = content.slice(sliceStart, sliceEnd);
+          const keyPattern = `"${lastKey}"`;
+          const keyIdx = sliceText.indexOf(keyPattern);
+          if (keyIdx >= 0) {
+            let cursor = keyIdx + keyPattern.length;
+            // find colon
+            while (cursor < sliceText.length && /\s/.test(sliceText[cursor]))
+              cursor++;
+            if (sliceText[cursor] === ':') cursor++;
+            while (cursor < sliceText.length && /\s/.test(sliceText[cursor]))
+              cursor++;
+            const valueStartInSlice = cursor;
+            let valueEndInSlice = valueStartInSlice;
+            if (sliceText[valueStartInSlice] === '"') {
+              // string value: find ending quote (naive, ignores escapes)
+              valueEndInSlice = sliceText.indexOf('"', valueStartInSlice + 1);
+              if (valueEndInSlice === -1)
+                valueEndInSlice = valueStartInSlice + 1;
+              else valueEndInSlice += 1; // include closing quote
+            } else {
+              // non-string: read until comma or closing brace
+              while (
+                valueEndInSlice < sliceText.length &&
+                ![',', '\n', '\r', '}'].includes(sliceText[valueEndInSlice])
+              ) {
+                valueEndInSlice++;
+              }
+            }
+            const absStart = sliceStart + valueStartInSlice;
+            const absEnd = sliceStart + valueEndInSlice;
+            const start = offsetToPosition(content, absStart);
+            const end = offsetToPosition(content, absEnd);
+            return { start, end };
+          }
+        }
+      }
+    }
   } catch (e) {
     // Log error during development? findNodeAtLocation might throw
     console.error(`Error finding JSON node at path ${path.join('.')}: ${e}`);

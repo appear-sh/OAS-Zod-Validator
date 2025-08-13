@@ -15,36 +15,23 @@ export const ReferenceObject = z
   })
   .strict();
 
-// Define format types for better error messages
-const StringFormats = z.enum(
-  [
-    'date-time',
-    'date',
-    'time',
-    'email',
-    'hostname',
-    'ipv4',
-    'ipv6',
-    'uri',
-    'uuid',
-    'password',
-    'byte',
-    'binary',
-  ],
-  {
-    errorMap: () => ({
-      message:
-        'Invalid string format. Must be one of: date-time, date, time, email, hostname, ipv4, ipv6, uri, uuid, password, byte, binary',
-    }),
-  }
-);
+// Retain known format lists for type-compat checks only
+const KNOWN_STRING_FORMATS = [
+  'date-time',
+  'date',
+  'time',
+  'email',
+  'hostname',
+  'ipv4',
+  'ipv6',
+  'uri',
+  'uuid',
+  'password',
+  'byte',
+  'binary',
+] as const;
 
-const NumericFormats = z.enum(['int32', 'int64', 'float', 'double'], {
-  errorMap: () => ({
-    message:
-      'Invalid numeric format. Must be one of: int32, int64, float, double',
-  }),
-});
+const KNOWN_NUMERIC_FORMATS = ['int32', 'int64', 'float', 'double'] as const;
 
 // Helper function to get parent type from context
 export function getParentType(ctx: z.RefinementCtx): string | undefined {
@@ -104,26 +91,29 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
   );
   const baseSchema = z
     .object({
-      type: z.enum(
-        ['string', 'number', 'integer', 'boolean', 'array', 'object'],
-        {
-          errorMap: () => ({
-            message:
-              'Invalid type. Must be one of: string, number, integer, boolean, array, object',
-          }),
-        }
-      ),
+      type: z.enum([
+        'string',
+        'number',
+        'integer',
+        'boolean',
+        'array',
+        'object',
+      ]),
+      // Allow any string for format per OAS (open value), but keep type checks for known formats
       format: z
-        .union([StringFormats, NumericFormats])
+        .string()
         .optional()
         .superRefine((format, ctx) => {
           if (!format) return;
-          if (ctx.path.filter((key) => key === 'format').length > 1) return;
+          const currentPath = Array.isArray((ctx as any).path)
+            ? ((ctx as any).path as (string | number)[])
+            : [];
+          if (currentPath.filter((key) => key === 'format').length > 1) return;
           if (typeof (ctx as any).parent !== 'object') return;
           const type = getRootType(ctx);
           if (type !== undefined) {
             if (
-              ['int32', 'int64', 'float', 'double'].includes(format) &&
+              (KNOWN_NUMERIC_FORMATS as readonly string[]).includes(format) &&
               type !== 'number' &&
               type !== 'integer'
             ) {
@@ -134,20 +124,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
               });
             }
             if (
-              [
-                'date-time',
-                'date',
-                'time',
-                'email',
-                'hostname',
-                'ipv4',
-                'ipv6',
-                'uri',
-                'uuid',
-                'password',
-                'byte',
-                'binary',
-              ].includes(format) &&
+              (KNOWN_STRING_FORMATS as readonly string[]).includes(format) &&
               type !== 'string'
             ) {
               ctx.addIssue({

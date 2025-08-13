@@ -1,5 +1,17 @@
 import { z } from 'zod';
-import { SchemaObject, ReferenceObject } from './core.js';
+import { SchemaObject } from './core.js';
+import {
+  ReferenceObject,
+  SchemaReferenceObject,
+  ResponseReferenceObject,
+  ParameterReferenceObject,
+  ExampleReferenceObject,
+  RequestBodyReferenceObject,
+  HeaderReferenceObject,
+  // SecuritySchemeReferenceObject,
+  LinkReferenceObject,
+  CallbackReferenceObject,
+} from './reference.js';
 import { RequestBodyObject, ResponseObject } from './requestResponse.js';
 
 // Parameter Object (reused from paths.ts to avoid circular dependency)
@@ -58,63 +70,63 @@ export const ComponentsObject = z
           message:
             'Schema names must contain only alphanumeric characters, dots, underscores, and hyphens',
         }),
-        z.union([SchemaObject, ReferenceObject])
+        z.union([SchemaObject, SchemaReferenceObject])
       )
       .optional(),
 
     responses: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([ResponseObject, ReferenceObject])
+        z.union([ResponseObject, ResponseReferenceObject])
       )
       .optional(),
 
     parameters: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([ParameterObject, ReferenceObject])
+        z.union([ParameterObject, ParameterReferenceObject])
       )
       .optional(),
 
     examples: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([ExampleObject, ReferenceObject])
+        z.union([ExampleObject, ExampleReferenceObject])
       )
       .optional(),
 
     requestBodies: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([RequestBodyObject, ReferenceObject])
+        z.union([RequestBodyObject, RequestBodyReferenceObject])
       )
       .optional(),
 
     headers: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([HeaderObject, ReferenceObject])
+        z.union([HeaderObject, HeaderReferenceObject])
       )
       .optional(),
 
     securitySchemes: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.any() // This will be replaced with SecuritySchemeObject when we implement it
+        z.union([ReferenceObject, z.any()]) // TODO: replace any with SecuritySchemeObject
       )
       .optional(),
 
     links: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([LinkObject, ReferenceObject])
+        z.union([LinkObject, LinkReferenceObject])
       )
       .optional(),
 
     callbacks: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([CallbackObject, ReferenceObject])
+        z.union([CallbackObject, CallbackReferenceObject])
       )
       .optional(),
   })
