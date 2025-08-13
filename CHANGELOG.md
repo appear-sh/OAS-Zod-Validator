@@ -1,5 +1,11 @@
 # @appear.sh/oas-zod-validator
 
+## 1.5.0
+
+### Minor Changes
+
+- 44d121d: Added Zod4 support, query method allowed, $ref path validation
+
 ## 1.4.0
 
 ### Minor Changes
