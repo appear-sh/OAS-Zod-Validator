@@ -6,12 +6,13 @@ import {
 } from '../schemas/validator.js';
 import { z } from 'zod';
 import { YAMLParseError, SchemaValidationError } from '../errors/index.js';
-import { getValidationCache } from './cache.js';
+import { getValidationCache, LRUCache } from './cache.js';
+import { fnv1a32 } from './hash.js';
 
 /**
  * Cache for parsed YAML/JSON documents
  */
-const YAML_CACHE = new Map<string, unknown>();
+const YAML_CACHE = new LRUCache<string, unknown>(50);
 
 /**
  * Max size for the YAML cache
@@ -25,10 +26,7 @@ const MAX_YAML_CACHE_SIZE = 50;
  * @returns A cache key based on a lightweight hash of the content
  */
 function generateYamlCacheKey(content: string): string {
-  // Simple "hash" using first 100 chars + length + last 100 chars
-  const start = content.slice(0, 100);
-  const end = content.slice(-100);
-  return `${start}_${content.length}_${end}`;
+  return fnv1a32(content);
 }
 
 /**
@@ -45,18 +43,16 @@ function parseYamlWithCache(content: string): unknown {
 
   const key = generateYamlCacheKey(content);
 
-  if (YAML_CACHE.has(key)) {
-    return YAML_CACHE.get(key);
-  }
+  const cached = YAML_CACHE.get(key);
+  if (cached !== undefined) return cached;
 
   const parsed = load(content);
 
-  // Cache management: remove oldest entries if cache is too large
-  if (YAML_CACHE.size >= MAX_YAML_CACHE_SIZE) {
-    const keysToDelete = Array.from(YAML_CACHE.keys()).slice(0, 5); // Remove 5 oldest entries
-    keysToDelete.forEach((k) => YAML_CACHE.delete(k));
+  // Ensure cache doesn't grow beyond MAX_YAML_CACHE_SIZE by updating capacity if needed
+  // (LRUCache maintains size on set; we keep constant capacity)
+  if ((YAML_CACHE as any).updateMaxSize) {
+    (YAML_CACHE as any).updateMaxSize(MAX_YAML_CACHE_SIZE);
   }
-
   YAML_CACHE.set(key, parsed);
   return parsed;
 }

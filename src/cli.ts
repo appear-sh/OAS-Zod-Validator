@@ -4,15 +4,13 @@
 import { ValidationOptions, validateOpenAPI } from './schemas/validator.js';
 import chalk from 'chalk';
 import { Command } from 'commander';
-// Lazy import inquirer in interactive mode to speed cold start
-let inquirer: typeof import('inquirer') | undefined;
+import inquirer from 'inquirer';
 import fs from 'node:fs';
 import path from 'node:path';
 import ora from 'ora';
 import { fileURLToPath } from 'url';
 import * as YAML from 'yaml';
-// Lazy import js-yaml only when formatting complex values for CLI
-let jsYaml: typeof import('js-yaml') | undefined;
+import jsYaml from 'js-yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
 import { getIssueSeverity } from './errors/severity.js';
 import * as jsonc from 'jsonc-parser';
@@ -210,10 +208,7 @@ function formatValueForCli(value: any): string {
   if (typeof value === 'object' && value !== null) {
     try {
       // Use js-yaml dump for CLI display formatting
-      if (!jsYaml) {
-        jsYaml = await import('js-yaml');
-      }
-      const yamlString = jsYaml.dump!(value, {
+      const yamlString = jsYaml.dump(value, {
         indent: 2,
         lineWidth: 80,
         skipInvalid: true,
@@ -651,9 +646,6 @@ export async function runCLI(args: string[]): Promise<void> {
     };
 
     if (opts.interactive || !file) {
-      if (!inquirer) {
-        inquirer = await import('inquirer');
-      }
       const result = await runInteractiveMode();
       await validateSpec(result.filePath, { ...options, ...result.options });
     } else {
