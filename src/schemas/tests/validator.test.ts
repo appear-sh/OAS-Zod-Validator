@@ -3204,7 +3204,7 @@ describe('Error Map Handling', () => {
 
     // Create a parser that uses the error map
     const createErrorMap = (options: ValidationOptions): z.ZodErrorMap => {
-      return (issue, ctx) => {
+      return (issue: z.ZodIssue, ctx) => {
         if (issue.code === z.ZodIssueCode.custom) {
           switch (issue.path[issue.path.length - 1]) {
             case 'headers':
@@ -3227,12 +3227,12 @@ describe('Error Map Handling', () => {
       strict: true,
       strictRules: { requireRateLimitHeaders: true },
     });
-    const result = errorMap(mockIssue, {
+    const mapped = errorMap(mockIssue as unknown as z.ZodIssue, {
       defaultError: 'Default error message',
-      data: {},
     });
 
-    expect(result.message).toBe('Default error message');
+    // Mapped message object
+    expect((mapped as any).message).toBe('Default error message');
   });
 });
 
@@ -4420,16 +4420,28 @@ describe('Abort and failFast behaviour', () => {
     const controller = new AbortController();
     const content = JSON.stringify({ openapi: '3.0.3', info: {}, paths: {} });
     controller.abort('user_cancel');
-    const result = validateOpenAPIDocument(content, { signal: controller.signal });
+    const result = validateOpenAPIDocument(content, {
+      signal: controller.signal,
+    });
     expect(result.valid).toBe(false);
     // Returns a ZodError wrapper; message should reflect abort
-    const messages = (result.errors?.issues ?? []).map((i: any) => i.message).join(' ');
+    const messages = (result.errors?.issues ?? [])
+      .map((i: any) => i.message)
+      .join(' ');
     expect(messages.toLowerCase()).toContain('aborted');
   });
 
   test('failFast stops at first strict issue', () => {
-    const bad = JSON.stringify({ openapi: '3.0.3', info: {}, paths: { '/x/{id}': {}, '/x/{name}': {} } });
-    const result = validateOpenAPIDocument(bad, { strict: true, failFast: true, noLocation: true });
+    const bad = JSON.stringify({
+      openapi: '3.0.3',
+      info: {},
+      paths: { '/x/{id}': {}, '/x/{name}': {} },
+    });
+    const result = validateOpenAPIDocument(bad, {
+      strict: true,
+      failFast: true,
+      noLocation: true,
+    });
     expect(result.valid).toBe(false);
     const issues = result.errors?.issues ?? [];
     expect(issues.length).toBeGreaterThan(0);

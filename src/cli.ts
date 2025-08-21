@@ -237,10 +237,15 @@ async function validateSpec(
   filePath: string,
   cliOptions: CLIOptions
 ): Promise<void> {
-  const spinner: { succeed: (msg?: string) => void; fail: (msg?: string) => void } =
-    cliOptions.quiet
-      ? { succeed: () => {}, fail: () => {} }
-      : (ora({ text: `Validating ${chalk.blueBright(filePath)}...`, spinner: 'dots' }).start() as any);
+  const spinner: {
+    succeed: (msg?: string) => void;
+    fail: (msg?: string) => void;
+  } = cliOptions.quiet
+    ? { succeed: () => {}, fail: () => {} }
+    : (ora({
+        text: `Validating ${chalk.blueBright(filePath)}...`,
+        spinner: 'dots',
+      }).start() as any);
 
   let parsedContent: unknown = null;
   let jsonAst: jsonc.Node | undefined = undefined;
@@ -572,7 +577,8 @@ async function runInteractiveMode(): Promise<{
  * @param args - Command line arguments
  */
 export async function runCLI(args: string[]): Promise<void> {
-  const quiet = args.includes('--quiet') || args.includes('-q') || !process.stdout.isTTY;
+  const quiet =
+    args.includes('--quiet') || args.includes('-q') || !process.stdout.isTTY;
   if (!quiet) displayWelcome();
 
   const program = new Command()
@@ -658,7 +664,10 @@ export async function runCLI(args: string[]): Promise<void> {
           options.autoFastThresholdBytes = 15 * 1024 * 1024; // default
         }
         // If file is huge and user didn't force locations, prefer noLocation fast parsing
-        if (stat.size > options.autoFastThresholdBytes && options.noLocation !== false) {
+        if (
+          stat.size > options.autoFastThresholdBytes &&
+          options.noLocation !== false
+        ) {
           options.noLocation = true;
         }
       } catch {

@@ -46,7 +46,10 @@ describe('Performance options', () => {
     const num = 1500;
     const components: Record<string, unknown> = {};
     for (let i = 0; i < num; i++) {
-      components[`S${i}`] = { type: 'object', properties: { id: { type: 'integer' } } };
+      components[`S${i}`] = {
+        type: 'object',
+        properties: { id: { type: 'integer' } },
+      };
     }
     const paths: Record<string, unknown> = {};
     for (let i = 0; i < num; i++) {
@@ -55,16 +58,33 @@ describe('Performance options', () => {
           responses: {
             '200': {
               description: 'ok',
-              content: { 'application/json': { schema: { $ref: `#/components/schemas/S${i}` } } },
+              content: {
+                'application/json': {
+                  schema: { $ref: `#/components/schemas/S${i}` },
+                },
+              },
             },
           },
         },
       };
     }
-    const content = JSON.stringify({ openapi: '3.0.3', info: { title: 'X', version: '1' }, components: { schemas: components }, paths });
+    const content = JSON.stringify({
+      openapi: '3.0.3',
+      info: { title: 'X', version: '1' },
+      components: { schemas: components },
+      paths,
+    });
 
-    const fast = validateOpenAPIDocument(content, { fastMode: true, noLocation: true, maxErrors: 5 });
-    const strict = validateOpenAPIDocument(content, { fastMode: false, noLocation: false, maxErrors: 5 });
+    const fast = validateOpenAPIDocument(content, {
+      fastMode: true,
+      noLocation: true,
+      maxErrors: 5,
+    });
+    const strict = validateOpenAPIDocument(content, {
+      fastMode: false,
+      noLocation: false,
+      maxErrors: 5,
+    });
 
     expect(fast).toBeDefined();
     expect(strict).toBeDefined();
