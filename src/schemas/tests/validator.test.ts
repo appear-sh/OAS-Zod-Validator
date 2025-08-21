@@ -4414,3 +4414,24 @@ describe('Tag Uniqueness (Strict Mode)', () => {
     expect(result.errors).toBeUndefined();
   });
 });
+
+describe('Abort and failFast behaviour', () => {
+  test('abort via AbortSignal stops validation early', () => {
+    const controller = new AbortController();
+    const content = JSON.stringify({ openapi: '3.0.3', info: {}, paths: {} });
+    controller.abort('user_cancel');
+    const result = validateOpenAPIDocument(content, { signal: controller.signal });
+    expect(result.valid).toBe(false);
+    // Returns a ZodError wrapper; message should reflect abort
+    const messages = (result.errors?.issues ?? []).map((i: any) => i.message).join(' ');
+    expect(messages.toLowerCase()).toContain('aborted');
+  });
+
+  test('failFast stops at first strict issue', () => {
+    const bad = JSON.stringify({ openapi: '3.0.3', info: {}, paths: { '/x/{id}': {}, '/x/{name}': {} } });
+    const result = validateOpenAPIDocument(bad, { strict: true, failFast: true, noLocation: true });
+    expect(result.valid).toBe(false);
+    const issues = result.errors?.issues ?? [];
+    expect(issues.length).toBeGreaterThan(0);
+  });
+});

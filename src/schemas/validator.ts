@@ -13,6 +13,7 @@ import {
   SchemaValidationError,
   StrictValidationError,
   VersionError,
+  AbortedError,
 } from '../errors/index.js';
 import { OpenAPIVersion, createOpenAPIVersion } from '../types/index.js';
 import {
@@ -72,6 +73,12 @@ export interface ValidationOptions {
 
   /** Skip string pattern checks to save time on large specs */
   skipPatternChecks?: boolean;
+
+  /** AbortSignal to cancel validation when issues arise or externally */
+  signal?: AbortSignal;
+
+  /** Fail fast on first issue (aborts immediately when an issue is detected) */
+  failFast?: boolean;
 }
 
 /**
@@ -358,8 +365,22 @@ export function validateOpenAPI(
   const resolvedRefs: string[] = [];
 
   try {
+    // Early abort before any heavy work
+    if (options.signal?.aborted) {
+      throw new AbortedError('Validation aborted', {
+        context: { reason: options.signal.reason },
+      });
+    }
+
     const docAsObject = document as Record<string, unknown>;
     let parsed: OpenAPISpec;
+    const checkAbort = () => {
+      if (options.signal?.aborted) {
+        throw new AbortedError('Validation aborted', {
+          context: { reason: options.signal.reason },
+        });
+      }
+    };
 
     const parseParams: any = {
       path: [],
@@ -402,6 +423,7 @@ export function validateOpenAPI(
     if (options.strict) {
       const allStrictIssues: z.ZodIssue[] = [];
 
+      checkAbort();
       verifyRefTargets(
         parsed as unknown as Record<string, unknown>,
         resolvedRefs
@@ -427,9 +449,17 @@ export function validateOpenAPI(
       }
 
       // Path ambiguity check
+      checkAbort();
       const pathAmbiguityIssues = validatePathAmbiguity(parsed as any, options);
       if (pathAmbiguityIssues.length > 0) {
         allStrictIssues.push(...pathAmbiguityIssues);
+        if (options.failFast) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
         if (
           typeof options.maxErrors === 'number' &&
           options.maxErrors > 0 &&
@@ -444,9 +474,17 @@ export function validateOpenAPI(
       }
 
       // Tag uniqueness check
+      checkAbort();
       const tagUniquenessIssues = validateTagUniqueness(parsed as any, options);
       if (tagUniquenessIssues.length > 0) {
         allStrictIssues.push(...tagUniquenessIssues);
+        if (options.failFast) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
         if (
           typeof options.maxErrors === 'number' &&
           options.maxErrors > 0 &&
@@ -466,6 +504,7 @@ export function validateOpenAPI(
         for (const [pathKey, pathItemValue] of Object.entries(
           parsedDoc.paths
         )) {
+          checkAbort();
           if (
             !pathItemValue ||
             typeof pathItemValue !== 'object' ||
@@ -503,6 +542,7 @@ export function validateOpenAPI(
             const operation = pathItem[method]; // Operation type is already { parameters?: ... }
 
             if (operation && typeof operation === 'object') {
+              checkAbort();
               const parameterValIssues = collectAndValidateOperationParameters(
                 pathKey,
                 method,
@@ -513,6 +553,13 @@ export function validateOpenAPI(
               );
               if (parameterValIssues.length > 0) {
                 allStrictIssues.push(...parameterValIssues);
+                if (options.failFast) {
+                  throw new SchemaValidationError(
+                    'Strict OpenAPI validation failed.',
+                    new z.ZodError(allStrictIssues),
+                    { context: { strict: true } }
+                  );
+                }
                 if (
                   typeof options.maxErrors === 'number' &&
                   options.maxErrors > 0 &&
@@ -530,15 +577,31 @@ export function validateOpenAPI(
         }
       }
 
+      checkAbort();
       const apiPatternsError = validateAPIPatterns(parsed, options);
       if (apiPatternsError) {
         allStrictIssues.push(...apiPatternsError.issues);
+        if (options.failFast) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
       }
 
       if (options.strictRules?.requireRateLimitHeaders) {
+        checkAbort();
         const rateLimitError = validateRateLimitHeaders(parsed, options);
         if (rateLimitError) {
           allStrictIssues.push(...rateLimitError.issues);
+          if (options.failFast) {
+            throw new SchemaValidationError(
+              'Strict OpenAPI validation failed.',
+              new z.ZodError(allStrictIssues),
+              { context: { strict: true } }
+            );
+          }
         }
       }
 
