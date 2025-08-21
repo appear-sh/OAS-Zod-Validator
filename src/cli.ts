@@ -39,6 +39,13 @@ export interface CLIOptions {
   interactive?: boolean;
   cacheEnabled?: boolean;
   cacheSize?: number;
+  // Performance/behaviour knobs
+  fast?: boolean;
+  noLocation?: boolean;
+  maxErrors?: number;
+  autoFastThresholdBytes?: number;
+  skipExamples?: boolean;
+  skipPatternChecks?: boolean;
 }
 
 /**
@@ -287,6 +294,13 @@ async function validateSpec(
         enabled: cliOptions.cacheEnabled !== false,
         maxSize: cliOptions.cacheSize,
       },
+      // Performance/behaviour knobs passed to core
+      fastMode: cliOptions.fast,
+      noLocation: cliOptions.noLocation,
+      maxErrors: cliOptions.maxErrors,
+      autoFastThresholdBytes: cliOptions.autoFastThresholdBytes,
+      skipExamples: cliOptions.skipExamples,
+      skipPatternChecks: cliOptions.skipPatternChecks,
     };
 
     // Validate the plain JS object
@@ -573,7 +587,18 @@ export async function runCLI(args: string[]): Promise<void> {
     .option('-i, --interactive', 'Run in interactive mode')
     .option('-c, --config <path>', 'Path to config file')
     .option('--no-cache', 'Disable validation caching')
-    .option('--cache-size <size>', 'Set maximum cache size', parseInt);
+    .option('--cache-size <size>', 'Set maximum cache size', parseInt)
+    // Performance/behaviour knobs
+    .option('--fast', 'Enable fast mode (skips heavy checks)')
+    .option('--no-location', 'Skip computing locations for errors')
+    .option('--max-errors <n>', 'Cap number of reported errors', parseInt)
+    .option(
+      '--auto-fast-threshold <bytes>',
+      'Auto-enable fast mode above this size (bytes)',
+      parseInt
+    )
+    .option('--skip-examples', 'Skip example validations')
+    .option('--skip-pattern-checks', 'Skip string pattern validations');
 
   program.parse(args);
 
@@ -606,6 +631,16 @@ export async function runCLI(args: string[]): Promise<void> {
       format: opts.json ? 'json' : options.format,
       cacheEnabled: opts.noCache !== true,
       cacheSize: opts.cacheSize,
+      fast: opts.fast ?? options.fast,
+      noLocation: opts.noLocation ?? options.noLocation,
+      maxErrors:
+        typeof opts.maxErrors === 'number' ? opts.maxErrors : options.maxErrors,
+      autoFastThresholdBytes:
+        typeof opts.autoFastThreshold === 'number'
+          ? opts.autoFastThreshold
+          : options.autoFastThresholdBytes,
+      skipExamples: opts.skipExamples ?? options.skipExamples,
+      skipPatternChecks: opts.skipPatternChecks ?? options.skipPatternChecks,
     };
 
     if (opts.interactive || !file) {

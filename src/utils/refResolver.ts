@@ -3,6 +3,7 @@ import { ReferenceError, ErrorCode } from '../errors/index.js';
 import { JSONPointer, createJSONPointer } from '../types/index.js';
 import { getValidationCache } from './cache.js';
 import { memoize } from './memoize.js';
+import { buildPointerIndex } from './pointerIndex.js';
 
 /**
  * Interface for a reference resolution operation
@@ -24,9 +25,11 @@ export class RefResolver {
   private visitedRefs: Set<string> = new Set();
   private doc: Record<string, unknown>;
   private resolvedRefs: string[] = [];
+  private pointerIndex: Map<JSONPointer, unknown>;
 
   constructor(doc: Record<string, unknown>) {
     this.doc = doc;
+    this.pointerIndex = buildPointerIndex(doc);
   }
 
   /**
@@ -151,8 +154,10 @@ export class RefResolver {
         }
 
         try {
-          // Resolve the reference target
-          const target = get(this.doc, resolution.path);
+          // Resolve the reference target (prefer O(1) map lookup)
+          const indexed = this.pointerIndex.get(resolution.jsonPointer);
+          const target =
+            indexed !== undefined ? indexed : get(this.doc, resolution.path);
 
           if (!target) {
             throw new ReferenceError(

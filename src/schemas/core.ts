@@ -382,6 +382,11 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
       return raw;
     }, baseSchema)
     .superRefine((schema, ctx) => {
+      const fastMode = Boolean((ctx as any)?.options?.data?.fastMode);
+      const skipExamples =
+        Boolean((ctx as any)?.options?.data?.skipExamples) || fastMode;
+      const skipPatternChecks =
+        Boolean((ctx as any)?.options?.data?.skipPatternChecks) || fastMode;
       // Validate that array types have items
       if (schema.type === 'array' && !schema.items) {
         ctx.addIssue({
@@ -475,8 +480,12 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
         }
       }
 
-      // Validate string examples
-      if (schema.example !== undefined && schema.type === 'string') {
+      // Validate string examples (skip in fast mode if configured)
+      if (
+        !skipExamples &&
+        schema.example !== undefined &&
+        schema.type === 'string'
+      ) {
         if (typeof schema.example !== 'string') {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -508,8 +517,8 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
             });
           }
 
-          // Validate pattern constraint if provided
-          if (schema.pattern) {
+          // Validate pattern constraint if provided (skip pattern checks if configured)
+          if (!skipPatternChecks && schema.pattern) {
             try {
               const regex = new RegExp(schema.pattern);
               if (!regex.test(schema.example)) {
@@ -528,11 +537,16 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     })
     .refine(
       (schema: any) => {
+        const fastMode = Boolean(
+          (z as any).getPath?.()?.options?.data?.fastMode
+        );
+        const skipExamples = fastMode;
         if (
           schema.example === undefined ||
           (schema.type !== 'number' && schema.type !== 'integer')
         )
           return true;
+        if (skipExamples) return true;
         if (typeof schema.example !== 'number') return false;
         if (typeof schema.minimum === 'number') {
           return schema.exclusiveMinimum
@@ -548,11 +562,16 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     )
     .refine(
       (schema: any) => {
+        const fastMode = Boolean(
+          (z as any).getPath?.()?.options?.data?.fastMode
+        );
+        const skipExamples = fastMode;
         if (
           schema.example === undefined ||
           (schema.type !== 'number' && schema.type !== 'integer')
         )
           return true;
+        if (skipExamples) return true;
         if (typeof schema.example !== 'number') return false;
         if (typeof schema.maximum === 'number') {
           return schema.exclusiveMaximum
@@ -568,11 +587,16 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     )
     .refine(
       (schema: any) => {
+        const fastMode = Boolean(
+          (z as any).getPath?.()?.options?.data?.fastMode
+        );
+        const skipExamples = fastMode;
         if (
           schema.example === undefined ||
           (schema.type !== 'number' && schema.type !== 'integer')
         )
           return true;
+        if (skipExamples) return true;
         if (typeof schema.example !== 'number') return false;
         if (typeof schema.multipleOf === 'number') {
           const quotient = schema.example / schema.multipleOf;
@@ -588,8 +612,13 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     )
     .refine(
       (schema: any) => {
+        const fastMode = Boolean(
+          (z as any).getPath?.()?.options?.data?.fastMode
+        );
+        const skipExamples = fastMode;
         if (schema.example === undefined || schema.type !== 'string')
           return true;
+        if (skipExamples) return true;
         if (typeof schema.example !== 'string') return false;
         if (typeof schema.minLength === 'number') {
           return schema.example.length >= schema.minLength;
@@ -603,8 +632,13 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     )
     .refine(
       (schema: any) => {
+        const fastMode = Boolean(
+          (z as any).getPath?.()?.options?.data?.fastMode
+        );
+        const skipExamples = fastMode;
         if (schema.example === undefined || schema.type !== 'string')
           return true;
+        if (skipExamples) return true;
         if (typeof schema.example !== 'string') return false;
         if (typeof schema.maxLength === 'number') {
           return schema.example.length <= schema.maxLength;
@@ -618,10 +652,18 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
     )
     .refine(
       (schema: any) => {
+        const fastMode = Boolean(
+          (z as any).getPath?.()?.options?.data?.fastMode
+        );
+        const skipExamples = fastMode;
+        const skipPatternChecks =
+          skipExamples ||
+          Boolean((z as any).getPath?.()?.options?.data?.skipPatternChecks);
         if (schema.example === undefined || schema.type !== 'string')
           return true;
+        if (skipExamples) return true;
         if (typeof schema.example !== 'string') return false;
-        if (schema.pattern) {
+        if (!skipPatternChecks && schema.pattern) {
           try {
             const regex = new RegExp(schema.pattern);
             return regex.test(schema.example);
