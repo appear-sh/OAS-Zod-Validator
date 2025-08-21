@@ -144,6 +144,30 @@ describe('RefResolver', () => {
     expect(() => resolver.verifyAllRefs()).toThrow();
   });
 
+  test('should resolve references with tokens requiring RFC6901 encoding', () => {
+    const doc = {
+      openapi: '3.0.0',
+      components: {
+        schemas: {
+          'a/b': { type: 'string' },
+          'c~d': { type: 'number' },
+          Container: {
+            type: 'object',
+            properties: {
+              first: { $ref: '#/components/schemas/a~1b' },
+              second: { $ref: '#/components/schemas/c~0d' },
+            },
+          },
+        },
+      },
+    } as const;
+
+    const resolver = new RefResolver(doc as any);
+    const refs = resolver.verifyAllRefs();
+    expect(refs).toContain('#/components/schemas/a~1b');
+    expect(refs).toContain('#/components/schemas/c~0d');
+  });
+
   test('should throw error for missing references', () => {
     const doc = {
       openapi: '3.0.0',

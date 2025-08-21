@@ -1,4 +1,5 @@
 import { JSONPointer } from '../types/index.js';
+import { encodePointerToken } from './jsonPointer.js';
 
 /**
  * Build a JSON Pointer index for fast O(1) lookups of common component targets.
@@ -32,9 +33,9 @@ export function buildPointerIndex(
     for (const [name, value] of Object.entries(
       bag as Record<string, unknown>
     )) {
-      // JSON Pointer format requires escaping of ~ and / in reference tokens,
-      // but component keys are typically clean; keep simple for now.
-      const pointer = `#/components/${section}/${name}` as JSONPointer;
+      // Encode token per RFC6901 (escape '~' and '/') to build valid pointer
+      const encodedName = encodePointerToken(name);
+      const pointer = `#/components/${section}/${encodedName}` as JSONPointer;
       index.set(pointer, value);
     }
   }

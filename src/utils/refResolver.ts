@@ -1,9 +1,9 @@
-import { get } from 'lodash-es';
 import { ReferenceError, ErrorCode } from '../errors/index.js';
 import { JSONPointer, createJSONPointer } from '../types/index.js';
 import { getValidationCache } from './cache.js';
 import { memoize } from './memoize.js';
 import { buildPointerIndex } from './pointerIndex.js';
+import { getByPointer } from './jsonPointer.js';
 
 /**
  * Interface for a reference resolution operation
@@ -157,7 +157,9 @@ export class RefResolver {
           // Resolve the reference target (prefer O(1) map lookup)
           const indexed = this.pointerIndex.get(resolution.jsonPointer);
           const target =
-            indexed !== undefined ? indexed : get(this.doc, resolution.path);
+            indexed !== undefined
+              ? indexed
+              : getByPointer(this.doc, resolution.jsonPointer);
 
           if (!target) {
             throw new ReferenceError(

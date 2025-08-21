@@ -28,7 +28,7 @@ import {
   getLocationFromYamlAst,
 } from '../utils/locationUtils.js';
 import { Range, LocatedZodIssue } from '../types/location.js';
-import { get } from 'lodash-es';
+import { getByPointer } from '../utils/jsonPointer.js';
 import { createJSONPointer, JSONPointer } from '../types/index.js';
 import { ParameterObject as ParameterObjectSchema } from './paths.js';
 import { ReferenceObject as ReferenceObjectSchema } from './reference.js';
@@ -1057,8 +1057,10 @@ function collectAndValidateOperationParameters(
     }
 
     // If not in cache, resolve using lodash.get
-    const path = jsonPointer.substring(2).split('/');
-    const target = get(doc, path);
+    const target = getByPointer(
+      doc as unknown as Record<string, unknown>,
+      jsonPointer
+    );
 
     if (!target) {
       // Reference not found, issue should be caught by verifyRefTargets
