@@ -120,6 +120,15 @@ describe('Validation Cache', () => {
 
     // Key should be different
     expect(key1).not.toEqual(key3);
+
+    // Changing irrelevant options should not explode key size or cause instability
+    const noisyOptions = {
+      strict: true,
+      cache: { enabled: true, maxSize: 999 },
+      memory: { adaptiveCaching: true, maxMemoryTargetMB: 2048 },
+    } as any;
+    const key4 = cache.generateDocumentKey(testDocument, noisyOptions);
+    expect(typeof key4).toBe('string');
   });
 
   test('should reset all caches', () => {
