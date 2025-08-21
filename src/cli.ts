@@ -4,13 +4,15 @@
 import { ValidationOptions, validateOpenAPI } from './schemas/validator.js';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import inquirer from 'inquirer';
+// Lazy import inquirer in interactive mode to speed cold start
+let inquirer: typeof import('inquirer') | undefined;
 import fs from 'node:fs';
 import path from 'node:path';
 import ora from 'ora';
 import { fileURLToPath } from 'url';
 import * as YAML from 'yaml';
-import jsYaml from 'js-yaml';
+// Lazy import js-yaml only when formatting complex values for CLI
+let jsYaml: typeof import('js-yaml') | undefined;
 import { getOASSpecLink } from './errors/specLinks.js';
 import { getIssueSeverity } from './errors/severity.js';
 import * as jsonc from 'jsonc-parser';
@@ -208,7 +210,10 @@ function formatValueForCli(value: any): string {
   if (typeof value === 'object' && value !== null) {
     try {
       // Use js-yaml dump for CLI display formatting
-      const yamlString = jsYaml.dump(value, {
+      if (!jsYaml) {
+        jsYaml = await import('js-yaml');
+      }
+      const yamlString = jsYaml.dump!(value, {
         indent: 2,
         lineWidth: 80,
         skipInvalid: true,
@@ -571,7 +576,8 @@ async function runInteractiveMode(): Promise<{
  * @param args - Command line arguments
  */
 export async function runCLI(args: string[]): Promise<void> {
-  displayWelcome();
+  const quiet = args.includes('--quiet') || args.includes('-q') || !process.stdout.isTTY;
+  if (!quiet) displayWelcome();
 
   const program = new Command()
     .name('oas-validate')
@@ -598,7 +604,8 @@ export async function runCLI(args: string[]): Promise<void> {
       parseInt
     )
     .option('--skip-examples', 'Skip example validations')
-    .option('--skip-pattern-checks', 'Skip string pattern validations');
+    .option('--skip-pattern-checks', 'Skip string pattern validations')
+    .option('-q, --quiet', 'Suppress banner and spinner output');
 
   program.parse(args);
 
@@ -644,9 +651,25 @@ export async function runCLI(args: string[]): Promise<void> {
     };
 
     if (opts.interactive || !file) {
+      if (!inquirer) {
+        inquirer = await import('inquirer');
+      }
       const result = await runInteractiveMode();
       await validateSpec(result.filePath, { ...options, ...result.options });
     } else {
+      // Use fs.stat to pre-compute file size and set auto-fast threshold
+      try {
+        const stat = await fs.promises.stat(file);
+        if (!options.autoFastThresholdBytes) {
+          options.autoFastThresholdBytes = 15 * 1024 * 1024; // default
+        }
+        // If file is huge and user didn't force locations, prefer noLocation fast parsing
+        if (stat.size > options.autoFastThresholdBytes && options.noLocation !== false) {
+          options.noLocation = true;
+        }
+      } catch {
+        // ignore stat errors; proceed
+      }
       await validateSpec(file, options);
     }
   } catch (err) {
