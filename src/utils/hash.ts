@@ -27,5 +27,3 @@ export function stableStringify(value: unknown): string {
     .map(([k, v]) => `${JSON.stringify(k)}:${stableStringify(v)}`);
   return `{${entries.join(',')}}`;
 }
-
-

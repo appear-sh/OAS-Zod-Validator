@@ -38,7 +38,7 @@ export function splitPointer(pointer: JSONPointer | string): string[] {
  */
 export function joinPointerTokens(tokens: string[]): JSONPointer {
   const encoded = tokens.map((t) => encodePointerToken(String(t))).join('/');
-  return (`#/${encoded}` as unknown) as JSONPointer;
+  return `#/${encoded}` as unknown as JSONPointer;
 }
 
 /**
@@ -68,5 +68,3 @@ export function getByPointer(
   }
   return current;
 }
-
-
