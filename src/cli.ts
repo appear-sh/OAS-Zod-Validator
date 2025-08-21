@@ -46,6 +46,7 @@ export interface CLIOptions {
   autoFastThresholdBytes?: number;
   skipExamples?: boolean;
   skipPatternChecks?: boolean;
+  quiet?: boolean;
 }
 
 /**
@@ -236,10 +237,10 @@ async function validateSpec(
   filePath: string,
   cliOptions: CLIOptions
 ): Promise<void> {
-  const spinner = ora({
-    text: `Validating ${chalk.blueBright(filePath)}...`,
-    spinner: 'dots',
-  }).start();
+  const spinner: { succeed: (msg?: string) => void; fail: (msg?: string) => void } =
+    cliOptions.quiet
+      ? { succeed: () => {}, fail: () => {} }
+      : (ora({ text: `Validating ${chalk.blueBright(filePath)}...`, spinner: 'dots' }).start() as any);
 
   let parsedContent: unknown = null;
   let jsonAst: jsonc.Node | undefined = undefined;
@@ -643,6 +644,7 @@ export async function runCLI(args: string[]): Promise<void> {
           : options.autoFastThresholdBytes,
       skipExamples: opts.skipExamples ?? options.skipExamples,
       skipPatternChecks: opts.skipPatternChecks ?? options.skipPatternChecks,
+      quiet,
     };
 
     if (opts.interactive || !file) {

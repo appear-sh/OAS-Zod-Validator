@@ -40,4 +40,33 @@ describe('Performance options', () => {
     const issues = result.errors?.issues ?? [];
     expect(issues.length).toBeLessThanOrEqual(maxErrors);
   });
+
+  it('synthetic large spec smoke: fast vs strict runs', () => {
+    // Generate a medium-sized synthetic spec to keep CI runtime reasonable
+    const num = 1500;
+    const components: Record<string, unknown> = {};
+    for (let i = 0; i < num; i++) {
+      components[`S${i}`] = { type: 'object', properties: { id: { type: 'integer' } } };
+    }
+    const paths: Record<string, unknown> = {};
+    for (let i = 0; i < num; i++) {
+      paths[`/r/${i}`] = {
+        get: {
+          responses: {
+            '200': {
+              description: 'ok',
+              content: { 'application/json': { schema: { $ref: `#/components/schemas/S${i}` } } },
+            },
+          },
+        },
+      };
+    }
+    const content = JSON.stringify({ openapi: '3.0.3', info: { title: 'X', version: '1' }, components: { schemas: components }, paths });
+
+    const fast = validateOpenAPIDocument(content, { fastMode: true, noLocation: true, maxErrors: 5 });
+    const strict = validateOpenAPIDocument(content, { fastMode: false, noLocation: false, maxErrors: 5 });
+
+    expect(fast).toBeDefined();
+    expect(strict).toBeDefined();
+  });
 });
