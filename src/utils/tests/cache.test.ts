@@ -1,4 +1,5 @@
 import { ValidationCache } from '../cache.js';
+import { LRUCache } from '../cache.js';
 import { ValidationResult } from '../../schemas/validator.js';
 import { createJSONPointer } from '../../types/index.js';
 
@@ -67,6 +68,21 @@ describe('Validation Cache', () => {
     // Second and third items should still be in the cache
     expect(cache.getValidationResult('key2')).toBeDefined();
     expect(cache.getValidationResult('key3')).toBeDefined();
+  });
+
+  test('LRU semantics: get should promote key recency and evict least-recently used', () => {
+    // Directly test LRUCache behaviour via a small instance
+    const lru = new LRUCache<string, number>(2);
+    lru.set('a', 1); // keys: [a]
+    lru.set('b', 2); // keys: [a,b]
+    // Access 'a' to promote MRU → keys: [b,a]
+    expect(lru.get('a')).toBe(1);
+    // Insert 'c' triggers eviction of LRU 'b'
+    lru.set('c', 3);
+    // 'b' should be evicted; 'a' and 'c' should remain
+    expect(lru.get('b')).toBeUndefined();
+    expect(lru.get('a')).toBe(1);
+    expect(lru.get('c')).toBe(3);
   });
 
   test('should store and retrieve reference targets', () => {

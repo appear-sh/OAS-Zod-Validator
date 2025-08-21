@@ -55,7 +55,15 @@ export class LRUCache<K, V> {
    * Get an item from the cache
    */
   get(key: K): V | undefined {
-    return this.map.get(key);
+    const value = this.map.get(key);
+    if (value === undefined) return undefined;
+    // Promote to most recently used by moving key to the end
+    const index = this.keys.indexOf(key);
+    if (index !== -1) {
+      this.keys.splice(index, 1);
+      this.keys.push(key);
+    }
+    return value;
   }
 
   /**
