@@ -1,4 +1,5 @@
 import { ValidationCache } from '../cache.js';
+import { LRUCache } from '../cache.js';
 import { ValidationResult } from '../../schemas/validator.js';
 import { createJSONPointer } from '../../types/index.js';
 
@@ -69,6 +70,21 @@ describe('Validation Cache', () => {
     expect(cache.getValidationResult('key3')).toBeDefined();
   });
 
+  test('LRU semantics: get should promote key recency and evict least-recently used', () => {
+    // Directly test LRUCache behaviour via a small instance
+    const lru = new LRUCache<string, number>(2);
+    lru.set('a', 1); // keys: [a]
+    lru.set('b', 2); // keys: [a,b]
+    // Access 'a' to promote MRU → keys: [b,a]
+    expect(lru.get('a')).toBe(1);
+    // Insert 'c' triggers eviction of LRU 'b'
+    lru.set('c', 3);
+    // 'b' should be evicted; 'a' and 'c' should remain
+    expect(lru.get('b')).toBeUndefined();
+    expect(lru.get('a')).toBe(1);
+    expect(lru.get('c')).toBe(3);
+  });
+
   test('should store and retrieve reference targets', () => {
     // Create a direct instance
     const cache = new ValidationCache();
@@ -104,6 +120,15 @@ describe('Validation Cache', () => {
 
     // Key should be different
     expect(key1).not.toEqual(key3);
+
+    // Changing irrelevant options should not explode key size or cause instability
+    const noisyOptions = {
+      strict: true,
+      cache: { enabled: true, maxSize: 999 },
+      memory: { adaptiveCaching: true, maxMemoryTargetMB: 2048 },
+    } as any;
+    const key4 = cache.generateDocumentKey(testDocument, noisyOptions);
+    expect(typeof key4).toBe('string');
   });
 
   test('should reset all caches', () => {

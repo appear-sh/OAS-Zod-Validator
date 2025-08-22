@@ -1,7 +1,7 @@
-import { get } from 'lodash-es';
 import { ReferenceError, ErrorCode } from '../errors/index.js';
 import { createJSONPointer } from '../types/index.js';
 import { getValidationCache } from './cache.js';
+import { getByPointer } from './jsonPointer.js';
 
 /**
  * Verifies that all references in a document point to valid targets
@@ -58,8 +58,7 @@ export function verifyRefTargets(
         return; // Reference exists in cache
       }
 
-      const path = _refPointer.substring(2).split('/');
-      const target = get(doc, path);
+      const target = getByPointer(doc, _refPointer);
 
       if (!target) {
         throw new ReferenceError(

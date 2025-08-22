@@ -1,6 +1,13 @@
 import { validateFromYaml } from '../validateFromYaml.js';
 import { verifyRefTargets } from '../verifyRefTargets.js';
 import { ReferenceError } from '../../errors/validation.js';
+import {
+  encodePointerToken,
+  decodePointerToken,
+  splitPointer,
+  joinPointerTokens,
+  getByPointer,
+} from '../../utils/jsonPointer.js';
 
 import { describe, test, expect } from 'vitest';
 describe('Utils Coverage Improvements', () => {
@@ -156,6 +163,27 @@ paths:
 
       verifyRefTargets(doc, resolvedRefs);
       expect(resolvedRefs).toContain('#/components/schemas/Comment');
+    });
+  });
+
+  describe('jsonPointer utilities', () => {
+    test('encode/decode and traversal', () => {
+      expect(encodePointerToken('a/b')).toBe('a~1b');
+      expect(encodePointerToken('c~d')).toBe('c~0d');
+      expect(decodePointerToken('a~1b')).toBe('a/b');
+      expect(decodePointerToken('c~0d')).toBe('c~d');
+
+      const tokens = splitPointer('#/components/schemas/a~1b');
+      expect(tokens).toEqual(['components', 'schemas', 'a/b']);
+
+      const pointer = joinPointerTokens(['components', 'schemas', 'x/y']);
+      expect(pointer).toBe('#/components/schemas/x~1y');
+
+      const doc = {
+        components: { schemas: { arr: [{ id: 1 }, { id: 2 }] } },
+      } as const;
+      expect(getByPointer(doc, '#/components/schemas/arr/1/id')).toBe(2);
+      expect(getByPointer(doc, '#/components/schemas/missing')).toBeUndefined();
     });
   });
 });

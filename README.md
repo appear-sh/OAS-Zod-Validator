@@ -12,11 +12,11 @@
     <a href="https://docs.appear.sh/resources/open-source"><strong>Learn more »</strong></a>
     <br />
     <br />
-    <a href="https://www.appear.sh">Appear Website</a>
+    <a href="https://www.appear.sh">Appear site</a>
     ·
     <a href="https://github.com/appear-sh/OAS-Zod-Validator/issues">Issues</a>
     ·
-    <a href="https://www.appear.sh/productmap">Appear Product Map</a>
+    <a href="https://www.validator.appear.sh/">OSS API Schema Validator tool</a>
   </p>
 </p>
 
@@ -201,6 +201,27 @@ Create `.oas-validate.json` for persistent options:
 - [Validation Options](./docs/validation.md)
 - [Error Reference](./docs/errors.md)
 - [Examples](./docs/examples/)
+
+## Performance and large specs
+
+For very large specs (multi‑MB), the validator provides options to reduce CPU and memory while preserving correctness:
+
+- `fastMode`: Enables structural validation and skips heavy checks. Equivalent to enabling `skipExamples` and `skipPatternChecks`.
+- `noLocation`: Skips computing source locations; avoids building ASTs/Document for files (big speedup on large files).
+- `autoFastThresholdBytes`: Auto‑enable fast mode when content size exceeds this threshold. Defaults to ~15 MiB.
+- `maxErrors`: Cap the number of reported issues. Useful to short‑circuit runaway errors in huge inputs.
+- `skipExamples`: Skip validating `example` values.
+- `skipPatternChecks`: Skip expensive regex validations.
+
+CLI flags:
+
+- `--fast`, `--no-location`, `--max-errors <n>`, `--auto-fast-threshold <bytes>`, `--skip-examples`, `--skip-pattern-checks`, `--quiet`.
+
+Caching:
+
+- Validation results, schema parsing and `$ref` targets are cached with a true LRU.
+- Cache keys are compact and stable (hashed document signature + minimal options that affect semantics).
+- Adaptive memory options are supported; see `getValidationCache` for knobs.
 
 ## Development
 

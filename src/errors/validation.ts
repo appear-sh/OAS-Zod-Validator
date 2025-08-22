@@ -110,3 +110,19 @@ export class VersionError extends OpenAPIValidatorError {
     this.version = version;
   }
 }
+
+/**
+ * Error thrown when validation is aborted via AbortSignal or fail-fast policy
+ */
+export class AbortedError extends OpenAPIValidatorError {
+  constructor(
+    message = 'Validation aborted',
+    options?: { source?: string; context?: Record<string, unknown> }
+  ) {
+    super(message, {
+      code: ErrorCode.ABORTED,
+      source: options?.source,
+      context: options?.context,
+    });
+  }
+}

@@ -54,4 +54,5 @@ export enum ErrorCode {
 
   // Unexpected errors
   INTERNAL_ERROR = 'INTERNAL_ERROR',
+  ABORTED = 'ABORTED',
 }

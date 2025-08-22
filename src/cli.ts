@@ -39,6 +39,14 @@ export interface CLIOptions {
   interactive?: boolean;
   cacheEnabled?: boolean;
   cacheSize?: number;
+  // Performance/behaviour knobs
+  fast?: boolean;
+  noLocation?: boolean;
+  maxErrors?: number;
+  autoFastThresholdBytes?: number;
+  skipExamples?: boolean;
+  skipPatternChecks?: boolean;
+  quiet?: boolean;
 }
 
 /**
@@ -229,10 +237,15 @@ async function validateSpec(
   filePath: string,
   cliOptions: CLIOptions
 ): Promise<void> {
-  const spinner = ora({
-    text: `Validating ${chalk.blueBright(filePath)}...`,
-    spinner: 'dots',
-  }).start();
+  const spinner: {
+    succeed: (msg?: string) => void;
+    fail: (msg?: string) => void;
+  } = cliOptions.quiet
+    ? { succeed: () => {}, fail: () => {} }
+    : (ora({
+        text: `Validating ${chalk.blueBright(filePath)}...`,
+        spinner: 'dots',
+      }).start() as any);
 
   let parsedContent: unknown = null;
   let jsonAst: jsonc.Node | undefined = undefined;
@@ -287,6 +300,13 @@ async function validateSpec(
         enabled: cliOptions.cacheEnabled !== false,
         maxSize: cliOptions.cacheSize,
       },
+      // Performance/behaviour knobs passed to core
+      fastMode: cliOptions.fast,
+      noLocation: cliOptions.noLocation,
+      maxErrors: cliOptions.maxErrors,
+      autoFastThresholdBytes: cliOptions.autoFastThresholdBytes,
+      skipExamples: cliOptions.skipExamples,
+      skipPatternChecks: cliOptions.skipPatternChecks,
     };
 
     // Validate the plain JS object
@@ -557,7 +577,9 @@ async function runInteractiveMode(): Promise<{
  * @param args - Command line arguments
  */
 export async function runCLI(args: string[]): Promise<void> {
-  displayWelcome();
+  const quiet =
+    args.includes('--quiet') || args.includes('-q') || !process.stdout.isTTY;
+  if (!quiet) displayWelcome();
 
   const program = new Command()
     .name('oas-validate')
@@ -573,7 +595,19 @@ export async function runCLI(args: string[]): Promise<void> {
     .option('-i, --interactive', 'Run in interactive mode')
     .option('-c, --config <path>', 'Path to config file')
     .option('--no-cache', 'Disable validation caching')
-    .option('--cache-size <size>', 'Set maximum cache size', parseInt);
+    .option('--cache-size <size>', 'Set maximum cache size', parseInt)
+    // Performance/behaviour knobs
+    .option('--fast', 'Enable fast mode (skips heavy checks)')
+    .option('--no-location', 'Skip computing locations for errors')
+    .option('--max-errors <n>', 'Cap number of reported errors', parseInt)
+    .option(
+      '--auto-fast-threshold <bytes>',
+      'Auto-enable fast mode above this size (bytes)',
+      parseInt
+    )
+    .option('--skip-examples', 'Skip example validations')
+    .option('--skip-pattern-checks', 'Skip string pattern validations')
+    .option('-q, --quiet', 'Suppress banner and spinner output');
 
   program.parse(args);
 
@@ -606,12 +640,39 @@ export async function runCLI(args: string[]): Promise<void> {
       format: opts.json ? 'json' : options.format,
       cacheEnabled: opts.noCache !== true,
       cacheSize: opts.cacheSize,
+      fast: opts.fast ?? options.fast,
+      noLocation: opts.noLocation ?? options.noLocation,
+      maxErrors:
+        typeof opts.maxErrors === 'number' ? opts.maxErrors : options.maxErrors,
+      autoFastThresholdBytes:
+        typeof opts.autoFastThreshold === 'number'
+          ? opts.autoFastThreshold
+          : options.autoFastThresholdBytes,
+      skipExamples: opts.skipExamples ?? options.skipExamples,
+      skipPatternChecks: opts.skipPatternChecks ?? options.skipPatternChecks,
+      quiet,
     };
 
     if (opts.interactive || !file) {
       const result = await runInteractiveMode();
       await validateSpec(result.filePath, { ...options, ...result.options });
     } else {
+      // Use fs.stat to pre-compute file size and set auto-fast threshold
+      try {
+        const stat = await fs.promises.stat(file);
+        if (!options.autoFastThresholdBytes) {
+          options.autoFastThresholdBytes = 15 * 1024 * 1024; // default
+        }
+        // If file is huge and user didn't force locations, prefer noLocation fast parsing
+        if (
+          stat.size > options.autoFastThresholdBytes &&
+          options.noLocation !== false
+        ) {
+          options.noLocation = true;
+        }
+      } catch {
+        // ignore stat errors; proceed
+      }
       await validateSpec(file, options);
     }
   } catch (err) {

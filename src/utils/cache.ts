@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ValidationOptions, ValidationResult } from '../schemas/validator.js';
 import { JSONPointer } from '../types/index.js';
+import { fnv1a32, stableStringify } from './hash.js';
 // import { OpenAPISpec } from '../schemas/types.js'; // Removed unused import
 import {
   MemoryOptions,
@@ -55,7 +56,15 @@ export class LRUCache<K, V> {
    * Get an item from the cache
    */
   get(key: K): V | undefined {
-    return this.map.get(key);
+    const value = this.map.get(key);
+    if (value === undefined) return undefined;
+    // Promote to most recently used by moving key to the end
+    const index = this.keys.indexOf(key);
+    if (index !== -1) {
+      this.keys.splice(index, 1);
+      this.keys.push(key);
+    }
+    return value;
   }
 
   /**
@@ -233,26 +242,28 @@ export class ValidationCache {
       document !== null &&
       'index' in document
     ) {
-      // For test documents, include the index directly to guarantee key uniqueness
       const doc = document as Record<string, unknown>;
-      return `test_doc_${doc.index}_${JSON.stringify(options)}`;
+      const optSig = this.generateOptionsSignature(options);
+      return `test_doc_${String(doc.index)}_${optSig}`;
     }
 
-    // Regular document handling
-    const docStr =
-      typeof document === 'object' && document !== null
-        ? JSON.stringify({
-            openapi: (document as Record<string, unknown>).openapi,
-            info: (document as Record<string, any>).info?.version,
-            paths: Object.keys(
-              ((document as Record<string, unknown>).paths as
-                | Record<string, unknown>
-                | undefined) || {}
-            ).length,
-          })
-        : String(document);
+    // Build a compact, stable document signature
+    let docSig = 'scalar:' + String(document);
+    if (typeof document === 'object' && document !== null) {
+      const docObj = document as Record<string, any>;
+      const openapi = typeof docObj.openapi === 'string' ? docObj.openapi : '';
+      const version = docObj.info?.version ?? '';
+      const pathCount = docObj.paths
+        ? Object.keys(docObj.paths as Record<string, unknown>).length
+        : 0;
+      const compCount = docObj.components
+        ? Object.keys(docObj.components as Record<string, unknown>).length
+        : 0;
+      docSig = stableStringify({ openapi, version, pathCount, compCount });
+    }
 
-    return `${docStr}_${JSON.stringify(options)}`;
+    const optSig = this.generateOptionsSignature(options);
+    return `${fnv1a32(docSig)}_${optSig}`;
   }
 
   /**
@@ -320,11 +331,27 @@ export class ValidationCache {
   ): string {
     // For test documents with index
     if ('index' in doc) {
-      return `ref_${refPointer}_test_doc_${doc.index}`;
+      return `ref_${refPointer}_test_doc_${String((doc as any).index)}`;
     }
-
-    // Regular document handling
+    // Regular document handling with hashed doc key
     return `ref_${refPointer}_${this.generateDocumentKey(doc, {})}`;
+  }
+
+  /**
+   * Generate a minimal, stable options signature impacting validation semantics
+   */
+  private generateOptionsSignature(options: ValidationOptions): string {
+    // Only include options that change validation semantics
+    const minimal = {
+      strict: options.strict ?? false,
+      allowFutureOASVersions: options.allowFutureOASVersions ?? false,
+      reqRL: options.strictRules?.requireRateLimitHeaders ?? false,
+      fast: options.fastMode ?? false,
+      skipEx: options.skipExamples ?? false,
+      skipPat: options.skipPatternChecks ?? false,
+      maxErr: typeof options.maxErrors === 'number' ? options.maxErrors : 0,
+    };
+    return fnv1a32(stableStringify(minimal));
   }
 
   /**

@@ -13,6 +13,7 @@ import {
   SchemaValidationError,
   StrictValidationError,
   VersionError,
+  AbortedError,
 } from '../errors/index.js';
 import { OpenAPIVersion, createOpenAPIVersion } from '../types/index.js';
 import {
@@ -28,7 +29,7 @@ import {
   getLocationFromYamlAst,
 } from '../utils/locationUtils.js';
 import { Range, LocatedZodIssue } from '../types/location.js';
-import { get } from 'lodash-es';
+import { getByPointer } from '../utils/jsonPointer.js';
 import { createJSONPointer, JSONPointer } from '../types/index.js';
 import { ParameterObject as ParameterObjectSchema } from './paths.js';
 import { ReferenceObject as ReferenceObjectSchema } from './reference.js';
@@ -54,6 +55,30 @@ export interface ValidationOptions {
 
   /** Memory optimization options - shorthand for cache.memory */
   memory?: MemoryOptions;
+
+  /** Force structural/fast validation mode (reduced work, no locations) */
+  fastMode?: boolean;
+
+  /** Auto-enable fast mode when content byte size exceeds this threshold (defaults to 15 MiB) */
+  autoFastThresholdBytes?: number;
+
+  /** Cap the number of issues collected/returned */
+  maxErrors?: number;
+
+  /** Skip computing source locations (line/column). Avoids AST build. */
+  noLocation?: boolean;
+
+  /** Skip validating examples to save time on large specs */
+  skipExamples?: boolean;
+
+  /** Skip string pattern checks to save time on large specs */
+  skipPatternChecks?: boolean;
+
+  /** AbortSignal to cancel validation when issues arise or externally */
+  signal?: AbortSignal;
+
+  /** Fail fast on first issue (aborts immediately when an issue is detected) */
+  failFast?: boolean;
 }
 
 /**
@@ -132,7 +157,7 @@ function validateRateLimitHeaders(
   const issues: z.ZodIssue[] = [];
 
   const paths = ((doc as any).paths || {}) as Record<string, unknown>;
-  for (const [pathKey, pathItem] of Object.entries(
+  outer_paths: for (const [pathKey, pathItem] of Object.entries(
     paths as Record<string, unknown>
   )) {
     if (!pathItem || typeof pathItem !== 'object') continue;
@@ -161,6 +186,13 @@ function validateRateLimitHeaders(
             path: ['paths', pathKey, methodKey, 'responses', status, 'headers'],
             message: 'Rate limiting headers are required in strict mode',
           });
+          if (
+            typeof options.maxErrors === 'number' &&
+            options.maxErrors > 0 &&
+            issues.length >= options.maxErrors
+          ) {
+            break outer_paths;
+          }
         }
       }
     }
@@ -213,11 +245,14 @@ const createErrorMap = (options: ValidationOptions) => {
  * @param doc - The OpenAPI document to validate
  * @returns ZodError if validation fails, otherwise undefined
  */
-function validateAPIPatterns(doc: OpenAPISpec): z.ZodError | undefined {
+function validateAPIPatterns(
+  doc: OpenAPISpec,
+  options?: ValidationOptions
+): z.ZodError | undefined {
   const issues: z.ZodIssue[] = [];
 
   const paths = (doc as Record<string, unknown>).paths || {};
-  for (const [pathKey, pathItem] of Object.entries(paths)) {
+  outer_api: for (const [pathKey, pathItem] of Object.entries(paths)) {
     if (!pathItem || typeof pathItem !== 'object') continue;
 
     // Validate bulk operations pattern
@@ -240,6 +275,14 @@ function validateAPIPatterns(doc: OpenAPISpec): z.ZodError | undefined {
       } catch (error) {
         if (error instanceof z.ZodError) {
           issues.push(...error.issues);
+          if (
+            options &&
+            typeof options.maxErrors === 'number' &&
+            options.maxErrors > 0 &&
+            issues.length >= options.maxErrors
+          ) {
+            break outer_api;
+          }
         }
       }
     }
@@ -266,6 +309,14 @@ function validateAPIPatterns(doc: OpenAPISpec): z.ZodError | undefined {
       } catch (error) {
         if (error instanceof z.ZodError) {
           issues.push(...error.issues);
+          if (
+            options &&
+            typeof options.maxErrors === 'number' &&
+            options.maxErrors > 0 &&
+            issues.length >= options.maxErrors
+          ) {
+            break outer_api;
+          }
         }
       }
     }
@@ -314,8 +365,22 @@ export function validateOpenAPI(
   const resolvedRefs: string[] = [];
 
   try {
+    // Early abort before any heavy work
+    if (options.signal?.aborted) {
+      throw new AbortedError('Validation aborted', {
+        context: { reason: options.signal.reason },
+      });
+    }
+
     const docAsObject = document as Record<string, unknown>;
     let parsed: OpenAPISpec;
+    const checkAbort = () => {
+      if (options.signal?.aborted) {
+        throw new AbortedError('Validation aborted', {
+          context: { reason: options.signal.reason },
+        });
+      }
+    };
 
     const parseParams: any = {
       path: [],
@@ -323,6 +388,11 @@ export function validateOpenAPI(
       data: {
         strict: options.strict,
         strictRules: options.strictRules,
+        fastMode: options.fastMode === true,
+        skipExamples:
+          options.skipExamples === true || options.fastMode === true,
+        skipPatternChecks:
+          options.skipPatternChecks === true || options.fastMode === true,
       },
     };
 
@@ -353,26 +423,79 @@ export function validateOpenAPI(
     if (options.strict) {
       const allStrictIssues: z.ZodIssue[] = [];
 
+      checkAbort();
       verifyRefTargets(
         parsed as unknown as Record<string, unknown>,
         resolvedRefs
       );
 
-      const operationIdIssues = validateOperationIdUniqueness(parsed as any);
+      const operationIdIssues = validateOperationIdUniqueness(
+        parsed as any,
+        options
+      );
       if (operationIdIssues.length > 0) {
         allStrictIssues.push(...operationIdIssues);
+        if (
+          typeof options.maxErrors === 'number' &&
+          options.maxErrors > 0 &&
+          allStrictIssues.length >= options.maxErrors
+        ) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
       }
 
       // Path ambiguity check
-      const pathAmbiguityIssues = validatePathAmbiguity(parsed as any);
+      checkAbort();
+      const pathAmbiguityIssues = validatePathAmbiguity(parsed as any, options);
       if (pathAmbiguityIssues.length > 0) {
         allStrictIssues.push(...pathAmbiguityIssues);
+        if (options.failFast) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
+        if (
+          typeof options.maxErrors === 'number' &&
+          options.maxErrors > 0 &&
+          allStrictIssues.length >= options.maxErrors
+        ) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
       }
 
       // Tag uniqueness check
-      const tagUniquenessIssues = validateTagUniqueness(parsed as any);
+      checkAbort();
+      const tagUniquenessIssues = validateTagUniqueness(parsed as any, options);
       if (tagUniquenessIssues.length > 0) {
         allStrictIssues.push(...tagUniquenessIssues);
+        if (options.failFast) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
+        if (
+          typeof options.maxErrors === 'number' &&
+          options.maxErrors > 0 &&
+          allStrictIssues.length >= options.maxErrors
+        ) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
       }
 
       // Iterate through paths and operations for parameter validation
@@ -381,6 +504,7 @@ export function validateOpenAPI(
         for (const [pathKey, pathItemValue] of Object.entries(
           parsedDoc.paths
         )) {
+          checkAbort();
           if (
             !pathItemValue ||
             typeof pathItemValue !== 'object' ||
@@ -418,30 +542,66 @@ export function validateOpenAPI(
             const operation = pathItem[method]; // Operation type is already { parameters?: ... }
 
             if (operation && typeof operation === 'object') {
+              checkAbort();
               const parameterValIssues = collectAndValidateOperationParameters(
                 pathKey,
                 method,
                 pathItem.parameters as ParameterOrReference[] | undefined,
                 operation.parameters as ParameterOrReference[] | undefined,
-                parsed // The full document, used by resolveParameter
+                parsed, // The full document, used by resolveParameter
+                options
               );
               if (parameterValIssues.length > 0) {
                 allStrictIssues.push(...parameterValIssues);
+                if (options.failFast) {
+                  throw new SchemaValidationError(
+                    'Strict OpenAPI validation failed.',
+                    new z.ZodError(allStrictIssues),
+                    { context: { strict: true } }
+                  );
+                }
+                if (
+                  typeof options.maxErrors === 'number' &&
+                  options.maxErrors > 0 &&
+                  allStrictIssues.length >= options.maxErrors
+                ) {
+                  throw new SchemaValidationError(
+                    'Strict OpenAPI validation failed.',
+                    new z.ZodError(allStrictIssues),
+                    { context: { strict: true } }
+                  );
+                }
               }
             }
           }
         }
       }
 
-      const apiPatternsError = validateAPIPatterns(parsed);
+      checkAbort();
+      const apiPatternsError = validateAPIPatterns(parsed, options);
       if (apiPatternsError) {
         allStrictIssues.push(...apiPatternsError.issues);
+        if (options.failFast) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
       }
 
       if (options.strictRules?.requireRateLimitHeaders) {
+        checkAbort();
         const rateLimitError = validateRateLimitHeaders(parsed, options);
         if (rateLimitError) {
           allStrictIssues.push(...rateLimitError.issues);
+          if (options.failFast) {
+            throw new SchemaValidationError(
+              'Strict OpenAPI validation failed.',
+              new z.ZodError(allStrictIssues),
+              { context: { strict: true } }
+            );
+          }
         }
       }
 
@@ -573,76 +733,139 @@ export function validateOpenAPIDocument(
   options: ValidationOptions = {}
 ): LocatedValidationResult {
   let parsedContent: unknown;
-  let fileType: 'json' | 'yaml';
+  let fileType: 'json' | 'yaml' | 'unknown' = 'unknown';
   let rootNode: jsonc.Node | undefined;
   let yamlDoc: YAML.Document.Parsed | undefined;
-  const parseErrors: jsonc.ParseError[] = [];
 
-  // Try parsing as JSON first
-  try {
-    // Use parseTree to get AST for location mapping
-    rootNode = jsonc.parseTree(content, parseErrors);
-    if (parseErrors.length > 0) {
-      // Check if errors are actual structural errors or just comments
-      const structuralErrors = parseErrors.filter(
-        (e) => e.error !== jsonc.ParseErrorCode.InvalidCommentToken
-      );
-      if (structuralErrors.length > 0) {
-        throw new Error(`JSON parsing failed: ${structuralErrors[0].error}`);
-      }
-      // If only non-structural errors, proceed but maybe warn?
-    }
-    // Use regular parse for the object Zod will validate
-    // Allow trailing commas as jsonc handles them
-    parsedContent = jsonc.parse(content, [], { allowTrailingComma: true });
-    fileType = 'json';
-  } catch /* No variable needed */ {
-    // If JSON parsing fails, try YAML
+  // Determine whether to avoid AST/YAML document creation (no locations)
+  const defaultThreshold = 15 * 1024 * 1024; // 15 MiB
+  const threshold =
+    typeof options.autoFastThresholdBytes === 'number'
+      ? options.autoFastThresholdBytes
+      : defaultThreshold;
+  const contentBytes =
+    typeof Buffer !== 'undefined' && (Buffer as any).byteLength
+      ? (Buffer as any).byteLength(content, 'utf8')
+      : content.length;
+  const shouldFastMode = Boolean(options.fastMode) || contentBytes > threshold;
+  const noLocation = Boolean(options.noLocation) || shouldFastMode;
+  const effectiveOptions: ValidationOptions = {
+    ...options,
+    fastMode: shouldFastMode || Boolean(options.fastMode),
+    // Propagate implied skips when auto-fast triggers
+    skipExamples:
+      options.skipExamples === true ||
+      shouldFastMode ||
+      options.fastMode === true,
+    skipPatternChecks:
+      options.skipPatternChecks === true ||
+      shouldFastMode ||
+      options.fastMode === true,
+  };
+
+  if (noLocation) {
+    // Parse without building AST/Document for speed
     try {
-      yamlDoc = YAML.parseDocument(content, { strict: false }); // Use non-strict mode potentially?
-      if (yamlDoc.errors.length > 0) {
-        // Simplify: Report only the first YAML parse error message
+      parsedContent = JSON.parse(content);
+      fileType = 'json';
+    } catch {
+      try {
+        parsedContent = YAML.parse(content, { strict: false });
+        fileType = 'yaml';
+      } catch (yamlError) {
         return {
           valid: false,
           errors: new z.ZodError([
             {
               code: z.ZodIssueCode.custom,
               path: [],
-              message: `YAML parsing failed: ${yamlDoc.errors[0].message}`,
+              message:
+                yamlError instanceof Error
+                  ? `Failed to parse as JSON or YAML: ${yamlError.message}`
+                  : 'Failed to parse as JSON or YAML',
             },
           ]),
           resolvedRefs: [],
         };
       }
-      parsedContent = yamlDoc.toJS();
-      fileType = 'yaml';
-    } catch (yamlError) {
-      // If both fail, return a generic parsing error
-      return {
-        valid: false,
-        errors: new z.ZodError([
-          {
-            code: z.ZodIssueCode.custom,
-            path: [],
-            message:
-              yamlError instanceof Error
-                ? `Failed to parse as JSON or YAML: ${yamlError.message}`
-                : 'Failed to parse as JSON or YAML',
-          },
-        ]),
-        resolvedRefs: [],
-      };
+    }
+  } else {
+    const parseErrors: jsonc.ParseError[] = [];
+    // Try parsing as JSON first with AST
+    try {
+      rootNode = jsonc.parseTree(content, parseErrors);
+      if (parseErrors.length > 0) {
+        const structuralErrors = parseErrors.filter(
+          (e) => e.error !== jsonc.ParseErrorCode.InvalidCommentToken
+        );
+        if (structuralErrors.length > 0) {
+          throw new Error(
+            `JSON parsing failed: ${jsonc.printParseErrorCode(
+              structuralErrors[0].error
+            )}`
+          );
+        }
+      }
+      parsedContent = jsonc.parse(content, [], { allowTrailingComma: true });
+      fileType = 'json';
+    } catch /* No variable needed */ {
+      // If JSON parsing fails, try YAML with Document for location mapping
+      try {
+        yamlDoc = YAML.parseDocument(content, { strict: false });
+        if (yamlDoc.errors.length > 0) {
+          return {
+            valid: false,
+            errors: new z.ZodError([
+              {
+                code: z.ZodIssueCode.custom,
+                path: [],
+                message: `YAML parsing failed: ${yamlDoc.errors[0].message}`,
+              },
+            ]),
+            resolvedRefs: [],
+          };
+        }
+        parsedContent = yamlDoc.toJS();
+        fileType = 'yaml';
+      } catch (yamlError) {
+        return {
+          valid: false,
+          errors: new z.ZodError([
+            {
+              code: z.ZodIssueCode.custom,
+              path: [],
+              message:
+                yamlError instanceof Error
+                  ? `Failed to parse as JSON or YAML: ${yamlError.message}`
+                  : 'Failed to parse as JSON or YAML',
+            },
+          ]),
+          resolvedRefs: [],
+        };
+      }
     }
   }
 
   // Now validate the parsed content using the existing function
-  const validationResult = validateOpenAPI(parsedContent, options);
+  const validationResult = validateOpenAPI(parsedContent, effectiveOptions);
 
   // If validation failed, augment errors with location
   if (!validationResult.valid && validationResult.errors) {
-    const locatedIssues: LocatedZodIssue[] = (
-      validationResult.errors as z.ZodError
-    ).issues.map((issue) => {
+    const allIssues = (validationResult.errors as z.ZodError).issues;
+    const limitedIssues =
+      typeof options.maxErrors === 'number' && options.maxErrors > 0
+        ? allIssues.slice(0, options.maxErrors)
+        : allIssues;
+
+    if (noLocation) {
+      return {
+        valid: false,
+        errors: new z.ZodError(limitedIssues as any),
+        resolvedRefs: validationResult.resolvedRefs,
+      };
+    }
+
+    const locatedIssues: LocatedZodIssue[] = limitedIssues.map((issue) => {
       let range: Range | undefined;
       try {
         if (fileType === 'json' && rootNode) {
@@ -692,7 +915,7 @@ export function validateOpenAPIDocument(
       return locatedIssue;
     });
 
-    // Return result with located issues
+    // Return result with located issues (respecting maxErrors)
     return {
       valid: false,
       // Create a new ZodError instance with the augmented issues
@@ -711,7 +934,10 @@ export function validateOpenAPIDocument(
  * @param doc The OpenAPI document to validate.
  * @returns An array of ZodIssue objects if duplicates are found, otherwise an empty array.
  */
-function validateOperationIdUniqueness(doc: OpenAPISlice): z.ZodIssue[] {
+function validateOperationIdUniqueness(
+  doc: OpenAPISlice,
+  options?: ValidationOptions
+): z.ZodIssue[] {
   const issues: z.ZodIssue[] = [];
   const encounteredOperationIds = new Set<string>();
 
@@ -754,6 +980,14 @@ function validateOperationIdUniqueness(doc: OpenAPISlice): z.ZodIssue[] {
               path: ['paths', pathKey, method, 'operationId'],
               message: `Duplicate operationId '${operation.operationId}' found. operationId MUST be unique across all operations.`,
             });
+            if (
+              options &&
+              typeof options.maxErrors === 'number' &&
+              options.maxErrors > 0 &&
+              issues.length >= options.maxErrors
+            ) {
+              return issues;
+            }
           } else {
             encounteredOperationIds.add(operation.operationId);
           }
@@ -844,7 +1078,8 @@ function collectAndValidateOperationParameters(
   method: string,
   rawPathItemParams: ReadonlyArray<ParameterOrReference> | undefined,
   rawOperationParams: ReadonlyArray<ParameterOrReference> | undefined,
-  document: OpenAPISpec
+  document: OpenAPISpec,
+  options?: ValidationOptions
 ): z.ZodIssue[] {
   let allIssues: z.ZodIssue[] = [];
   const cache = getValidationCache();
@@ -885,8 +1120,10 @@ function collectAndValidateOperationParameters(
     }
 
     // If not in cache, resolve using lodash.get
-    const path = jsonPointer.substring(2).split('/');
-    const target = get(doc, path);
+    const target = getByPointer(
+      doc as unknown as Record<string, unknown>,
+      jsonPointer
+    );
 
     if (!target) {
       // Reference not found, issue should be caught by verifyRefTargets
@@ -926,6 +1163,14 @@ function collectAndValidateOperationParameters(
       'parameters',
     ])
   );
+  if (
+    options &&
+    typeof options.maxErrors === 'number' &&
+    options.maxErrors > 0 &&
+    allIssues.length >= options.maxErrors
+  ) {
+    return allIssues;
+  }
 
   const resolvedOperationParams: ResolvedParameter[] = [];
   if (rawOperationParams) {
@@ -942,6 +1187,14 @@ function collectAndValidateOperationParameters(
       'parameters',
     ])
   );
+  if (
+    options &&
+    typeof options.maxErrors === 'number' &&
+    options.maxErrors > 0 &&
+    allIssues.length >= options.maxErrors
+  ) {
+    return allIssues;
+  }
 
   // If no internal duplication issues found in the *resolved* lists,
   // then the override logic can be applied.
@@ -970,7 +1223,10 @@ function collectAndValidateOperationParameters(
  * @param doc The OpenAPI document to validate.
  * @returns An array of ZodIssue objects if ambiguities are found, otherwise an empty array.
  */
-function validatePathAmbiguity(doc: OpenAPISlice): z.ZodIssue[] {
+function validatePathAmbiguity(
+  doc: OpenAPISlice,
+  options?: ValidationOptions
+): z.ZodIssue[] {
   const issues: z.ZodIssue[] = [];
   if (!doc.paths) {
     return issues;
@@ -999,6 +1255,14 @@ function validatePathAmbiguity(doc: OpenAPISlice): z.ZodIssue[] {
         path: ['paths'], // General path for this type of document-wide issue
         message: `Ambiguous path templates found. The following paths are structurally equivalent: ${originalPaths.join(', ')}. Normalized form: ${normalized}`,
       });
+      if (
+        options &&
+        typeof options.maxErrors === 'number' &&
+        options.maxErrors > 0 &&
+        issues.length >= options.maxErrors
+      ) {
+        return issues;
+      }
       // Optionally, create an issue for each specific conflicting path as well,
       // though a single issue listing all conflicts for a given normalized form is often sufficient.
       // For example:
@@ -1021,7 +1285,10 @@ function validatePathAmbiguity(doc: OpenAPISlice): z.ZodIssue[] {
  * @param doc The OpenAPI document to validate.
  * @returns An array of ZodIssue objects if duplicate tag names are found, otherwise an empty array.
  */
-function validateTagUniqueness(doc: OpenAPISlice): z.ZodIssue[] {
+function validateTagUniqueness(
+  doc: OpenAPISlice,
+  options?: ValidationOptions
+): z.ZodIssue[] {
   const issues: z.ZodIssue[] = [];
   if (!doc.tags || !Array.isArray(doc.tags)) {
     return issues;
@@ -1042,6 +1309,14 @@ function validateTagUniqueness(doc: OpenAPISlice): z.ZodIssue[] {
           path: ['tags', i, 'name'], // Path to the duplicate tag's name
           message: `Duplicate tag name found: "${tagName}". Tag names MUST be unique.`,
         });
+        if (
+          options &&
+          typeof options.maxErrors === 'number' &&
+          options.maxErrors > 0 &&
+          issues.length >= options.maxErrors
+        ) {
+          return issues;
+        }
       } else {
         encounteredTagNames.add(tagName);
       }
@@ -1053,6 +1328,14 @@ function validateTagUniqueness(doc: OpenAPISlice): z.ZodIssue[] {
         path: ['tags', i],
         message: 'Invalid tag object found in global tags array.',
       });
+      if (
+        options &&
+        typeof options.maxErrors === 'number' &&
+        options.maxErrors > 0 &&
+        issues.length >= options.maxErrors
+      ) {
+        return issues;
+      }
     }
   }
   return issues;
