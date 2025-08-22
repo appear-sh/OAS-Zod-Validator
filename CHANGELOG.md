@@ -1,5 +1,11 @@
 # @appear.sh/oas-zod-validator
 
+## 1.5.1
+
+### Patch Changes
+
+- 81681be: Better handling for larger specs
+
 ## 1.5.0
 
 ### Minor Changes
