@@ -393,6 +393,9 @@ export function validateOpenAPI(
           options.skipExamples === true || options.fastMode === true,
         skipPatternChecks:
           options.skipPatternChecks === true || options.fastMode === true,
+        // Pass version awareness into schema parsing so core schemas can
+        // distinguish OAS 3.0 vs 3.1 behaviours (e.g., type arrays, null type)
+        isOAS31: false as boolean,
       },
     };
 
@@ -401,13 +404,16 @@ export function validateOpenAPI(
       typeof docAsObject.openapi === 'string' &&
       docAsObject.openapi.startsWith('3.')
     ) {
+      // Determine 3.1 semantics from the actual string
+      parseParams.data.isOAS31 = docAsObject.openapi.startsWith('3.1');
       parsed = OpenAPIObject31.parse(
         docAsObject,
         parseParams
       ) as unknown as OpenAPISpec;
     } else {
       const version = detectOpenAPIVersion(docAsObject as any);
-      if (version.startsWith('3.1')) {
+      parseParams.data.isOAS31 = version.startsWith('3.1');
+      if (parseParams.data.isOAS31) {
         parsed = OpenAPIObject31.parse(
           docAsObject as any,
           parseParams

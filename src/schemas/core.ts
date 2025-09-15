@@ -77,6 +77,19 @@ export const getRootType = memoize(_getRootType, {
   },
 });
 
+// Helpers for handling multi-type arrays in OAS 3.1
+function getTypesSetFromValue(typeVal: unknown): Set<string> | undefined {
+  if (Array.isArray(typeVal)) return new Set(typeVal as string[]);
+  if (typeof typeVal === 'string') return new Set([typeVal]);
+  return undefined;
+}
+
+function hasType(ctx: any, expected: string): boolean {
+  const raw = _getRootType(ctx);
+  const set = getTypesSetFromValue(raw);
+  return set ? set.has(expected) : false;
+}
+
 // Improved schema object with more specific types and better error messages
 export const SchemaObject: z.ZodType = z.lazy(() => {
   // Preprocessor to select ReferenceObject if $ref exists, stripping extraneous keys
@@ -91,14 +104,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
   );
   const baseSchema = z
     .object({
-      type: z.enum([
-        'string',
-        'number',
-        'integer',
-        'boolean',
-        'array',
-        'object',
-      ]),
+      type: z.enum(['string', 'number', 'integer', 'boolean', 'array', 'object']),
       // Allow any string for format per OAS (open value), but keep type checks for known formats
       format: z
         .string()
@@ -388,8 +394,11 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           Boolean((ctx as any)?.options?.data?.skipExamples) || fastMode;
         const skipPatternChecks =
           Boolean((ctx as any)?.options?.data?.skipPatternChecks) || fastMode;
+        const isArrayOnly = schema.type === 'array';
+        const isObjectOnly = schema.type === 'object';
+        const hasNumericType = schema.type === 'number' || schema.type === 'integer';
         // Validate that array types have items
-        if (schema.type === 'array' && !schema.items) {
+        if (isArrayOnly && !schema.items) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: 'Array types must define items',
@@ -397,11 +406,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           });
         }
         // Validate that object types have properties or additionalProperties
-        if (
-          schema.type === 'object' &&
-          !schema.properties &&
-          !schema.additionalProperties
-        ) {
+        if (isObjectOnly && !schema.properties && !schema.additionalProperties) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message:
@@ -414,7 +419,7 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           schema.format &&
           ['int32', 'int64', 'float', 'double'].includes(schema.format)
         ) {
-          if (schema.type !== 'number' && schema.type !== 'integer') {
+          if (!hasNumericType) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
               message: `Format '${schema.format}' can only be used with numeric types (number, integer)`,

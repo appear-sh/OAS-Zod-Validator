@@ -88,6 +88,37 @@ describe('OpenAPI 3.1 Specific Features', () => {
     expect(result.valid).toBe(true);
   });
 
+  test('accepts type arrays and mixed oneOf in 3.1', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: { title: 'Mixed Types', version: '1.0.0' },
+      paths: {},
+      components: {
+        schemas: {
+          Attempt1: {
+            type: ['array', 'string', 'integer', 'number', 'boolean', 'object', 'null'],
+          },
+          AnyValue: {
+            oneOf: [
+              { type: 'string' },
+              { type: 'number' },
+              { type: 'integer' },
+              { type: 'boolean' },
+              { type: 'array', items: {} },
+              { type: 'object' },
+            ],
+          },
+          Attempt3: {
+            $ref: '#/components/schemas/AnyValue',
+          },
+        },
+      },
+    } as const;
+
+    const result = validateOpenAPI(spec);
+    expect(result.valid).toBe(true);
+  });
+
   test('rejects invalid jsonSchemaDialect URLs', () => {
     const spec = {
       openapi: '3.1.0',
