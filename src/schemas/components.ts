@@ -137,9 +137,7 @@ export const ComponentsObject = z
 export type Components = z.infer<typeof ComponentsObject>;
 
 // 3.1 variant using SchemaObject31 for component schemas
-export const ComponentsObject31 = (
-  ComponentsObject as unknown as z.ZodObject<any>
-).safeExtend({
+export const ComponentsObject31 = ComponentsObject.safeExtend({
   schemas: z
     .record(
       z.string().regex(/^[a-zA-Z0-9._-]+$/, {
