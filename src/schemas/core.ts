@@ -660,6 +660,55 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
   );
 });
 
+// OpenAPI 3.1 / JSON Schema 2020-12 compatible SchemaObject
+// - Supports type as string or array of strings
+// - Supports composition keywords (oneOf, anyOf, allOf, not)
+// - Does NOT enforce array items or object properties/additionalProperties
+export const SchemaObject31: z.ZodType = z.lazy(() => {
+  const BaseType = z.enum([
+    'string',
+    'number',
+    'integer',
+    'boolean',
+    'array',
+    'object',
+  ]);
+
+  // ReferenceObject from this module already validates generic component/path refs
+  const SchemaOrRef31: z.ZodType = z.union([
+    z.lazy(() => SchemaObject31),
+    ReferenceObject,
+  ]);
+
+  return z
+    .object({
+      // 3.1 allows type arrays and type to be omitted
+      type: z.union([BaseType, z.array(BaseType)]).optional(),
+      format: z.string().optional(),
+      title: z.string().optional(),
+      description: z.string().optional(),
+      default: z.unknown().optional(),
+      nullable: z.boolean().optional(),
+      deprecated: z.boolean().optional(),
+      example: z.unknown().optional(),
+      enum: z.array(z.unknown()).optional(),
+
+      // Composition keywords
+      oneOf: z.array(SchemaOrRef31).optional(),
+      anyOf: z.array(SchemaOrRef31).optional(),
+      allOf: z.array(SchemaOrRef31).optional(),
+      not: SchemaOrRef31.optional(),
+
+      // Structural keywords (relaxed compared to 3.0 rules)
+      items: z.union([SchemaOrRef31, z.array(SchemaOrRef31)]).optional(),
+      properties: z.record(z.string(), SchemaOrRef31).optional(),
+      additionalProperties: z.union([z.boolean(), SchemaOrRef31]).optional(),
+      required: z.array(z.string()).optional(),
+      // Leave other JSON Schema keywords open via passthrough
+    })
+    .passthrough();
+});
+
 // Basic extensible object that allows any additional properties
 export const ExtensibleObject = z.object({}).passthrough();
 

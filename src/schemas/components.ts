@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { SchemaObject } from './core.js';
+import { SchemaObject, SchemaObject31 } from './core.js';
 import {
   ReferenceObject,
   SchemaReferenceObject,
@@ -135,3 +135,20 @@ export const ComponentsObject = z
   });
 
 export type Components = z.infer<typeof ComponentsObject>;
+
+// 3.1 variant using SchemaObject31 for component schemas
+export const ComponentsObject31 = (
+  ComponentsObject as unknown as z.ZodObject<any>
+).safeExtend({
+  schemas: z
+    .record(
+      z.string().regex(/^[a-zA-Z0-9._-]+$/, {
+        message:
+          'Schema names must contain only alphanumeric characters, dots, underscores, and hyphens',
+      }),
+      z.union([SchemaObject31, SchemaReferenceObject])
+    )
+    .optional(),
+});
+
+export type Components31 = z.infer<typeof ComponentsObject31>;
