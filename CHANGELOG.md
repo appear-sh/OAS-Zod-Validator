@@ -1,5 +1,11 @@
 # @appear.sh/oas-zod-validator
 
+## 1.5.2
+
+### Patch Changes
+
+- ea6113c: Fix issue #24 - support for union types
+
 ## 1.5.1
 
 ### Patch Changes
