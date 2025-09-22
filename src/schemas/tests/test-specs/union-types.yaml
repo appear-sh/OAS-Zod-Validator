@@ -1,0 +1,48 @@
+openapi: 3.1.0
+info:
+  title: 'Issue #24 reproduction'
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    # JSON Schema-style.
+    Attempt1:
+      type:
+        - array
+        - string
+        - integer
+        - number
+        - boolean
+        - object
+    # Shouldn't make a difference but why not?
+    # @see https://www.openapis.org/blog/2021/02/16/migrating-from-openapi-3-0-to-3-1-0#:~:text=Swap%20nullable%20for%20type%20arrays
+    Attempt1b:
+      type:
+        - "array"
+        - "string"
+        - "integer"
+        - "number"
+        - "boolean"
+        - "object"
+    # Invalid per these docs, so use `oneOf` instead
+    # @see https://swagger.io/docs/specification/v3_0/data-models/data-types/#mixed-types
+    Attempt2:
+      oneOf:
+        - type: array
+        - type: string
+        - type: integer
+        - type: number
+        - type: boolean
+        - type: object
+    # @see  https://swagger.io/docs/specification/v3_0/data-models/data-types/#any-type
+    AnyValue:
+      oneOf:
+        - type: string
+        - type: number
+        - type: integer
+        - type: boolean
+        - type: array
+          items: {}
+        - type: object
+    Attempt3:
+      $ref: '#/components/schemas/AnyValue'

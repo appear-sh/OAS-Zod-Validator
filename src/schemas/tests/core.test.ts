@@ -2,6 +2,7 @@ import {
   ExtensibleObject,
   ReferenceObject,
   SchemaObject,
+  SchemaObject31,
   VendorExtensible,
   getParentType,
   getRootType,
@@ -692,6 +693,53 @@ describe('Core Schema Types', () => {
           expect(result.data.maximum).toBe(100);
         }
       });
+    });
+  });
+});
+
+describe('Core Schema Types - OpenAPI 3.1', () => {
+  describe('SchemaObject31', () => {
+    test('accepts type as array (mixed types)', () => {
+      const schema = {
+        type: ['array', 'string', 'integer', 'number', 'boolean', 'object'],
+      };
+      expect(() => SchemaObject31.parse(schema)).not.toThrow();
+    });
+
+    test('accepts composition-only schemas (oneOf of primitives/array/object)', () => {
+      const schema = {
+        oneOf: [
+          { type: 'array' },
+          { type: 'string' },
+          { type: 'integer' },
+          { type: 'number' },
+          { type: 'boolean' },
+          { type: 'object' },
+        ],
+      };
+      expect(() => SchemaObject31.parse(schema)).not.toThrow();
+    });
+
+    test('allows empty subschema in items (items: {})', () => {
+      const schema = {
+        type: 'array',
+        items: {},
+      };
+      expect(() => SchemaObject31.parse(schema)).not.toThrow();
+    });
+
+    test('does not require items for array type in 3.1', () => {
+      const schema = {
+        type: 'array',
+      };
+      expect(() => SchemaObject31.parse(schema)).not.toThrow();
+    });
+
+    test('allows object without properties/additionalProperties in 3.1', () => {
+      const schema = {
+        type: 'object',
+      };
+      expect(() => SchemaObject31.parse(schema)).not.toThrow();
     });
   });
 });
