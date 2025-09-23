@@ -39,7 +39,7 @@ export const ResponseObject = z
 
 // Add explicit type annotation to fix compiler serialization error
 export const OpenAPIObject: z.ZodType = z.object({
-  openapi: z.string().regex(/^3\.(0|1)\.\d+$/),
+  openapi: z.string().regex(/^3\.0\.\d+$/),
   info: z.object({
     title: z.string(),
     description: z.string().optional(),

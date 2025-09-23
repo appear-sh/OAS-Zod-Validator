@@ -21,13 +21,14 @@ const WebhookObject = z
     head: WebhookOperationObject.optional(),
     patch: WebhookOperationObject.optional(),
     trace: WebhookOperationObject.optional(),
+    // Not part of 3.1, but we keep passthrough below to ignore unknowns
   })
   .passthrough();
 
 // Add explicit type annotation to fix compiler serialization error
 export const OpenAPIObject31: z.ZodType = z
   .object({
-    openapi: z.string().regex(/^3\.[1-9]\.\d+$/),
+    openapi: z.string().regex(/^3\.1\.\d+$/),
     info: z
       .object({
         title: z.string(),
@@ -40,3 +41,5 @@ export const OpenAPIObject31: z.ZodType = z
     components: ComponentsObject31.optional(),
   })
   .passthrough();
+
+// 3.2 now lives in openapi32.ts for clarity

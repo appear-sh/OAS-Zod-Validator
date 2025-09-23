@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { OpenAPIObject } from './openapi.js';
 import { OpenAPIObject31 } from './openapi31.js';
+import { OpenAPIObject32, OpenAPIObjectFuture } from './openapi32.js';
 import { verifyRefTargets } from '../utils/refResolver.js';
 import { OpenAPISpec, PathItem, Operation, OpenAPISlice } from './types.js';
 import {
@@ -111,6 +112,9 @@ function _detectOpenAPIVersion(doc: Record<string, unknown>): OpenAPIVersion {
   }
 
   try {
+    if (doc.openapi.startsWith('3.2.')) {
+      return createOpenAPIVersion(doc.openapi);
+    }
     if (doc.openapi.startsWith('3.1.')) {
       return createOpenAPIVersion(doc.openapi);
     }
@@ -401,13 +405,19 @@ export function validateOpenAPI(
       typeof docAsObject.openapi === 'string' &&
       docAsObject.openapi.startsWith('3.')
     ) {
-      parsed = OpenAPIObject31.parse(
+      // Use a future-friendly 3.x schema that mirrors 3.2
+      parsed = OpenAPIObjectFuture.parse(
         docAsObject,
         parseParams
       ) as unknown as OpenAPISpec;
     } else {
       const version = detectOpenAPIVersion(docAsObject as any);
-      if (version.startsWith('3.1')) {
+      if (version.startsWith('3.2')) {
+        parsed = OpenAPIObject32.parse(
+          docAsObject as any,
+          parseParams
+        ) as unknown as OpenAPISpec;
+      } else if (version.startsWith('3.1')) {
         parsed = OpenAPIObject31.parse(
           docAsObject as any,
           parseParams
@@ -537,6 +547,8 @@ export function validateOpenAPI(
             'head',
             'patch',
             'trace',
+            // 3.2 additions
+            'query',
           ] as const;
           for (const method of methods) {
             const operation = pathItem[method]; // Operation type is already { parameters?: ... }
@@ -549,6 +561,49 @@ export function validateOpenAPI(
                 pathItem.parameters as ParameterOrReference[] | undefined,
                 operation.parameters as ParameterOrReference[] | undefined,
                 parsed, // The full document, used by resolveParameter
+                options
+              );
+              if (parameterValIssues.length > 0) {
+                allStrictIssues.push(...parameterValIssues);
+                if (options.failFast) {
+                  throw new SchemaValidationError(
+                    'Strict OpenAPI validation failed.',
+                    new z.ZodError(allStrictIssues),
+                    { context: { strict: true } }
+                  );
+                }
+                if (
+                  typeof options.maxErrors === 'number' &&
+                  options.maxErrors > 0 &&
+                  allStrictIssues.length >= options.maxErrors
+                ) {
+                  throw new SchemaValidationError(
+                    'Strict OpenAPI validation failed.',
+                    new z.ZodError(allStrictIssues),
+                    { context: { strict: true } }
+                  );
+                }
+              }
+            }
+          }
+          // 3.2 additionalOperations iteration
+          if (
+            typeof (pathItem as any).additionalOperations === 'object' &&
+            (pathItem as any).additionalOperations
+          ) {
+            for (const [methodKey, operation] of Object.entries(
+              (pathItem as any).additionalOperations as Record<string, any>
+            )) {
+              if (!operation || typeof operation !== 'object') continue;
+              checkAbort();
+              const parameterValIssues = collectAndValidateOperationParameters(
+                pathKey,
+                methodKey,
+                pathItem.parameters as ParameterOrReference[] | undefined,
+                (operation as any).parameters as
+                  | ParameterOrReference[]
+                  | undefined,
+                parsed,
                 options
               );
               if (parameterValIssues.length > 0) {

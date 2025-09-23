@@ -389,7 +389,7 @@ describe('OpenAPI Validator', () => {
 
   test('allows future versions with allowFutureOASVersions flag', () => {
     const futureSpec = {
-      openapi: '3.2.0',
+      openapi: '3.3.0',
       info: {
         title: 'Future API',
         version: '1.0.0',
@@ -452,7 +452,7 @@ describe('OpenAPI Validator', () => {
 describe('OpenAPI Version Detection', () => {
   test('handles future 3.x versions with allowFutureOASVersions', () => {
     const futureSpec = {
-      openapi: '3.2.0',
+      openapi: '3.3.0',
       info: { title: 'Future API', version: '1.0.0' },
       paths: {},
     };
@@ -466,7 +466,7 @@ describe('OpenAPI Version Detection', () => {
 
   test('rejects future versions without allowFutureOASVersions', () => {
     const futureSpec = {
-      openapi: '3.2.0',
+      openapi: '3.3.0',
       info: { title: 'Future API', version: '1.0.0' },
       paths: {},
     };
@@ -626,7 +626,7 @@ describe('Version Detection', () => {
   });
 
   test('rejects invalid versions', () => {
-    ['2.0', '4.0.0', '3.2.0', 'invalid'].forEach((version) => {
+    ['2.0', '4.0.0', '3.3.0', 'invalid'].forEach((version) => {
       const doc = {
         openapi: version,
         info: { title: 'Test API', version: '1.0.0' },
