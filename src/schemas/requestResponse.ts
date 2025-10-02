@@ -58,18 +58,21 @@ export const MediaTypeObject32 = z
               serializedValue: z.any().optional(),
               externalValue: z.string().url().optional(),
             })
-            .refine((obj) => {
-              const present = [
-                obj.value !== undefined,
-                obj.dataValue !== undefined,
-                obj.serializedValue !== undefined,
-                obj.externalValue !== undefined,
-              ].filter(Boolean).length;
-              return present <= 1;
-            }, {
-              message:
-                "Only one of 'value', 'dataValue', 'serializedValue', or 'externalValue' may be present",
-            })
+            .refine(
+              (obj) => {
+                const present = [
+                  obj.value !== undefined,
+                  obj.dataValue !== undefined,
+                  obj.serializedValue !== undefined,
+                  obj.externalValue !== undefined,
+                ].filter(Boolean).length;
+                return present <= 1;
+              },
+              {
+                message:
+                  "Only one of 'value', 'dataValue', 'serializedValue', or 'externalValue' may be present",
+              }
+            )
             .strict(),
         ])
       )

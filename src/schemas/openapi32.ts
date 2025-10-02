@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ComponentsObject32 } from './openapi32.components.js';
+import { ComponentsObject32 } from './components.js';
 import { PathsObject32 } from './openapi32.paths.js';
 
 export const ServerObject32 = z.object({
@@ -45,6 +45,7 @@ export const OpenAPIObject32: z.ZodType = z
       })
       .passthrough(),
     jsonSchemaDialect: z.string().url().optional(),
+    webhooks: z.record(z.string(), z.record(z.string(), z.any())).optional(),
     servers: z.array(ServerObject32).optional(),
     paths: PathsObject32.optional(),
     components: ComponentsObject32.optional(),
@@ -74,6 +75,7 @@ export const OpenAPIObjectFuture: z.ZodType = z
       })
       .passthrough(),
     jsonSchemaDialect: z.string().url().optional(),
+    webhooks: z.record(z.string(), z.record(z.string(), z.any())).optional(),
     servers: z.array(ServerObject32).optional(),
     paths: PathsObject32.optional(),
     components: ComponentsObject32.optional(),

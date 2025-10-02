@@ -32,8 +32,7 @@ import {
 import { Range, LocatedZodIssue } from '../types/location.js';
 import { getByPointer } from '../utils/jsonPointer.js';
 import { createJSONPointer, JSONPointer } from '../types/index.js';
-import { ParameterObject as ParameterObjectSchema } from './paths.js';
-import { ReferenceObject as ReferenceObjectSchema } from './reference.js';
+// Decouple validator parameter resolution from Zod schemas to avoid version coupling
 
 /**
  * Options for validating OpenAPI specifications
@@ -705,13 +704,19 @@ export function validateOpenAPI(
       });
 
     if (error instanceof z.ZodError) {
-      const baseIssues = normalizeIssues(
+      let baseIssues = normalizeIssues(
         (error as z.ZodError).issues as z.ZodIssue[]
       );
-      const extraStrictIssues = options.strict
-        ? validateTagUniqueness(document as any as OpenAPISlice)
-        : [];
-      const normalized = new z.ZodError([...baseIssues, ...extraStrictIssues]);
+      // Maintain historical behaviour: if strict and parse failed early, still report tag uniqueness issues
+      if (options.strict) {
+        const tagIssues = validateTagUniqueness(
+          document as any as OpenAPISlice
+        );
+        if (tagIssues.length > 0) {
+          baseIssues = [...baseIssues, ...tagIssues];
+        }
+      }
+      const normalized = new z.ZodError(baseIssues);
       result = {
         valid: false,
         errors: normalized,
@@ -1053,18 +1058,14 @@ function validateOperationIdUniqueness(
   return issues;
 }
 
-// Type for a fully resolved Parameter object (no $ref)
-// This infers the type from the Zod schema, excluding the possibility of it being a reference itself.
-// We assume ParameterObjectSchema does not include `$ref` at its top level after specific discriminated union parsing.
-type ResolvedParameter = z.infer<typeof ParameterObjectSchema>;
+// Minimal resolved parameter shape used for uniqueness checks
+type ResolvedParameter = {
+  name: string;
+  in: string;
+} & Record<string, unknown>;
 
-// Type for an item in a parameters array, which can be a ParameterObject or a ReferenceObject
-const _ParameterOrReferenceSchema = z.union([
-  ParameterObjectSchema,
-  ReferenceObjectSchema,
-]);
-
-type ParameterOrReference = z.infer<typeof _ParameterOrReferenceSchema>;
+// Parameter or $ref shorthand for internal checks
+type ParameterOrReference = { $ref: string } | ResolvedParameter;
 
 /**
  * Checks a list of RESOLVED parameters for uniqueness based on 'name' and 'in'.
@@ -1144,12 +1145,20 @@ function collectAndValidateOperationParameters(
     doc: OpenAPISpec
   ): ResolvedParameter | null => {
     if (!('$ref' in paramOrRef)) {
-      // It's already a ParameterObject, ensure it fits our ResolvedParameter type definition
-      // ParameterObjectSchema.parse(paramOrRef); // This would throw if invalid, which is good
-      return paramOrRef as ResolvedParameter; // Assuming it's already valid if not a ref
+      // Guard minimal fields
+      const p = paramOrRef as any;
+      if (
+        p &&
+        typeof p === 'object' &&
+        typeof p.name === 'string' &&
+        typeof p.in === 'string'
+      ) {
+        return p as ResolvedParameter;
+      }
+      return null;
     }
 
-    const refString = paramOrRef.$ref;
+    const refString: string = (paramOrRef as { $ref: string }).$ref;
     let jsonPointer: JSONPointer;
     try {
       jsonPointer = createJSONPointer(refString);
@@ -1164,14 +1173,16 @@ function collectAndValidateOperationParameters(
       doc as Record<string, unknown>
     );
     if (cachedTarget !== undefined) {
-      try {
-        // Validate that the cached target is a valid ParameterObject
-        ParameterObjectSchema.parse(cachedTarget);
-        return cachedTarget as ResolvedParameter;
-      } catch {
-        // Cached item is not a valid parameter object
-        return null;
+      const ct: any = cachedTarget;
+      if (
+        ct &&
+        typeof ct === 'object' &&
+        typeof ct.name === 'string' &&
+        typeof ct.in === 'string'
+      ) {
+        return ct as ResolvedParameter;
       }
+      return null;
     }
 
     // If not in cache, resolve using lodash.get
@@ -1185,20 +1196,21 @@ function collectAndValidateOperationParameters(
       return null;
     }
 
-    try {
-      // Validate that the resolved target is a valid ParameterObject
-      ParameterObjectSchema.parse(target);
-      // Cache the successfully resolved and validated parameter object
+    const t: any = target;
+    if (
+      t &&
+      typeof t === 'object' &&
+      typeof t.name === 'string' &&
+      typeof t.in === 'string'
+    ) {
       cache.setRefTarget(
         jsonPointer,
         doc as Record<string, unknown>,
-        target as Record<string, unknown>
+        t as Record<string, unknown>
       );
-      return target as ResolvedParameter;
-    } catch {
-      // Resolved item is not a valid parameter object
-      return null;
+      return t as ResolvedParameter;
     }
+    return null;
   };
 
   const resolvedPathItemParams: ResolvedParameter[] = [];

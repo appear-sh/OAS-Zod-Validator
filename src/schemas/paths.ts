@@ -32,22 +32,6 @@ export const ParameterObject = z.discriminatedUnion('in', [
     schema: z.union([SchemaObject, ReferenceObject]),
     allowReserved: z.boolean().optional(),
   }),
-  // OAS 3.2: Querystring parameters (entire query string via content)
-  z
-    .object({
-      ...parameterBaseFields,
-      name: z.string().min(1, { message: 'Parameter name cannot be empty' }),
-      in: z.literal('querystring'),
-      // OAS 3.2 permits using content here; we allow schema too for compatibility, but enforce mutual exclusion
-      schema: z.union([SchemaObject, ReferenceObject]).optional(),
-      content: z.record(z.string(), z.any()).optional(),
-      allowReserved: z.boolean().optional(),
-    })
-    .refine((obj) => !((obj as any).schema && (obj as any).content), {
-      message:
-        "Parameter in 'querystring' must not define both 'schema' and 'content'",
-      path: ['schema'],
-    }),
   // Header parameters
   z.object({
     ...parameterBaseFields,
@@ -159,10 +143,6 @@ export const PathItemObject = z
     head: OperationObject.optional(),
     patch: OperationObject.optional(),
     trace: OperationObject.optional(),
-    // OAS 3.2 adds query method officially
-    query: OperationObject.optional(),
-    // OAS 3.2 additionalOperations: allow arbitrary method keys via record
-    additionalOperations: z.record(z.string(), OperationObject).optional(),
     servers: z
       .array(
         z.object({
@@ -221,13 +201,9 @@ export const PathItemObject = z
         'head',
         'patch',
         'trace',
-        'query',
       ];
       const hasStd = operations.some((op) => op in pathItem);
-      const hasAdditional =
-        typeof (pathItem as any).additionalOperations === 'object' &&
-        Object.keys((pathItem as any).additionalOperations || {}).length > 0;
-      return hasStd || hasAdditional;
+      return hasStd;
     },
     {
       message: 'Path item must define at least one operation',
@@ -280,7 +256,6 @@ export const PathsObject: z.ZodType<
           'head',
           'patch',
           'trace',
-          'query',
         ] as const;
         for (const op of operations) {
           const operation = pathItem[op];

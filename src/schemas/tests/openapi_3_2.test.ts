@@ -42,6 +42,45 @@ describe('OpenAPI 3.2 features', () => {
     expect(result.valid).toBe(true);
   });
 
+  test('3.2 webhooks accepted', () => {
+    const doc = {
+      openapi: '3.2.1',
+      info: { title: 'API', version: '1.0.0' },
+      webhooks: {
+        onEvent: {
+          post: { responses: { '200': { description: 'OK' } } },
+        },
+      },
+    } as any;
+    const result = validateOpenAPI(doc);
+    expect(result.valid).toBe(true);
+  });
+
+  test('MediaType encoding: mixing legacy encoding with item/prefix encoding is rejected', () => {
+    const doc = {
+      openapi: '3.2.0',
+      info: { title: 'API', version: '1.0.0' },
+      paths: {
+        '/bad': {
+          post: {
+            requestBody: {
+              content: {
+                'multipart/mixed': {
+                  itemSchema: { type: 'string' },
+                  prefixEncoding: { x: {} },
+                  encoding: { legacy: {} }, // should be rejected by refine
+                },
+              },
+            },
+            responses: { default: { description: 'x' } },
+          },
+        },
+      },
+    } as any;
+    const result = validateOpenAPI(doc);
+    expect(result.valid).toBe(false);
+  });
+
   test('allows querystring parameter with content, disallows schema+content together', () => {
     const good = {
       openapi: '3.2.0',
@@ -98,7 +137,10 @@ describe('OpenAPI 3.2 features', () => {
                 description: 'OK',
                 content: {
                   'application/jsonl': {
-                    itemSchema: { type: 'object', properties: { id: { type: 'string' } } },
+                    itemSchema: {
+                      type: 'object',
+                      properties: { id: { type: 'string' } },
+                    },
                   },
                 },
               },
@@ -177,5 +219,3 @@ describe('OpenAPI 3.2 features', () => {
     expect(validateOpenAPI(doc).valid).toBe(true);
   });
 });
-
-
