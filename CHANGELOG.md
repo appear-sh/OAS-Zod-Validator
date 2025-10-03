@@ -1,5 +1,11 @@
 # @appear.sh/oas-zod-validator
 
+## 1.6.0
+
+### Minor Changes
+
+- 25531c8: Added support for 3.2 and enforced 3.1 boundaries
+
 ## 1.5.2
 
 ### Patch Changes
