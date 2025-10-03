@@ -133,16 +133,21 @@ describe('YAML Validation', () => {
 
   test('validates YAML with future OpenAPI versions', () => {
     const yaml = `
-      openapi: 3.2.0
+      openapi: 3.3.0
       info:
         title: Future API
         version: 1.0.0
       paths: {}
     `;
 
-    const result = validateFromYaml(yaml, { allowFutureOASVersions: true });
-    expect(result.valid).toBe(true);
-    expect(result.errors).toBeUndefined();
+    const result1 = validateFromYaml(yaml, {
+      allowFutureOASVersions: true,
+      strict: true,
+    });
+    const result2 = validateFromYaml(yaml, { allowFutureOASVersions: true });
+
+    expect(result1.valid).toBe(true);
+    expect(result2.valid).toBe(true);
   });
 
   test('handles YAML parsing errors', () => {
@@ -180,7 +185,7 @@ describe('YAML Validation', () => {
 
   test('validates YAML with validation options', () => {
     const yaml = `
-      openapi: 3.2.0
+      openapi: 3.3.0
       info:
         title: Future API
         version: 1.0.0

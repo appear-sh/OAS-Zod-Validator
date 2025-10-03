@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { OpenAPIObject } from './openapi.js';
 import { OpenAPIObject31 } from './openapi31.js';
+import { OpenAPIObject32, OpenAPIObjectFuture } from './openapi32.js';
 import { verifyRefTargets } from '../utils/refResolver.js';
 import { OpenAPISpec, PathItem, Operation, OpenAPISlice } from './types.js';
 import {
@@ -31,8 +32,7 @@ import {
 import { Range, LocatedZodIssue } from '../types/location.js';
 import { getByPointer } from '../utils/jsonPointer.js';
 import { createJSONPointer, JSONPointer } from '../types/index.js';
-import { ParameterObject as ParameterObjectSchema } from './paths.js';
-import { ReferenceObject as ReferenceObjectSchema } from './reference.js';
+// Decouple validator parameter resolution from Zod schemas to avoid version coupling
 
 /**
  * Options for validating OpenAPI specifications
@@ -111,6 +111,9 @@ function _detectOpenAPIVersion(doc: Record<string, unknown>): OpenAPIVersion {
   }
 
   try {
+    if (doc.openapi.startsWith('3.2.')) {
+      return createOpenAPIVersion(doc.openapi);
+    }
     if (doc.openapi.startsWith('3.1.')) {
       return createOpenAPIVersion(doc.openapi);
     }
@@ -401,13 +404,19 @@ export function validateOpenAPI(
       typeof docAsObject.openapi === 'string' &&
       docAsObject.openapi.startsWith('3.')
     ) {
-      parsed = OpenAPIObject31.parse(
+      // Use a future-friendly 3.x schema that mirrors 3.2
+      parsed = OpenAPIObjectFuture.parse(
         docAsObject,
         parseParams
       ) as unknown as OpenAPISpec;
     } else {
       const version = detectOpenAPIVersion(docAsObject as any);
-      if (version.startsWith('3.1')) {
+      if (version.startsWith('3.2')) {
+        parsed = OpenAPIObject32.parse(
+          docAsObject as any,
+          parseParams
+        ) as unknown as OpenAPISpec;
+      } else if (version.startsWith('3.1')) {
         parsed = OpenAPIObject31.parse(
           docAsObject as any,
           parseParams
@@ -537,6 +546,8 @@ export function validateOpenAPI(
             'head',
             'patch',
             'trace',
+            // 3.2 additions
+            'query',
           ] as const;
           for (const method of methods) {
             const operation = pathItem[method]; // Operation type is already { parameters?: ... }
@@ -549,6 +560,49 @@ export function validateOpenAPI(
                 pathItem.parameters as ParameterOrReference[] | undefined,
                 operation.parameters as ParameterOrReference[] | undefined,
                 parsed, // The full document, used by resolveParameter
+                options
+              );
+              if (parameterValIssues.length > 0) {
+                allStrictIssues.push(...parameterValIssues);
+                if (options.failFast) {
+                  throw new SchemaValidationError(
+                    'Strict OpenAPI validation failed.',
+                    new z.ZodError(allStrictIssues),
+                    { context: { strict: true } }
+                  );
+                }
+                if (
+                  typeof options.maxErrors === 'number' &&
+                  options.maxErrors > 0 &&
+                  allStrictIssues.length >= options.maxErrors
+                ) {
+                  throw new SchemaValidationError(
+                    'Strict OpenAPI validation failed.',
+                    new z.ZodError(allStrictIssues),
+                    { context: { strict: true } }
+                  );
+                }
+              }
+            }
+          }
+          // 3.2 additionalOperations iteration
+          if (
+            typeof (pathItem as any).additionalOperations === 'object' &&
+            (pathItem as any).additionalOperations
+          ) {
+            for (const [methodKey, operation] of Object.entries(
+              (pathItem as any).additionalOperations as Record<string, any>
+            )) {
+              if (!operation || typeof operation !== 'object') continue;
+              checkAbort();
+              const parameterValIssues = collectAndValidateOperationParameters(
+                pathKey,
+                methodKey,
+                pathItem.parameters as ParameterOrReference[] | undefined,
+                (operation as any).parameters as
+                  | ParameterOrReference[]
+                  | undefined,
+                parsed,
                 options
               );
               if (parameterValIssues.length > 0) {
@@ -650,13 +704,19 @@ export function validateOpenAPI(
       });
 
     if (error instanceof z.ZodError) {
-      const baseIssues = normalizeIssues(
+      let baseIssues = normalizeIssues(
         (error as z.ZodError).issues as z.ZodIssue[]
       );
-      const extraStrictIssues = options.strict
-        ? validateTagUniqueness(document as any as OpenAPISlice)
-        : [];
-      const normalized = new z.ZodError([...baseIssues, ...extraStrictIssues]);
+      // Maintain historical behaviour: if strict and parse failed early, still report tag uniqueness issues
+      if (options.strict) {
+        const tagIssues = validateTagUniqueness(
+          document as any as OpenAPISlice
+        );
+        if (tagIssues.length > 0) {
+          baseIssues = [...baseIssues, ...tagIssues];
+        }
+      }
+      const normalized = new z.ZodError(baseIssues);
       result = {
         valid: false,
         errors: normalized,
@@ -998,18 +1058,14 @@ function validateOperationIdUniqueness(
   return issues;
 }
 
-// Type for a fully resolved Parameter object (no $ref)
-// This infers the type from the Zod schema, excluding the possibility of it being a reference itself.
-// We assume ParameterObjectSchema does not include `$ref` at its top level after specific discriminated union parsing.
-type ResolvedParameter = z.infer<typeof ParameterObjectSchema>;
+// Minimal resolved parameter shape used for uniqueness checks
+type ResolvedParameter = {
+  name: string;
+  in: string;
+} & Record<string, unknown>;
 
-// Type for an item in a parameters array, which can be a ParameterObject or a ReferenceObject
-const _ParameterOrReferenceSchema = z.union([
-  ParameterObjectSchema,
-  ReferenceObjectSchema,
-]);
-
-type ParameterOrReference = z.infer<typeof _ParameterOrReferenceSchema>;
+// Parameter or $ref shorthand for internal checks
+type ParameterOrReference = { $ref: string } | ResolvedParameter;
 
 /**
  * Checks a list of RESOLVED parameters for uniqueness based on 'name' and 'in'.
@@ -1089,12 +1145,20 @@ function collectAndValidateOperationParameters(
     doc: OpenAPISpec
   ): ResolvedParameter | null => {
     if (!('$ref' in paramOrRef)) {
-      // It's already a ParameterObject, ensure it fits our ResolvedParameter type definition
-      // ParameterObjectSchema.parse(paramOrRef); // This would throw if invalid, which is good
-      return paramOrRef as ResolvedParameter; // Assuming it's already valid if not a ref
+      // Guard minimal fields
+      const p = paramOrRef as any;
+      if (
+        p &&
+        typeof p === 'object' &&
+        typeof p.name === 'string' &&
+        typeof p.in === 'string'
+      ) {
+        return p as ResolvedParameter;
+      }
+      return null;
     }
 
-    const refString = paramOrRef.$ref;
+    const refString: string = (paramOrRef as { $ref: string }).$ref;
     let jsonPointer: JSONPointer;
     try {
       jsonPointer = createJSONPointer(refString);
@@ -1109,14 +1173,16 @@ function collectAndValidateOperationParameters(
       doc as Record<string, unknown>
     );
     if (cachedTarget !== undefined) {
-      try {
-        // Validate that the cached target is a valid ParameterObject
-        ParameterObjectSchema.parse(cachedTarget);
-        return cachedTarget as ResolvedParameter;
-      } catch {
-        // Cached item is not a valid parameter object
-        return null;
+      const ct: any = cachedTarget;
+      if (
+        ct &&
+        typeof ct === 'object' &&
+        typeof ct.name === 'string' &&
+        typeof ct.in === 'string'
+      ) {
+        return ct as ResolvedParameter;
       }
+      return null;
     }
 
     // If not in cache, resolve using lodash.get
@@ -1130,20 +1196,21 @@ function collectAndValidateOperationParameters(
       return null;
     }
 
-    try {
-      // Validate that the resolved target is a valid ParameterObject
-      ParameterObjectSchema.parse(target);
-      // Cache the successfully resolved and validated parameter object
+    const t: any = target;
+    if (
+      t &&
+      typeof t === 'object' &&
+      typeof t.name === 'string' &&
+      typeof t.in === 'string'
+    ) {
       cache.setRefTarget(
         jsonPointer,
         doc as Record<string, unknown>,
-        target as Record<string, unknown>
+        t as Record<string, unknown>
       );
-      return target as ResolvedParameter;
-    } catch {
-      // Resolved item is not a valid parameter object
-      return null;
+      return t as ResolvedParameter;
     }
+    return null;
   };
 
   const resolvedPathItemParams: ResolvedParameter[] = [];

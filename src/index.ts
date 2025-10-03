@@ -35,6 +35,7 @@ export type {
 // Re-export types that consumers might need
 export type { OpenAPIObject } from './schemas/openapi.js';
 export type { OpenAPIObject31 } from './schemas/openapi31.js';
+export type { OpenAPIObject32 } from './schemas/openapi32.js';
 
 // Export memory utilities
 export {
