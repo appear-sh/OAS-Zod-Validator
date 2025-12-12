@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import yaml from 'js-yaml';
+import * as YAML from 'yaml';
 import { validateOpenAPI } from '../validator.js';
 import { describe, test, expect } from 'vitest';
 
@@ -63,7 +63,7 @@ describe('Integration tests for multiple OAS specs', () => {
 
         try {
           if (filename.endsWith('.yaml') || filename.endsWith('.yml')) {
-            doc = yaml.load(fileData) as Record<string, unknown>;
+            doc = YAML.parse(fileData) as Record<string, unknown>;
           } else {
             doc = JSON.parse(fileData) as Record<string, unknown>;
           }

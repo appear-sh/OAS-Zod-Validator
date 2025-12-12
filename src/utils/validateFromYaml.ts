@@ -1,4 +1,4 @@
-import { load } from 'js-yaml';
+import { parse } from 'yaml';
 import {
   ValidationOptions,
   ValidationResult,
@@ -38,7 +38,7 @@ function generateYamlCacheKey(content: string): string {
 function parseYamlWithCache(content: string): unknown {
   // Don't use cache in test mode
   if (process.env.NODE_ENV === 'test') {
-    return load(content);
+    return parse(content);
   }
 
   const key = generateYamlCacheKey(content);
@@ -46,7 +46,7 @@ function parseYamlWithCache(content: string): unknown {
   const cached = YAML_CACHE.get(key);
   if (cached !== undefined) return cached;
 
-  const parsed = load(content);
+  const parsed = parse(content);
 
   // Ensure cache doesn't grow beyond MAX_YAML_CACHE_SIZE by updating capacity if needed
   // (LRUCache maintains size on set; we keep constant capacity)

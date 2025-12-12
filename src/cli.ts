@@ -10,7 +10,6 @@ import path from 'node:path';
 import ora from 'ora';
 import { fileURLToPath } from 'url';
 import * as YAML from 'yaml';
-import jsYaml from 'js-yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
 import { getIssueSeverity } from './errors/severity.js';
 import * as jsonc from 'jsonc-parser';
@@ -304,11 +303,10 @@ function formatValueForCli(value: any): string {
   }
   if (typeof value === 'object' && value !== null) {
     try {
-      // Use js-yaml dump for CLI display formatting
-      const yamlString = jsYaml.dump(value, {
+      // Use yaml stringify for CLI display formatting
+      const yamlString = YAML.stringify(value, {
         indent: 2,
         lineWidth: 80,
-        skipInvalid: true,
       });
       const lines = yamlString.split('\n');
       if (lines.length > 10 || yamlString.length > 300) {

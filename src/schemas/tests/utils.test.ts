@@ -1,6 +1,6 @@
 import { validateOpenAPI } from '../validator.js';
 import { describe, test, expect } from 'vitest';
-import yaml from 'js-yaml';
+import * as YAML from 'yaml';
 
 describe('YAML Validation', () => {
   test('validates yaml string', () => {
@@ -11,7 +11,7 @@ describe('YAML Validation', () => {
         version: 1.0.0
       paths: {}
     `;
-    const doc = yaml.load(yamlStr);
+    const doc = YAML.parse(yamlStr);
     const result = validateOpenAPI(doc);
     expect(result.valid).toBe(true);
   });
