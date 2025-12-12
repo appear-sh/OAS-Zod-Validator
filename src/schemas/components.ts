@@ -8,7 +8,7 @@ import {
   ExampleReferenceObject,
   RequestBodyReferenceObject,
   HeaderReferenceObject,
-  // SecuritySchemeReferenceObject,
+  SecuritySchemeReferenceObject,
   LinkReferenceObject,
   CallbackReferenceObject,
 } from './reference.js';
@@ -18,6 +18,7 @@ import {
   RequestBodyObject32,
   ResponseObject32,
 } from './requestResponse.js';
+import { SecuritySchemeObject } from './security.js';
 
 // Parameter Object (reused from paths.ts to avoid circular dependency)
 const ParameterObject = z.object({
@@ -147,7 +148,7 @@ export const ComponentsObject = z
     securitySchemes: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([ReferenceObject, z.any()]) // TODO: replace any with SecuritySchemeObject
+        z.union([SecuritySchemeReferenceObject, SecuritySchemeObject])
       )
       .optional(),
 
@@ -222,7 +223,7 @@ export const ComponentsObject31 = z
     securitySchemes: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([ReferenceObject, z.any()])
+        z.union([SecuritySchemeReferenceObject, SecuritySchemeObject])
       )
       .optional(),
 
@@ -294,11 +295,10 @@ export const ComponentsObject32 = z
       )
       .optional(),
 
-    // For 3.2 we still allow either a local object or a reference; URI refs are validated elsewhere
     securitySchemes: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([ReferenceObject, z.any()])
+        z.union([SecuritySchemeReferenceObject, SecuritySchemeObject])
       )
       .optional(),
 

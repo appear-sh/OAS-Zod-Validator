@@ -1,12 +1,12 @@
 import { z } from 'zod';
-import { PathsObject } from './paths.js';
+import { PathsObject31 } from './paths.js';
 import { ComponentsObject31 } from './components.js';
-import { RequestBodyObject, ResponsesObject } from './requestResponse.js';
+import { RequestBodyObject31, ResponsesObject31 } from './requestResponse.js';
 
 const WebhookOperationObject = z
   .object({
-    requestBody: RequestBodyObject.optional(),
-    responses: ResponsesObject,
+    requestBody: RequestBodyObject31.optional(),
+    responses: ResponsesObject31,
     parameters: z.array(z.any()).optional(),
   })
   .passthrough();
@@ -37,7 +37,7 @@ export const OpenAPIObject31: z.ZodType = z
       .passthrough(),
     jsonSchemaDialect: z.string().url().optional(),
     webhooks: z.record(z.string(), WebhookObject).optional(),
-    paths: PathsObject.optional(),
+    paths: PathsObject31.optional(),
     components: ComponentsObject31.optional(),
   })
   .passthrough();

@@ -229,16 +229,21 @@ describe('YAML Validation', () => {
          title: Test
            version: 1.0.0
       `,
-      // Invalid tag
-      `
-        !invalid
-        openapi: 3.0.0
-      `,
     ];
 
     invalidYamls.forEach((yaml) => {
       expect(() => validateFromYaml(yaml)).toThrow();
     });
+
+    // Unknown YAML tags emit a warning but don't throw (yaml package behaviour)
+    // The spec will fail validation for other reasons (missing required fields)
+    const taggedYaml = `
+      !invalid
+      openapi: 3.0.0
+    `;
+    // Doesn't throw, but returns invalid result due to missing 'info'
+    const result = validateFromYaml(taggedYaml);
+    expect(result.valid).toBe(false);
   });
 
   test('provides specific error messages for different error types', () => {

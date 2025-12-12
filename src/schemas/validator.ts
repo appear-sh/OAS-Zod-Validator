@@ -1263,23 +1263,6 @@ function collectAndValidateOperationParameters(
     return allIssues;
   }
 
-  // If no internal duplication issues found in the *resolved* lists,
-  // then the override logic can be applied.
-  if (allIssues.length === 0) {
-    const effectiveParametersMap = new Map<string, ResolvedParameter>();
-    resolvedPathItemParams.forEach((p) =>
-      effectiveParametersMap.set(`${p.in}:${p.name}`, p)
-    );
-    resolvedOperationParams.forEach((p) =>
-      effectiveParametersMap.set(`${p.in}:${p.name}`, p)
-    ); // Override logic
-
-    // The `effectiveParametersMap.values()` now represents the final unique list.
-    // No further duplication check is needed on this merged list itself due to:
-    // 1. `checkResolvedParameterListUniqueness` ensuring inputs are clean.
-    // 2. Map construction inherently ensuring unique keys (in:name).
-  }
-
   return allIssues;
 }
 

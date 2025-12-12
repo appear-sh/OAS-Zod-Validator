@@ -436,7 +436,7 @@ describe('Paths Schema Validation', () => {
 
       expect(() => ParameterObject.parse(param)).toThrow();
       expect(() => ParameterObject.parse(param)).toThrow(
-        /Header parameter names should contain only alphanumeric characters and hyphens/
+        /Header parameter names should contain only alphanumeric characters, hyphens, and underscores/
       );
     });
 

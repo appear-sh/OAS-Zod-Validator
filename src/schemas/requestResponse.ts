@@ -8,10 +8,38 @@ import {
   LinkReferenceObject,
 } from './reference.js';
 
-// Media Type Object
+// Media Type Object (OAS 3.0)
 export const MediaTypeObject = z
   .object({
     schema: z.union([SchemaObject, SchemaReferenceObject]).optional(),
+    example: z.any().optional(),
+    examples: z
+      .record(
+        z.string(),
+        z.union([
+          ExampleReferenceObject,
+          z
+            .object({
+              summary: z.string().optional(),
+              description: z.string().optional(),
+              value: z.any().optional(),
+              externalValue: z.string().url().optional(),
+            })
+            .refine((obj) => !(obj.value && obj.externalValue), {
+              message: "Cannot have both 'value' and 'externalValue'",
+            })
+            .strict(),
+        ])
+      )
+      .optional(),
+    encoding: z.record(z.string(), z.any()).optional(),
+  })
+  .passthrough();
+
+// Media Type Object (OAS 3.1) - uses SchemaObject31 which allows type to be omitted
+export const MediaTypeObject31 = z
+  .object({
+    schema: z.union([SchemaObject31, SchemaReferenceObject]).optional(),
     example: z.any().optional(),
     examples: z
       .record(
@@ -99,11 +127,20 @@ export const MediaTypeObject32 = z
     }
   );
 
-// Request Body Object
+// Request Body Object (OAS 3.0)
 export const RequestBodyObject = z
   .object({
     description: z.string().optional(),
     content: z.record(z.string(), MediaTypeObject),
+    required: z.boolean().optional(),
+  })
+  .passthrough();
+
+// Request Body Object (OAS 3.1)
+export const RequestBodyObject31 = z
+  .object({
+    description: z.string().optional(),
+    content: z.record(z.string(), MediaTypeObject31),
     required: z.boolean().optional(),
   })
   .passthrough();
@@ -162,6 +199,53 @@ export const ResponseObject = z
 export const ResponsesObject = z.record(
   z.string(), // Status Code or 'default'
   z.union([ResponseObject, ResponseReferenceObject])
+);
+
+// Response Object (OAS 3.1) - uses SchemaObject31 which allows type to be omitted
+export const ResponseObject31 = z
+  .object({
+    description: z.string(),
+    headers: z
+      .record(
+        z.string(),
+        z.union([
+          HeaderReferenceObject,
+          z.object({
+            description: z.string().optional(),
+            required: z.boolean().optional(),
+            deprecated: z.boolean().optional(),
+            schema: z.union([SchemaObject31, SchemaReferenceObject]).optional(),
+          }),
+        ])
+      )
+      .optional(),
+    content: z.record(z.string(), MediaTypeObject31).optional(),
+    links: z
+      .record(
+        z.string(),
+        z.union([
+          LinkReferenceObject,
+          z
+            .object({
+              operationRef: z.string().optional(),
+              operationId: z.string().optional(),
+              parameters: z.record(z.string(), z.any()).optional(),
+              requestBody: z.any().optional(),
+              description: z.string().optional(),
+              server: z.any().optional(),
+            })
+            .refine((obj) => !(obj.operationRef && obj.operationId), {
+              message: "Cannot have both 'operationRef' and 'operationId'",
+            }),
+        ])
+      )
+      .optional(),
+  })
+  .passthrough();
+
+export const ResponsesObject31 = z.record(
+  z.string(),
+  z.union([ResponseObject31, ResponseReferenceObject])
 );
 
 // Response Object (OAS 3.2)

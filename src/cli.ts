@@ -10,7 +10,6 @@ import path from 'node:path';
 import ora from 'ora';
 import { fileURLToPath } from 'url';
 import * as YAML from 'yaml';
-import jsYaml from 'js-yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
 import { getIssueSeverity } from './errors/severity.js';
 import * as jsonc from 'jsonc-parser';
@@ -145,6 +144,105 @@ async function loadConfig(configPath: string): Promise<ConfigFile> {
   }
 }
 
+// --- Helper function to extract the most specific error from union errors ---
+/**
+ * Recursively digs into nested union errors to find the most specific issue.
+ * Returns the deepest error with the longest path and most descriptive message.
+ * Preserves the original issue path as context for relative paths.
+ */
+function extractMostSpecificError(issue: any): {
+  path: (string | number)[];
+  message: string;
+} {
+  const originalPath = issue.path || [];
+
+  // If not a union error, return as-is
+  if (issue.code !== 'invalid_union' || !Array.isArray(issue.errors)) {
+    let msg = issue.message || 'Invalid input';
+    // Improve generic messages
+    if (msg === 'Invalid input' || msg === 'Invalid value') {
+      if (issue.code === 'invalid_type') {
+        msg = `Expected ${issue.expected}, received ${issue.received}`;
+      } else if (issue.code === 'invalid_value' && issue.values) {
+        msg = `Expected one of: ${issue.values.slice(0, 5).join(', ')}${issue.values.length > 5 ? '...' : ''}`;
+      }
+    }
+    return { path: originalPath, message: msg };
+  }
+
+  // Collect all leaf errors from all branches
+  const candidates: {
+    path: (string | number)[];
+    message: string;
+    depth: number;
+  }[] = [];
+
+  function collectErrors(
+    errors: any[],
+    parentPath: (string | number)[],
+    depth: number
+  ) {
+    for (const branch of errors) {
+      if (!Array.isArray(branch)) continue;
+      for (const err of branch) {
+        // Zod paths are absolute from document root - use the longer (more specific) one
+        const errRelPath = err.path || [];
+        const fullPath =
+          errRelPath.length > parentPath.length ? errRelPath : parentPath;
+
+        if (err.code === 'invalid_union' && Array.isArray(err.errors)) {
+          // Recurse into nested unions, carrying forward the path context
+          collectErrors(
+            err.errors,
+            errRelPath.length > parentPath.length ? errRelPath : parentPath,
+            depth + 1
+          );
+        } else {
+          // Leaf error - collect it
+          let msg = err.message || 'Invalid input';
+
+          // Improve generic messages based on error code
+          if (msg === 'Invalid input' || msg === 'Invalid value') {
+            if (err.code === 'invalid_type') {
+              msg = `Expected ${err.expected}, received ${err.received}`;
+            } else if (err.code === 'invalid_value' && err.values) {
+              const vals = err.values.slice(0, 5).join(', ');
+              msg = `Expected one of: ${vals}${err.values.length > 5 ? '...' : ''}`;
+            } else if (err.code === 'unrecognized_keys' && err.keys) {
+              msg = `Unrecognised keys: ${err.keys.join(', ')}`;
+            }
+          }
+
+          // Use the longer of fullPath or errRelPath
+          const usePath =
+            fullPath.length >= errRelPath.length ? fullPath : errRelPath;
+          candidates.push({ path: usePath, message: msg, depth });
+        }
+      }
+    }
+  }
+
+  collectErrors(issue.errors, originalPath, 0);
+
+  // Prefer errors with longer paths (more specific) and non-generic messages
+  if (candidates.length === 0) {
+    return { path: originalPath, message: issue.message || 'Invalid input' };
+  }
+
+  // Sort by: non-generic message first, then longest path, then deepest
+  candidates.sort((a, b) => {
+    const aGeneric =
+      a.message === 'Invalid input' || a.message === 'Invalid value';
+    const bGeneric =
+      b.message === 'Invalid input' || b.message === 'Invalid value';
+    if (aGeneric !== bGeneric) return aGeneric ? 1 : -1;
+    if (b.path.length !== a.path.length) return b.path.length - a.path.length;
+    return b.depth - a.depth;
+  });
+
+  return candidates[0];
+}
+
 // --- Helper function to get value from path ---
 /**
  * Safely retrieves a value from a nested object using a path array.
@@ -208,11 +306,10 @@ function formatValueForCli(value: any): string {
   }
   if (typeof value === 'object' && value !== null) {
     try {
-      // Use js-yaml dump for CLI display formatting
-      const yamlString = jsYaml.dump(value, {
+      // Use yaml stringify for CLI display formatting
+      const yamlString = YAML.stringify(value, {
         indent: 2,
         lineWidth: 80,
-        skipInvalid: true,
       });
       const lines = yamlString.split('\n');
       if (lines.length > 10 || yamlString.length > 300) {
@@ -364,27 +461,11 @@ async function validateSpec(
         );
 
         issuesWithLocation.forEach((issue) => {
-          let displayPath = issue.path as unknown as (string | number)[];
-          let displayMessage = issue.message;
+          // Extract the most specific error from potentially nested union errors
+          const { path: displayPath, message: displayMessage } =
+            extractMostSpecificError(issue);
 
-          if (
-            issue.code === 'invalid_union' &&
-            Array.isArray((issue as any).errors) &&
-            (issue as any).errors.length > 0
-          ) {
-            const firstBranch = ((issue as any).errors[0] as any[]) || [];
-            const specificIssue = firstBranch[0];
-            if (specificIssue && Array.isArray(specificIssue.path)) {
-              if (specificIssue.path.length > (issue.path as any[]).length) {
-                displayPath = specificIssue.path as (string | number)[];
-              }
-              displayMessage = specificIssue.message ?? displayMessage;
-            }
-          }
-
-          const pathString = (displayPath as (string | number)[])
-            .map((p) => String(p))
-            .join('.');
+          const pathString = displayPath.map((p) => String(p)).join('.');
           const specLink = getOASSpecLink(issue);
           const valueContext = getValueFromPath(
             parsedContent,
