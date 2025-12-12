@@ -171,7 +171,11 @@ function extractMostSpecificError(issue: any): {
   }
 
   // Collect all leaf errors from all branches
-  const candidates: { path: (string | number)[]; message: string; depth: number }[] = [];
+  const candidates: {
+    path: (string | number)[];
+    message: string;
+    depth: number;
+  }[] = [];
 
   function collectErrors(
     errors: any[],
@@ -185,12 +189,19 @@ function extractMostSpecificError(issue: any): {
         const errRelPath = err.path || [];
         const fullPath =
           errRelPath.length > 0 && !arraysEqual(errRelPath, parentPath)
-            ? [...parentPath, ...errRelPath.filter((p: any) => !parentPath.includes(p))]
+            ? [
+                ...parentPath,
+                ...errRelPath.filter((p: any) => !parentPath.includes(p)),
+              ]
             : parentPath;
 
         if (err.code === 'invalid_union' && Array.isArray(err.errors)) {
           // Recurse into nested unions, carrying forward the path context
-          collectErrors(err.errors, errRelPath.length > parentPath.length ? errRelPath : parentPath, depth + 1);
+          collectErrors(
+            err.errors,
+            errRelPath.length > parentPath.length ? errRelPath : parentPath,
+            depth + 1
+          );
         } else {
           // Leaf error - collect it
           let msg = err.message || 'Invalid input';
@@ -208,7 +219,8 @@ function extractMostSpecificError(issue: any): {
           }
 
           // Use the longer of fullPath or errRelPath
-          const usePath = fullPath.length >= errRelPath.length ? fullPath : errRelPath;
+          const usePath =
+            fullPath.length >= errRelPath.length ? fullPath : errRelPath;
           candidates.push({ path: usePath, message: msg, depth });
         }
       }
@@ -230,8 +242,10 @@ function extractMostSpecificError(issue: any): {
 
   // Sort by: non-generic message first, then longest path, then deepest
   candidates.sort((a, b) => {
-    const aGeneric = a.message === 'Invalid input' || a.message === 'Invalid value';
-    const bGeneric = b.message === 'Invalid input' || b.message === 'Invalid value';
+    const aGeneric =
+      a.message === 'Invalid input' || a.message === 'Invalid value';
+    const bGeneric =
+      b.message === 'Invalid input' || b.message === 'Invalid value';
     if (aGeneric !== bGeneric) return aGeneric ? 1 : -1;
     if (b.path.length !== a.path.length) return b.path.length - a.path.length;
     return b.depth - a.depth;

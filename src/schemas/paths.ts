@@ -380,10 +380,9 @@ const BaseOperationObject31 = z
         }),
         z.union([ResponseObject31, ReferenceObject])
       )
-      .refine(
-        (responses) => Object.keys(responses).length > 0,
-        { message: 'At least one response must be defined' }
-      )
+      .refine((responses) => Object.keys(responses).length > 0, {
+        message: 'At least one response must be defined',
+      })
       .optional(),
     deprecated: z.boolean().optional(),
     security: z.array(z.record(z.string(), z.array(z.string()))).optional(),

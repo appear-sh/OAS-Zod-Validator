@@ -84,7 +84,16 @@ describe('getOASSpecLink', () => {
   test('returns schema-object link for schema paths', () => {
     const issue: z.ZodIssue = {
       code: z.ZodIssueCode.custom,
-      path: ['paths', '/users', 'get', 'responses', '200', 'content', 'application/json', 'schema'],
+      path: [
+        'paths',
+        '/users',
+        'get',
+        'responses',
+        '200',
+        'content',
+        'application/json',
+        'schema',
+      ],
       message: 'Invalid',
     };
 
@@ -183,4 +192,3 @@ describe('getOASSpecLink', () => {
     expect(getOASSpecLink(issue)).toBe(`${BASE_URL}request-body-object`);
   });
 });
-

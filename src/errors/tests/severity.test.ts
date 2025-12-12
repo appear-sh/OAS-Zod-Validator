@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { getIssueSeverity, Severity } from '../severity.js';
+import { getIssueSeverity } from '../severity.js';
 import { z } from 'zod';
 
 describe('getIssueSeverity', () => {
@@ -86,4 +86,3 @@ describe('getIssueSeverity', () => {
     expect(getIssueSeverity(issue)).toBe('warning');
   });
 });
-
