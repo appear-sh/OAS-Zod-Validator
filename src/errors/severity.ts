@@ -1,5 +1,5 @@
 import type { ZodIssue } from 'zod';
-import { ZodIssueCode } from 'zod';
+import { z } from 'zod';
 
 /**
  * Defines the severity level of a validation issue.
@@ -11,7 +11,7 @@ export type Severity = 'error' | 'warning';
  */
 interface WarningPattern {
   pathSuffix: string;
-  code: ZodIssueCode;
+  code: ZodIssue['code'];
   // Optionally add more specific checks, e.g., on expected/received values
   // expected?: any;
 }
@@ -20,12 +20,12 @@ interface WarningPattern {
 // Initially focusing on missing optional but recommended description/summary fields.
 const WARNING_PATTERNS: WarningPattern[] = [
   // Missing description on various elements
-  { pathSuffix: '.description', code: ZodIssueCode.invalid_type },
+  { pathSuffix: '.description', code: z.ZodIssueCode.invalid_type },
   // Missing summary on operations
-  { pathSuffix: '.summary', code: ZodIssueCode.invalid_type },
+  { pathSuffix: '.summary', code: z.ZodIssueCode.invalid_type },
   // Add more nuanced patterns here as needed, e.g.:
-  // { pathSuffix: '.info.contact', code: ZodIssueCode.invalid_type },
-  // { pathSuffix: '.info.license', code: ZodIssueCode.invalid_type },
+  // { pathSuffix: '.info.contact', code: z.ZodIssueCode.invalid_type },
+  // { pathSuffix: '.info.license', code: z.ZodIssueCode.invalid_type },
 ];
 
 /**
