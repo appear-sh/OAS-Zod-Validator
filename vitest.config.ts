@@ -20,10 +20,12 @@ export default defineConfig({
         '**/*.d.ts',
       ],
       thresholds: {
-        statements: 60,
-        branches: 60,
-        functions: 57,
-        lines: 61,
+        // Set thresholds ~3% below current coverage to catch significant regressions
+        // while allowing minor fluctuations. Current: ~81% stmts, 82% branches, 92% funcs
+        statements: 78,
+        branches: 78,
+        functions: 88,
+        lines: 78,
       },
     },
     // Support ESM modules correctly
