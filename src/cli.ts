@@ -185,15 +185,10 @@ function extractMostSpecificError(issue: any): {
     for (const branch of errors) {
       if (!Array.isArray(branch)) continue;
       for (const err of branch) {
-        // Build the full path by combining parent context with error's relative path
+        // Zod paths are absolute from document root - use the longer (more specific) one
         const errRelPath = err.path || [];
         const fullPath =
-          errRelPath.length > 0 && !arraysEqual(errRelPath, parentPath)
-            ? [
-                ...parentPath,
-                ...errRelPath.filter((p: any) => !parentPath.includes(p)),
-              ]
-            : parentPath;
+          errRelPath.length > parentPath.length ? errRelPath : parentPath;
 
         if (err.code === 'invalid_union' && Array.isArray(err.errors)) {
           // Recurse into nested unions, carrying forward the path context
@@ -225,12 +220,6 @@ function extractMostSpecificError(issue: any): {
         }
       }
     }
-  }
-
-  // Helper to compare arrays
-  function arraysEqual(a: any[], b: any[]): boolean {
-    if (a.length !== b.length) return false;
-    return a.every((v, i) => v === b[i]);
   }
 
   collectErrors(issue.errors, originalPath, 0);
