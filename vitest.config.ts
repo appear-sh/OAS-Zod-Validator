@@ -18,6 +18,9 @@ export default defineConfig({
         '**/node_modules/**',
         '**/dist/**',
         '**/*.d.ts',
+        // Benchmarks are run manually, not as tests - exclude from coverage
+        '**/*-benchmark.ts',
+        '**/tests/*-benchmark.ts',
       ],
       thresholds: {
         // Set thresholds ~3% below current coverage to catch significant regressions
