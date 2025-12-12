@@ -33,11 +33,12 @@ export const ParameterObject = z.discriminatedUnion('in', [
     allowReserved: z.boolean().optional(),
   }),
   // Header parameters
+  // Header parameters - RFC 7230 allows token chars including underscore
   z.object({
     ...parameterBaseFields,
-    name: z.string().regex(/^[A-Za-z0-9-]+$/, {
+    name: z.string().regex(/^[A-Za-z0-9_-]+$/, {
       message:
-        'Header parameter names should contain only alphanumeric characters and hyphens',
+        'Header parameter names should contain only alphanumeric characters, hyphens, and underscores',
     }),
     in: z.literal('header'),
     schema: z.union([SchemaObject, ReferenceObject]),
