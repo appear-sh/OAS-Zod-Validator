@@ -1,19 +1,10 @@
 import { z } from 'zod';
 import { validateNumericFormat } from './numeric-formats.js';
 import { memoize } from '../utils/memoize.js';
+import { ReferenceObject } from './reference.js';
 
-// Enhanced error messages and stricter validation
-export const ReferenceObject = z
-  .object({
-    $ref: z
-      .string()
-      .startsWith('#/', { message: 'References must start with "#/"' })
-      .regex(/^#\/(components|paths)\/[\w/]+$/, {
-        message:
-          'Invalid reference format. Must be "#/components/... or #/paths/..."',
-      }),
-  })
-  .strict();
+// Re-export ReferenceObject for backward compatibility
+export { ReferenceObject };
 
 // Retain known format lists for type-compat checks only
 const KNOWN_STRING_FORMATS = [

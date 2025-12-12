@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { SchemaObject, ReferenceObject, ExtensibleObject } from './core.js';
-import { ParameterReferenceObject } from './reference.js';
+import { SchemaObject, ExtensibleObject } from './core.js';
+import { ReferenceObject, ParameterReferenceObject } from './reference.js';
 import { RequestBodyObject, ResponseObject } from './requestResponse.js';
 
 // Enhanced Parameter Location Object
