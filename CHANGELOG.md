@@ -1,5 +1,11 @@
 # @appear.sh/oas-zod-validator
 
+## 1.6.1
+
+### Patch Changes
+
+- 0ba3403: Fix false positives in OAS 3.1 validation and improve error messages
+
 ## 1.6.0
 
 ### Minor Changes
