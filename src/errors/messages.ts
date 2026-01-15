@@ -171,8 +171,13 @@ function mapZodCodeToErrorCode(
         return ValidationErrorCode.TYPE_KEYWORD_MISMATCH;
       }
 
-      // Example value errors
-      if (message.includes('Example') || message.includes('example')) {
+      // Example value errors (specific patterns to avoid false positives)
+      // Matches: "Example value...", "Example string..."
+      // Excludes: "Example cannot have both..." (Example Object), "For example:..." (suggestions)
+      if (
+        message.startsWith('Example value') ||
+        message.startsWith('Example string')
+      ) {
         return ValidationErrorCode.INVALID_EXAMPLE_VALUE;
       }
 
