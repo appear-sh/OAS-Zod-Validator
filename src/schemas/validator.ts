@@ -1488,7 +1488,7 @@ export function validateOpenAPIEnhanced(
 
     return {
       ...enhanced,
-      specLink: enhanced.specLink || specLink,
+      specLink: specLink || enhanced.specLink, // Prefer path-specific link over generic error-code link
       severity,
       category,
       suggestion:
