@@ -449,7 +449,10 @@ async function validateSpec(
       });
 
       // Detect OpenAPI version from parsed content (handle null/undefined)
-      const docAsObject = parsedContent as Record<string, unknown> | null | undefined;
+      const docAsObject = parsedContent as
+        | Record<string, unknown>
+        | null
+        | undefined;
       const specVersion =
         docAsObject && typeof docAsObject.openapi === 'string'
           ? docAsObject.openapi
