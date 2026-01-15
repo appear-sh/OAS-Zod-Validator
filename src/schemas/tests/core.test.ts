@@ -780,6 +780,25 @@ describe('Core Schema Types', () => {
         };
         expect(() => SchemaObject.parse(schema)).toThrow();
       });
+
+      test('accepts type: object with allOf (properties in composition)', () => {
+        const schema = {
+          type: 'object',
+          allOf: [{ type: 'object', properties: { id: { type: 'string' } } }],
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+
+      test('accepts type: array with anyOf (items in composition)', () => {
+        const schema = {
+          type: 'array',
+          anyOf: [
+            { type: 'array', items: { type: 'string' } },
+            { type: 'array', items: { type: 'number' } },
+          ],
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
     });
   });
 });
