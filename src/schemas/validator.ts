@@ -1470,15 +1470,23 @@ export function validateOpenAPIEnhanced(
     );
 
     const specLink = getOASSpecLink(issue, specVersion);
+    const severity = getIssueSeverity(issue);
+
+    // For warnings, prefer warning category over error code category
+    const warningCategory = getWarningCategory(
+      issue.path.join('.'),
+      issue.code
+    );
+    const category =
+      severity === 'warning' && warningCategory
+        ? warningCategory
+        : enhanced.category || 'general';
 
     return {
       ...enhanced,
       specLink: enhanced.specLink || specLink,
-      severity: getIssueSeverity(issue),
-      category:
-        enhanced.category ||
-        getWarningCategory(issue.path.join('.'), issue.code) ||
-        'general',
+      severity,
+      category,
       suggestion:
         enhanced.suggestion ||
         getWarningSuggestion(issue.path.join('.'), issue.code),
