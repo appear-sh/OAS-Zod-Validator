@@ -833,11 +833,7 @@ describe('Core Schema Types - OpenAPI 3.1', () => {
     describe('Composition Keywords Regression (3.1)', () => {
       test('anyOf with mixed types', () => {
         const schema = {
-          anyOf: [
-            { type: 'string' },
-            { type: 'integer' },
-            { type: 'boolean' },
-          ],
+          anyOf: [{ type: 'string' }, { type: 'integer' }, { type: 'boolean' }],
         };
         expect(() => SchemaObject31.parse(schema)).not.toThrow();
       });
