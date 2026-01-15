@@ -14,6 +14,12 @@ export enum ValidationErrorCode {
   INVALID_UNION = 'ERR_004',
   CUSTOM_VALIDATION_FAILED = 'ERR_005',
 
+  // Schema completeness (ERR_006-ERR_009)
+  MISSING_OBJECT_SCHEMA = 'ERR_006',
+  MISSING_ARRAY_ITEMS = 'ERR_007',
+  TYPE_KEYWORD_MISMATCH = 'ERR_008',
+  INVALID_EXAMPLE_VALUE = 'ERR_009',
+
   // Format validation (ERR_100-ERR_199)
   INVALID_FORMAT = 'ERR_101',
   FORMAT_TYPE_MISMATCH = 'ERR_102',
@@ -139,6 +145,38 @@ export const ERROR_CODES: Record<ValidationErrorCode, ErrorCodeInfo> = {
     category: 'schema',
     defaultMessage: 'Custom validation failed',
     suggestion: 'Check the custom validation rules for this field.',
+  },
+  [ValidationErrorCode.MISSING_OBJECT_SCHEMA]: {
+    code: ValidationErrorCode.MISSING_OBJECT_SCHEMA,
+    category: 'schema',
+    defaultMessage: 'Object type has no schema definition',
+    suggestion:
+      'Add `properties: { ... }` to define the object fields, or use `additionalProperties: true` to allow arbitrary key-value pairs.',
+    specSection: 'schema-object',
+  },
+  [ValidationErrorCode.MISSING_ARRAY_ITEMS]: {
+    code: ValidationErrorCode.MISSING_ARRAY_ITEMS,
+    category: 'schema',
+    defaultMessage: 'Array type has no items definition',
+    suggestion:
+      'Add `items: { type: "..." }` to define the schema for array elements.',
+    specSection: 'schema-object',
+  },
+  [ValidationErrorCode.TYPE_KEYWORD_MISMATCH]: {
+    code: ValidationErrorCode.TYPE_KEYWORD_MISMATCH,
+    category: 'schema',
+    defaultMessage: 'Keyword cannot be used with this type',
+    suggestion:
+      'Check that the keyword is compatible with the schema type. For example: minLength/maxLength/pattern are for strings; minimum/maximum are for numbers.',
+    specSection: 'schema-object',
+  },
+  [ValidationErrorCode.INVALID_EXAMPLE_VALUE]: {
+    code: ValidationErrorCode.INVALID_EXAMPLE_VALUE,
+    category: 'schema',
+    defaultMessage: 'Example value does not match schema constraints',
+    suggestion:
+      'Update the example to match the schema type, format, and constraints (min/max, pattern, etc.).',
+    specSection: 'schema-object',
   },
   [ValidationErrorCode.INVALID_FORMAT]: {
     code: ValidationErrorCode.INVALID_FORMAT,
