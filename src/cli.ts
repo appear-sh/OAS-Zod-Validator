@@ -11,7 +11,11 @@ import ora from 'ora';
 import { fileURLToPath } from 'url';
 import * as YAML from 'yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
-import { getIssueSeverity, getWarningSuggestion } from './errors/severity.js';
+import {
+  getIssueSeverity,
+  getWarningCategory,
+  getWarningSuggestion,
+} from './errors/severity.js';
 import { enhanceZodIssue } from './errors/messages.js';
 import * as jsonc from 'jsonc-parser';
 import {
@@ -475,12 +479,27 @@ async function validateSpec(
             specVersion
           );
 
+          // Apply warning-specific category override (same as validateOpenAPIEnhanced)
+          const warningCategory = getWarningCategory(
+            issue.path.join('.'),
+            issue.code
+          );
+          const category =
+            severity === 'warning' && warningCategory
+              ? warningCategory
+              : enhanced.category || 'general';
+
+          // Apply warning-specific suggestion fallback (same as text output)
+          const suggestion =
+            enhanced.suggestion ||
+            getWarningSuggestion(issue.path.join('.'), issue.code);
+
           return {
             ...issue,
             code: enhanced.code,
-            category: enhanced.category,
+            category,
             severity,
-            suggestion: enhanced.suggestion,
+            suggestion,
             specLink: specLink || enhanced.specLink,
           };
         });
