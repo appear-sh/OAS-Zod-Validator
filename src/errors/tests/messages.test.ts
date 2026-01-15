@@ -10,10 +10,13 @@ import { ValidationErrorCode } from '../codes.js';
 describe('messages utilities', () => {
   describe('formatMessage', () => {
     it('replaces placeholders with values', () => {
-      const result = formatMessage('Expected {{expected}}, received {{received}}', {
-        expected: 'string',
-        received: 'number',
-      });
+      const result = formatMessage(
+        'Expected {{expected}}, received {{received}}',
+        {
+          expected: 'string',
+          received: 'number',
+        }
+      );
       expect(result).toBe('Expected string, received number');
     });
 
@@ -109,12 +112,15 @@ describe('messages utilities', () => {
     });
 
     it('includes spec link when specSection is defined', () => {
-      const enhanced = enhanceZodIssue({
-        code: 'invalid_type',
-        path: ['info'],
-        message: 'Required',
-        received: 'undefined',
-      }, '3.1.0');
+      const enhanced = enhanceZodIssue(
+        {
+          code: 'invalid_type',
+          path: ['info'],
+          message: 'Required',
+          received: 'undefined',
+        },
+        '3.1.0'
+      );
       expect(enhanced.specLink).toContain('appear.sh/api-toolkit/specs');
     });
 

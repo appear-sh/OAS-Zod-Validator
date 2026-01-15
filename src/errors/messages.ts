@@ -3,11 +3,7 @@
  * Provides helper functions for working with error messages and suggestions
  */
 
-import {
-  ValidationErrorCode,
-  ErrorCodeInfo,
-  getErrorCodeInfo,
-} from './codes.js';
+import { ValidationErrorCode, getErrorCodeInfo } from './codes.js';
 
 /**
  * Template replacement for messages with placeholders like {{expected}}, {{received}}

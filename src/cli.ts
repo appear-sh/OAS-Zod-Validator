@@ -1,11 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-import {
-  ValidationOptions,
-  validateOpenAPI,
-  validateOpenAPIEnhanced,
-} from './schemas/validator.js';
+import { ValidationOptions, validateOpenAPI } from './schemas/validator.js';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
@@ -16,8 +12,7 @@ import { fileURLToPath } from 'url';
 import * as YAML from 'yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
 import { getIssueSeverity, getWarningSuggestion } from './errors/severity.js';
-import { enhanceZodIssue, formatMessage } from './errors/messages.js';
-import { getErrorCodeInfo } from './errors/codes.js';
+import { enhanceZodIssue } from './errors/messages.js';
 import * as jsonc from 'jsonc-parser';
 import {
   getLocationFromJsonAst,
@@ -517,7 +512,8 @@ async function validateSpec(
             specVersion
           );
 
-          const specLink = getOASSpecLink(issue, specVersion) || enhanced.specLink;
+          const specLink =
+            getOASSpecLink(issue, specVersion) || enhanced.specLink;
           const valueContext = getValueFromPath(
             parsedContent,
             displayPath as (string | number)[]

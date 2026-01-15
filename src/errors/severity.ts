@@ -1,5 +1,4 @@
 import type { ZodIssue } from 'zod';
-import { z } from 'zod';
 
 /**
  * Defines the severity level of a validation issue.

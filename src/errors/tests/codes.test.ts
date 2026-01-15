@@ -38,8 +38,12 @@ describe('error codes', () => {
     });
 
     it('includes suggestions for most codes', () => {
-      expect(ERROR_CODES[ValidationErrorCode.INVALID_TYPE].suggestion).toBeDefined();
-      expect(ERROR_CODES[ValidationErrorCode.INVALID_EMAIL].suggestion).toContain('email');
+      expect(
+        ERROR_CODES[ValidationErrorCode.INVALID_TYPE].suggestion
+      ).toBeDefined();
+      expect(
+        ERROR_CODES[ValidationErrorCode.INVALID_EMAIL].suggestion
+      ).toContain('email');
     });
   });
 
