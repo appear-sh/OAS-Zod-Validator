@@ -155,10 +155,17 @@ async function loadConfig(configPath: string): Promise<ConfigFile> {
  * Returns the deepest error with the longest path and most descriptive message.
  * Preserves the original issue path as context for relative paths.
  */
-function extractMostSpecificError(issue: any): {
+interface ExtractedError {
   path: (string | number)[];
   message: string;
-} {
+  code: string;
+  expected?: unknown;
+  received?: unknown;
+  validation?: string;
+  origin?: string;
+}
+
+function extractMostSpecificError(issue: any): ExtractedError {
   const originalPath = issue.path || [];
 
   // If not a union error, return as-is
@@ -172,15 +179,19 @@ function extractMostSpecificError(issue: any): {
         msg = `Expected one of: ${issue.values.slice(0, 5).join(', ')}${issue.values.length > 5 ? '...' : ''}`;
       }
     }
-    return { path: originalPath, message: msg };
+    return {
+      path: originalPath,
+      message: msg,
+      code: issue.code,
+      expected: issue.expected,
+      received: issue.received,
+      validation: issue.validation,
+      origin: issue.origin,
+    };
   }
 
   // Collect all leaf errors from all branches
-  const candidates: {
-    path: (string | number)[];
-    message: string;
-    depth: number;
-  }[] = [];
+  const candidates: (ExtractedError & { depth: number })[] = [];
 
   function collectErrors(
     errors: any[],
@@ -221,7 +232,16 @@ function extractMostSpecificError(issue: any): {
           // Use the longer of fullPath or errRelPath
           const usePath =
             fullPath.length >= errRelPath.length ? fullPath : errRelPath;
-          candidates.push({ path: usePath, message: msg, depth });
+          candidates.push({
+            path: usePath,
+            message: msg,
+            code: err.code,
+            expected: err.expected,
+            received: err.received,
+            validation: err.validation,
+            origin: err.origin,
+            depth,
+          });
         }
       }
     }
@@ -231,7 +251,15 @@ function extractMostSpecificError(issue: any): {
 
   // Prefer errors with longer paths (more specific) and non-generic messages
   if (candidates.length === 0) {
-    return { path: originalPath, message: issue.message || 'Invalid input' };
+    return {
+      path: originalPath,
+      message: issue.message || 'Invalid input',
+      code: issue.code,
+      expected: issue.expected,
+      received: issue.received,
+      validation: issue.validation,
+      origin: issue.origin,
+    };
   }
 
   // Sort by: non-generic message first, then longest path, then deepest
@@ -521,19 +549,20 @@ async function validateSpec(
 
           const pathString = displayPath.map((p) => String(p)).join('.');
 
-          // Get enhanced error info
+          // Get enhanced error info using the EXTRACTED error's properties
+          // This ensures the error code matches the displayed message
           const enhanced = enhanceZodIssue(
             {
-              code: issue.code,
-              path: (issue.path as Array<string | number>).filter(
+              code: extracted.code,
+              path: displayPath.filter(
                 (p): p is string | number =>
                   typeof p === 'string' || typeof p === 'number'
               ),
-              message: issue.message,
-              expected: (issue as any).expected,
-              received: (issue as any).received,
-              validation: (issue as any).validation,
-              origin: (issue as any).origin,
+              message: extracted.message,
+              expected: extracted.expected,
+              received: extracted.received,
+              validation: extracted.validation,
+              origin: extracted.origin,
             },
             specVersion
           );
