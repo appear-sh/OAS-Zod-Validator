@@ -114,12 +114,8 @@ const WARNING_PATTERNS: WarningPattern[] = [
     category: 'organization',
     suggestion: 'Add server URLs for API environments',
   },
-  {
-    pathSuffix: '.x-',
-    code: 'unrecognized_keys',
-    category: 'organization',
-    suggestion: 'Custom extensions should use x- prefix',
-  },
+  // Note: unrecognized_keys errors store key names in issue.keys, not path
+  // So path-based matching cannot detect x- prefixed extension keys
 ];
 
 /**
