@@ -30,6 +30,7 @@ export function enhanceZodIssue(
     expected?: unknown;
     received?: unknown;
     validation?: string;
+    origin?: string; // Zod uses 'origin' for too_small/too_big to indicate type
   },
   specVersion: string = '3.1.0'
 ): {
@@ -46,7 +47,8 @@ export function enhanceZodIssue(
   const mappedCode = mapZodCodeToErrorCode(
     issue.code,
     issue.validation,
-    issue.received
+    issue.received,
+    issue.origin
   );
   const info = getErrorCodeInfo(mappedCode);
 
@@ -89,7 +91,8 @@ export function enhanceZodIssue(
 function mapZodCodeToErrorCode(
   zodCode: string,
   validation?: string,
-  received?: unknown
+  received?: unknown,
+  origin?: string
 ): string {
   // Handle invalid_string validation checks first (regex, email, etc.)
   if (zodCode === 'invalid_string') {
@@ -149,14 +152,15 @@ function mapZodCodeToErrorCode(
   }
 
   // Handle too_small (min constraints)
+  // Zod uses 'origin' property to indicate the constrained value type
   if (zodCode === 'too_small') {
-    if (validation === 'string') return ValidationErrorCode.INVALID_MIN_LENGTH;
+    if (origin === 'string') return ValidationErrorCode.INVALID_MIN_LENGTH;
     return ValidationErrorCode.INVALID_MINIMUM;
   }
 
   // Handle too_big (max constraints)
   if (zodCode === 'too_big') {
-    if (validation === 'string') return ValidationErrorCode.INVALID_MAX_LENGTH;
+    if (origin === 'string') return ValidationErrorCode.INVALID_MAX_LENGTH;
     return ValidationErrorCode.INVALID_MAXIMUM;
   }
 

@@ -1465,6 +1465,7 @@ export function validateOpenAPIEnhanced(
         expected: (issue as any).expected,
         received: (issue as any).received,
         validation: (issue as any).validation,
+        origin: (issue as any).origin,
       },
       specVersion
     );

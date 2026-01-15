@@ -93,22 +93,44 @@ describe('messages utilities', () => {
       expect(enhanced.code).toBe(ValidationErrorCode.CUSTOM_VALIDATION_FAILED);
     });
 
-    it('maps too_small to INVALID_MINIMUM', () => {
+    it('maps too_small with origin=number to INVALID_MINIMUM', () => {
       const enhanced = enhanceZodIssue({
         code: 'too_small',
         path: ['count'],
         message: 'Too small',
+        origin: 'number',
       });
       expect(enhanced.code).toBe(ValidationErrorCode.INVALID_MINIMUM);
     });
 
-    it('maps too_big to INVALID_MAXIMUM', () => {
+    it('maps too_small with origin=string to INVALID_MIN_LENGTH', () => {
+      const enhanced = enhanceZodIssue({
+        code: 'too_small',
+        path: ['name'],
+        message: 'Too short',
+        origin: 'string',
+      });
+      expect(enhanced.code).toBe(ValidationErrorCode.INVALID_MIN_LENGTH);
+    });
+
+    it('maps too_big with origin=number to INVALID_MAXIMUM', () => {
       const enhanced = enhanceZodIssue({
         code: 'too_big',
         path: ['count'],
         message: 'Too big',
+        origin: 'number',
       });
       expect(enhanced.code).toBe(ValidationErrorCode.INVALID_MAXIMUM);
+    });
+
+    it('maps too_big with origin=string to INVALID_MAX_LENGTH', () => {
+      const enhanced = enhanceZodIssue({
+        code: 'too_big',
+        path: ['name'],
+        message: 'Too long',
+        origin: 'string',
+      });
+      expect(enhanced.code).toBe(ValidationErrorCode.INVALID_MAX_LENGTH);
     });
 
     it('includes spec link when specSection is defined', () => {

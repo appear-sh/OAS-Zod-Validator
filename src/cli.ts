@@ -465,6 +465,7 @@ async function validateSpec(
               expected: (issue as any).expected,
               received: (issue as any).received,
               validation: (issue as any).validation,
+              origin: (issue as any).origin,
             },
             specVersion
           );
@@ -508,6 +509,7 @@ async function validateSpec(
               expected: (issue as any).expected,
               received: (issue as any).received,
               validation: (issue as any).validation,
+              origin: (issue as any).origin,
             },
             specVersion
           );
