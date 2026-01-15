@@ -400,33 +400,39 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           });
         }
 
-        // Skip type-specific validations when composition keywords are present
-        // Properties/items may be defined within the composed schemas
-        if (!schema.type || hasComposition) {
+        // Skip structural validations (items/properties) when composition keywords are present
+        // These may be defined within the composed schemas
+        // But continue with type-based validations (format, example) if type is present
+        if (!schema.type) {
           return;
         }
 
-        // Validate that array types have items (only when no composition)
-        if (schema.type === 'array' && !schema.items) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Array types must define items',
-            path: ['items'],
-          });
+        // Structural validations - skip when composition keywords present
+        if (!hasComposition) {
+          // Validate that array types have items (only when no composition)
+          if (schema.type === 'array' && !schema.items) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Array types must define items',
+              path: ['items'],
+            });
+          }
+          // Validate that object types have properties or additionalProperties (only when no composition)
+          if (
+            schema.type === 'object' &&
+            !schema.properties &&
+            !schema.additionalProperties
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                'Object types must define either properties or additionalProperties',
+              path: ['properties'],
+            });
+          }
         }
-        // Validate that object types have properties or additionalProperties (only when no composition)
-        if (
-          schema.type === 'object' &&
-          !schema.properties &&
-          !schema.additionalProperties
-        ) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message:
-              'Object types must define either properties or additionalProperties',
-            path: ['properties'],
-          });
-        }
+
+        // Type-based validations below run regardless of composition
         // Additional numeric format validation
         if (
           schema.format &&
