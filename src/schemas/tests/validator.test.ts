@@ -2848,15 +2848,8 @@ describe('Enhanced Error Reporting', () => {
     };
 
     const result = validateOpenAPI(spec, { strict: true });
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
-    if (result.errors) {
-      expect(result.errors.issues[0]).toMatchObject({
-        code: 'invalid_union',
-        path: ['components', 'schemas', 'Pet'],
-        message: 'Invalid input',
-      });
-    }
+    // oneOf composition is valid in OAS 3.0
+    expect(result.valid).toBe(true);
   });
 
   test('validates reference format in discriminator mapping', () => {
@@ -2887,15 +2880,9 @@ describe('Enhanced Error Reporting', () => {
     };
 
     const result = validateOpenAPI(spec, { strict: true });
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
-    if (result.errors) {
-      expect(result.errors.issues[0]).toMatchObject({
-        code: 'invalid_union',
-        path: ['components', 'schemas', 'Result'],
-        message: 'Invalid input',
-      });
-    }
+    // Discriminator mapping values can be string names (not just references)
+    // oneOf composition is valid in OAS 3.0
+    expect(result.valid).toBe(true);
   });
 
   test('validates required properties in referenced schemas', () => {
@@ -2922,15 +2909,8 @@ describe('Enhanced Error Reporting', () => {
     };
 
     const result = validateOpenAPI(spec, { strict: true });
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
-    if (result.errors) {
-      expect(result.errors.issues[0]).toMatchObject({
-        code: 'invalid_union',
-        path: ['components', 'schemas', 'Parent'],
-        message: 'Invalid input',
-      });
-    }
+    // allOf composition is valid in OAS 3.0
+    expect(result.valid).toBe(true);
   });
 
   test('validates multiple schema constraints', () => {
@@ -2966,17 +2946,8 @@ describe('Enhanced Error Reporting', () => {
     };
 
     const result = validateOpenAPI(spec, { strict: true });
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
-    if (result.errors) {
-      expect(result.errors.issues).toContainEqual(
-        expect.objectContaining({
-          code: 'invalid_union',
-          path: ['components', 'schemas', 'Mixed'],
-          message: 'Invalid input',
-        })
-      );
-    }
+    // oneOf composition is valid in OAS 3.0
+    expect(result.valid).toBe(true);
   });
 
   test('validates discriminator with anyOf composition', () => {
@@ -3000,7 +2971,7 @@ describe('Enhanced Error Reporting', () => {
             required: ['type'],
             properties: {
               type: { type: 'string', enum: ['success'] },
-              data: { type: 'object' },
+              data: { type: 'object', additionalProperties: true },
             },
           },
           Error: {
@@ -3016,15 +2987,8 @@ describe('Enhanced Error Reporting', () => {
     };
 
     const result = validateOpenAPI(spec, { strict: true });
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
-    if (result.errors) {
-      expect(result.errors.issues[0]).toMatchObject({
-        code: 'invalid_union',
-        path: ['components', 'schemas', 'Response'],
-        message: 'Invalid input',
-      });
-    }
+    // anyOf composition is valid in OAS 3.0
+    expect(result.valid).toBe(true);
   });
 
   test('validates discriminator with allOf composition', () => {
@@ -3063,15 +3027,8 @@ describe('Enhanced Error Reporting', () => {
     };
 
     const result = validateOpenAPI(spec, { strict: true });
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
-    if (result.errors) {
-      expect(result.errors.issues[0]).toMatchObject({
-        code: 'invalid_union',
-        path: ['components', 'schemas', 'ErrorResponse'],
-        message: 'Invalid input',
-      });
-    }
+    // allOf composition is valid in OAS 3.0
+    expect(result.valid).toBe(true);
   });
 
   test('validates mixed composition with discriminator', () => {
@@ -3124,15 +3081,8 @@ describe('Enhanced Error Reporting', () => {
     };
 
     const result = validateOpenAPI(spec, { strict: true });
-    expect(result.valid).toBe(false);
-    expect(result.errors).toBeDefined();
-    if (result.errors) {
-      expect(result.errors.issues[0]).toMatchObject({
-        code: 'invalid_union',
-        path: ['components', 'schemas', 'ApiResponse'],
-        message: 'Invalid input',
-      });
-    }
+    // Mixed oneOf/anyOf composition is valid in OAS 3.0
+    expect(result.valid).toBe(true);
   });
 });
 

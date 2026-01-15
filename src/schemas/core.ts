@@ -82,14 +82,15 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
   );
   const baseSchema = z
     .object({
-      type: z.enum([
-        'string',
-        'number',
-        'integer',
-        'boolean',
-        'array',
-        'object',
-      ]),
+      // Type is optional when using composition keywords (anyOf, oneOf, allOf)
+      type: z
+        .enum(['string', 'number', 'integer', 'boolean', 'array', 'object'])
+        .optional(),
+      // Composition keywords (OAS 3.0 supports these per JSON Schema draft-04)
+      anyOf: z.array(SchemaOrRef).optional(),
+      oneOf: z.array(SchemaOrRef).optional(),
+      allOf: z.array(SchemaOrRef).optional(),
+      not: SchemaOrRef.optional(),
       // Allow any string for format per OAS (open value), but keep type checks for known formats
       format: z
         .string()
@@ -333,6 +334,11 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
             'enum',
             'title',
             'description',
+            // Composition keywords (valid in OAS 3.0 Schema Object)
+            'anyOf',
+            'oneOf',
+            'allOf',
+            'not',
           ]);
 
           // Type-specific properties
@@ -379,6 +385,26 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           Boolean((ctx as any)?.options?.data?.skipExamples) || fastMode;
         const skipPatternChecks =
           Boolean((ctx as any)?.options?.data?.skipPatternChecks) || fastMode;
+
+        // Check if this is a composition-only schema (no type, uses anyOf/oneOf/allOf/not)
+        const hasComposition =
+          schema.anyOf || schema.oneOf || schema.allOf || schema.not;
+
+        // Schema must have either type or composition keywords
+        if (!schema.type && !hasComposition) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              'Schema must define either a type or use composition keywords (anyOf, oneOf, allOf, not)',
+            path: ['type'],
+          });
+        }
+
+        // Skip type-specific validations for composition-only schemas
+        if (!schema.type) {
+          return;
+        }
+
         // Validate that array types have items
         if (schema.type === 'array' && !schema.items) {
           ctx.addIssue({
