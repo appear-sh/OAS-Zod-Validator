@@ -1452,9 +1452,12 @@ export function validateOpenAPIEnhanced(
     };
   }
 
-  const docAsObject = document as Record<string, unknown>;
+  // Safely extract OpenAPI version, handling null/undefined documents
+  const docAsObject = document as Record<string, unknown> | null | undefined;
   const specVersion =
-    typeof docAsObject.openapi === 'string' ? docAsObject.openapi : '3.1.0';
+    docAsObject && typeof docAsObject.openapi === 'string'
+      ? docAsObject.openapi
+      : '3.1.0';
 
   const enhancedIssues = result.errors.issues.map((issue) => {
     const enhanced = enhanceZodIssue(

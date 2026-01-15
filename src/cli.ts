@@ -448,10 +448,12 @@ async function validateSpec(
         }
       });
 
-      // Detect OpenAPI version from parsed content
-      const docAsObject = parsedContent as Record<string, unknown>;
+      // Detect OpenAPI version from parsed content (handle null/undefined)
+      const docAsObject = parsedContent as Record<string, unknown> | null | undefined;
       const specVersion =
-        typeof docAsObject.openapi === 'string' ? docAsObject.openapi : '3.1.0';
+        docAsObject && typeof docAsObject.openapi === 'string'
+          ? docAsObject.openapi
+          : '3.1.0';
 
       if (cliOptions.format === 'json') {
         const outputIssues = issuesWithLocation.map((issue) => {
