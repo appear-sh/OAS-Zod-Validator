@@ -16,6 +16,13 @@ import {
   VersionError,
   AbortedError,
 } from '../errors/index.js';
+import { enhanceZodIssue } from '../errors/messages.js';
+import { getOASSpecLink } from '../errors/specLinks.js';
+import {
+  getIssueSeverity,
+  getWarningCategory,
+  getWarningSuggestion,
+} from '../errors/severity.js';
 import { OpenAPIVersion, createOpenAPIVersion } from '../types/index.js';
 import {
   getValidationCache,
@@ -92,6 +99,33 @@ export interface ValidationResult {
   errors?: z.ZodError;
 
   /** References that were resolved successfully */
+  resolvedRefs: string[];
+}
+
+/**
+ * Enhanced validation result with error codes, suggestions, and summary
+ */
+export interface EnhancedValidationResult {
+  valid: boolean;
+  summary?: {
+    errors: number;
+    warnings: number;
+    byCategory: Record<string, number>;
+    byCode: Record<string, number>;
+  };
+  errors?: {
+    issues: Array<{
+      code: string;
+      category: string;
+      severity: 'error' | 'warning';
+      message: string;
+      suggestion?: string;
+      specLink?: string;
+      path: (string | number)[];
+      expected?: unknown;
+      received?: unknown;
+    }>;
+  };
   resolvedRefs: string[];
 }
 
@@ -1389,4 +1423,107 @@ function validateTagUniqueness(
     }
   }
   return issues;
+}
+
+/**
+ * Enhanced OpenAPI validation with improved error reporting
+ *
+ * @param document - The OpenAPI document to validate
+ * @param options - Validation options
+ * @returns Enhanced validation result with codes, suggestions, and summary
+ */
+export function validateOpenAPIEnhanced(
+  document: unknown,
+  options: ValidationOptions = {}
+): EnhancedValidationResult {
+  const result = validateOpenAPI(document, options);
+
+  if (result.valid) {
+    return {
+      valid: true,
+      resolvedRefs: result.resolvedRefs,
+    };
+  }
+
+  if (!result.errors) {
+    return {
+      valid: false,
+      resolvedRefs: result.resolvedRefs,
+    };
+  }
+
+  // Safely extract OpenAPI version, handling null/undefined documents
+  const docAsObject = document as Record<string, unknown> | null | undefined;
+  const specVersion =
+    docAsObject && typeof docAsObject.openapi === 'string'
+      ? docAsObject.openapi
+      : '3.1.0';
+
+  const enhancedIssues = result.errors.issues.map((issue) => {
+    const enhanced = enhanceZodIssue(
+      {
+        code: issue.code,
+        path: issue.path as (string | number)[],
+        message: issue.message,
+        expected: (issue as any).expected,
+        received: (issue as any).received,
+        validation: (issue as any).validation,
+        origin: (issue as any).origin,
+      },
+      specVersion
+    );
+
+    const specLink = getOASSpecLink(issue, specVersion);
+    const severity = getIssueSeverity(issue);
+
+    // For warnings, prefer warning category over error code category
+    const warningCategory = getWarningCategory(
+      issue.path.join('.'),
+      issue.code
+    );
+    const category =
+      severity === 'warning' && warningCategory
+        ? warningCategory
+        : enhanced.category || 'general';
+
+    return {
+      ...enhanced,
+      specLink: specLink || enhanced.specLink, // Prefer path-specific link over generic error-code link
+      severity,
+      category,
+      suggestion:
+        enhanced.suggestion ||
+        getWarningSuggestion(issue.path.join('.'), issue.code),
+    };
+  });
+
+  const byCategory: Record<string, number> = {};
+  const byCode: Record<string, number> = {};
+  let errorCount = 0;
+  let warningCount = 0;
+
+  for (const issue of enhancedIssues) {
+    byCategory[issue.category] = (byCategory[issue.category] || 0) + 1;
+    byCode[issue.code] = (byCode[issue.code] || 0) + 1;
+
+    if (issue.severity === 'error') {
+      errorCount++;
+    } else {
+      warningCount++;
+    }
+  }
+
+  return {
+    valid: false,
+    summary: {
+      errors: errorCount,
+      warnings: warningCount,
+      byCategory,
+      byCode,
+    },
+    errors: {
+      issues: enhancedIssues,
+    },
+    resolvedRefs: result.resolvedRefs,
+  };
 }

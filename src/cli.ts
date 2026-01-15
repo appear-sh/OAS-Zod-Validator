@@ -11,7 +11,12 @@ import ora from 'ora';
 import { fileURLToPath } from 'url';
 import * as YAML from 'yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
-import { getIssueSeverity } from './errors/severity.js';
+import {
+  getIssueSeverity,
+  getWarningCategory,
+  getWarningSuggestion,
+} from './errors/severity.js';
+import { enhanceZodIssue } from './errors/messages.js';
 import * as jsonc from 'jsonc-parser';
 import {
   getLocationFromJsonAst,
@@ -150,10 +155,17 @@ async function loadConfig(configPath: string): Promise<ConfigFile> {
  * Returns the deepest error with the longest path and most descriptive message.
  * Preserves the original issue path as context for relative paths.
  */
-function extractMostSpecificError(issue: any): {
+interface ExtractedError {
   path: (string | number)[];
   message: string;
-} {
+  code: string;
+  expected?: unknown;
+  received?: unknown;
+  validation?: string;
+  origin?: string;
+}
+
+function extractMostSpecificError(issue: any): ExtractedError {
   const originalPath = issue.path || [];
 
   // If not a union error, return as-is
@@ -167,15 +179,19 @@ function extractMostSpecificError(issue: any): {
         msg = `Expected one of: ${issue.values.slice(0, 5).join(', ')}${issue.values.length > 5 ? '...' : ''}`;
       }
     }
-    return { path: originalPath, message: msg };
+    return {
+      path: originalPath,
+      message: msg,
+      code: issue.code,
+      expected: issue.expected,
+      received: issue.received,
+      validation: issue.validation,
+      origin: issue.origin,
+    };
   }
 
   // Collect all leaf errors from all branches
-  const candidates: {
-    path: (string | number)[];
-    message: string;
-    depth: number;
-  }[] = [];
+  const candidates: (ExtractedError & { depth: number })[] = [];
 
   function collectErrors(
     errors: any[],
@@ -216,7 +232,16 @@ function extractMostSpecificError(issue: any): {
           // Use the longer of fullPath or errRelPath
           const usePath =
             fullPath.length >= errRelPath.length ? fullPath : errRelPath;
-          candidates.push({ path: usePath, message: msg, depth });
+          candidates.push({
+            path: usePath,
+            message: msg,
+            code: err.code,
+            expected: err.expected,
+            received: err.received,
+            validation: err.validation,
+            origin: err.origin,
+            depth,
+          });
         }
       }
     }
@@ -226,7 +251,15 @@ function extractMostSpecificError(issue: any): {
 
   // Prefer errors with longer paths (more specific) and non-generic messages
   if (candidates.length === 0) {
-    return { path: originalPath, message: issue.message || 'Invalid input' };
+    return {
+      path: originalPath,
+      message: issue.message || 'Invalid input',
+      code: issue.code,
+      expected: issue.expected,
+      received: issue.received,
+      validation: issue.validation,
+      origin: issue.origin,
+    };
   }
 
   // Sort by: non-generic message first, then longest path, then deepest
@@ -447,11 +480,57 @@ async function validateSpec(
         }
       });
 
+      // Detect OpenAPI version from parsed content (handle null/undefined)
+      const docAsObject = parsedContent as
+        | Record<string, unknown>
+        | null
+        | undefined;
+      const specVersion =
+        docAsObject && typeof docAsObject.openapi === 'string'
+          ? docAsObject.openapi
+          : '3.1.0';
+
       if (cliOptions.format === 'json') {
-        const outputIssues = issuesWithLocation.map((issue) => ({
-          ...issue,
-          severity: getIssueSeverity(issue),
-        }));
+        const outputIssues = issuesWithLocation.map((issue) => {
+          const severity = getIssueSeverity(issue);
+          const specLink = getOASSpecLink(issue, specVersion);
+          const enhanced = enhanceZodIssue(
+            {
+              code: issue.code,
+              path: issue.path as (string | number)[],
+              message: issue.message,
+              expected: (issue as any).expected,
+              received: (issue as any).received,
+              validation: (issue as any).validation,
+              origin: (issue as any).origin,
+            },
+            specVersion
+          );
+
+          // Apply warning-specific category override (same as validateOpenAPIEnhanced)
+          const warningCategory = getWarningCategory(
+            issue.path.join('.'),
+            issue.code
+          );
+          const category =
+            severity === 'warning' && warningCategory
+              ? warningCategory
+              : enhanced.category || 'general';
+
+          // Apply warning-specific suggestion fallback (same as text output)
+          const suggestion =
+            enhanced.suggestion ||
+            getWarningSuggestion(issue.path.join('.'), issue.code);
+
+          return {
+            ...issue,
+            code: enhanced.code,
+            category,
+            severity,
+            suggestion,
+            specLink: specLink || enhanced.specLink,
+          };
+        });
         console.log(JSON.stringify({ errors: outputIssues }, null, 2));
       } else {
         console.log(
@@ -461,18 +540,45 @@ async function validateSpec(
         );
 
         issuesWithLocation.forEach((issue) => {
+          const severity = getIssueSeverity(issue);
+
           // Extract the most specific error from potentially nested union errors
-          const { path: displayPath, message: displayMessage } =
-            extractMostSpecificError(issue);
+          const extracted = extractMostSpecificError(issue);
+          const displayPath: (string | number)[] = extracted.path;
+          const displayMessage = extracted.message;
 
           const pathString = displayPath.map((p) => String(p)).join('.');
-          const specLink = getOASSpecLink(issue);
+
+          // Get enhanced error info using the EXTRACTED error's properties
+          // This ensures the error code matches the displayed message
+          const enhanced = enhanceZodIssue(
+            {
+              code: extracted.code,
+              path: displayPath.filter(
+                (p): p is string | number =>
+                  typeof p === 'string' || typeof p === 'number'
+              ),
+              message: extracted.message,
+              expected: extracted.expected,
+              received: extracted.received,
+              validation: extracted.validation,
+              origin: extracted.origin,
+            },
+            specVersion
+          );
+
+          const specLink =
+            getOASSpecLink(issue, specVersion) || enhanced.specLink;
           const valueContext = getValueFromPath(
             parsedContent,
             displayPath as (string | number)[]
           );
           const formattedValue = formatValueForCli(valueContext);
-          const severity = getIssueSeverity(issue);
+
+          // Get suggestion (from enhanced or warning patterns)
+          const suggestion =
+            enhanced.suggestion ||
+            getWarningSuggestion(issue.path.join('.'), issue.code);
 
           let locationString = '';
           if (issue.location?.start) {
@@ -480,48 +586,70 @@ async function validateSpec(
           }
 
           const severitySymbol =
-            severity === 'error'
-              ? chalk.red('• Error')
-              : chalk.yellow('▲ Warning');
+            severity === 'error' ? chalk.red('•') : chalk.yellow('▲');
+          const severityLabel = severity === 'error' ? 'Error' : 'Warning';
           const pathColor =
             severity === 'error' ? chalk.redBright : chalk.yellowBright;
+          const codeColor = severity === 'error' ? chalk.cyan : chalk.magenta;
 
-          // --- Build Output String ---
+          // Build Output String
           const outputLines = [];
-          // --- Append locationString to the path line ---
+
+          // Header with code and path
           outputLines.push(
-            `\n${severitySymbol} ${pathColor(pathString)}${locationString}`
+            `\n${severitySymbol} [${codeColor(enhanced.code)}] ${pathColor(pathString)}${locationString}`
           );
-          // --- <<< MODIFICATION END >>> ---
-          outputLines.push(`  Message:  ${chalk.white(displayMessage)}`);
-          if (specLink) {
-            outputLines.push(`  Spec:     ${chalk.blue.underline(specLink)}`);
+
+          // Message
+          outputLines.push(
+            `  ${severityLabel}: ${chalk.white(displayMessage)}`
+          );
+
+          // Suggestion
+          if (suggestion) {
+            outputLines.push(
+              `  ${chalk.green('💡 Suggestion:')} ${chalk.white(suggestion)}`
+            );
           }
+
+          // Spec link
+          if (specLink) {
+            outputLines.push(
+              `  ${chalk.blue('📖 Spec:')} ${chalk.blue.underline(specLink)}`
+            );
+          }
+
+          // Value context
           if (
             valueContext !== undefined ||
             displayMessage.toLowerCase().includes('invalid')
           ) {
             if (formattedValue.includes('\n')) {
-              outputLines.push(`  Value:`);
+              outputLines.push(`  ${chalk.gray('Value:')}`);
               outputLines.push(
                 formattedValue.startsWith('  ')
                   ? formattedValue
                   : `  ${formattedValue}`
               );
             } else {
-              outputLines.push(`  Value:    ${formattedValue}`);
+              outputLines.push(
+                `  ${chalk.gray('Value:')}    ${formattedValue}`
+              );
             }
           }
+
+          // Expected/Received
           if ('expected' in issue) {
             outputLines.push(
-              `  Expected: ${chalk.cyan(String(issue.expected))}`
+              `  ${chalk.gray('Expected:')} ${chalk.cyan(String(issue.expected))}`
             );
           }
           if ('received' in issue && issue.received !== undefined) {
             outputLines.push(
-              `  Received: ${chalk.magenta(String(issue.received))}`
+              `  ${chalk.gray('Received:')} ${chalk.magenta(String(issue.received))}`
             );
           }
+
           console.log(outputLines.join('\n'));
         });
       }

@@ -1,7 +1,9 @@
 import {
   validateOpenAPI,
+  validateOpenAPIEnhanced,
   ValidationOptions,
   ValidationResult,
+  EnhancedValidationResult,
   validateOpenAPIDocument,
   LocatedValidationResult,
 } from './schemas/validator.js';
@@ -9,10 +11,16 @@ import { validateFromYaml } from './utils/validateFromYaml.js';
 import { getValidationCache, CacheOptions } from './utils/cache.js';
 import { verifyRefTargets } from './utils/refResolver.js';
 import { Position, Range, LocatedZodIssue } from './types/location.js';
+import {
+  ValidationErrorCode,
+  ERROR_CODES,
+  getErrorCodeInfo,
+} from './errors/codes.js';
 
 // Core validation functions
 export {
   validateOpenAPI,
+  validateOpenAPIEnhanced,
   validateFromYaml,
   verifyRefTargets,
   validateOpenAPIDocument,
@@ -21,10 +29,14 @@ export {
 // Cache functionality
 export { getValidationCache };
 
+// Error codes
+export { ValidationErrorCode, ERROR_CODES, getErrorCodeInfo };
+
 // Types
 export type {
   ValidationOptions,
   ValidationResult,
+  EnhancedValidationResult,
   CacheOptions,
   LocatedValidationResult,
   LocatedZodIssue,

@@ -2,7 +2,7 @@ import { describe, test, expect } from 'vitest';
 import { getOASSpecLink } from '../specLinks.js';
 import { z } from 'zod';
 
-const BASE_URL = 'https://spec.openapis.org/oas/v3.1.0#';
+const BASE_URL = 'https://appear.sh/api-toolkit/specs?openapi=3.1.0#';
 
 describe('getOASSpecLink', () => {
   test('returns info-object link for info path', () => {
