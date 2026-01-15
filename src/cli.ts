@@ -1,7 +1,11 @@
 #!/usr/bin/env node
 'use strict';
 
-import { ValidationOptions, validateOpenAPI } from './schemas/validator.js';
+import {
+  ValidationOptions,
+  validateOpenAPI,
+  validateOpenAPIEnhanced,
+} from './schemas/validator.js';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import inquirer from 'inquirer';
@@ -11,7 +15,9 @@ import ora from 'ora';
 import { fileURLToPath } from 'url';
 import * as YAML from 'yaml';
 import { getOASSpecLink } from './errors/specLinks.js';
-import { getIssueSeverity } from './errors/severity.js';
+import { getIssueSeverity, getWarningSuggestion } from './errors/severity.js';
+import { enhanceZodIssue, formatMessage } from './errors/messages.js';
+import { getErrorCodeInfo } from './errors/codes.js';
 import * as jsonc from 'jsonc-parser';
 import {
   getLocationFromJsonAst,
@@ -447,11 +453,36 @@ async function validateSpec(
         }
       });
 
+      // Detect OpenAPI version from parsed content
+      const docAsObject = parsedContent as Record<string, unknown>;
+      const specVersion =
+        typeof docAsObject.openapi === 'string' ? docAsObject.openapi : '3.1.0';
+
       if (cliOptions.format === 'json') {
-        const outputIssues = issuesWithLocation.map((issue) => ({
-          ...issue,
-          severity: getIssueSeverity(issue),
-        }));
+        const outputIssues = issuesWithLocation.map((issue) => {
+          const severity = getIssueSeverity(issue);
+          const specLink = getOASSpecLink(issue, specVersion);
+          const enhanced = enhanceZodIssue(
+            {
+              code: issue.code,
+              path: issue.path as (string | number)[],
+              message: issue.message,
+              expected: (issue as any).expected,
+              received: (issue as any).received,
+              validation: (issue as any).validation,
+            },
+            specVersion
+          );
+
+          return {
+            ...issue,
+            code: enhanced.code,
+            category: enhanced.category,
+            severity,
+            suggestion: enhanced.suggestion,
+            specLink: specLink || enhanced.specLink,
+          };
+        });
         console.log(JSON.stringify({ errors: outputIssues }, null, 2));
       } else {
         console.log(
@@ -461,18 +492,42 @@ async function validateSpec(
         );
 
         issuesWithLocation.forEach((issue) => {
+          const severity = getIssueSeverity(issue);
+
           // Extract the most specific error from potentially nested union errors
-          const { path: displayPath, message: displayMessage } =
-            extractMostSpecificError(issue);
+          const extracted = extractMostSpecificError(issue);
+          const displayPath: (string | number)[] = extracted.path;
+          const displayMessage = extracted.message;
 
           const pathString = displayPath.map((p) => String(p)).join('.');
-          const specLink = getOASSpecLink(issue);
+
+          // Get enhanced error info
+          const enhanced = enhanceZodIssue(
+            {
+              code: issue.code,
+              path: (issue.path as Array<string | number>).filter(
+                (p): p is string | number =>
+                  typeof p === 'string' || typeof p === 'number'
+              ),
+              message: issue.message,
+              expected: (issue as any).expected,
+              received: (issue as any).received,
+              validation: (issue as any).validation,
+            },
+            specVersion
+          );
+
+          const specLink = getOASSpecLink(issue, specVersion) || enhanced.specLink;
           const valueContext = getValueFromPath(
             parsedContent,
             displayPath as (string | number)[]
           );
           const formattedValue = formatValueForCli(valueContext);
-          const severity = getIssueSeverity(issue);
+
+          // Get suggestion (from enhanced or warning patterns)
+          const suggestion =
+            enhanced.suggestion ||
+            getWarningSuggestion(issue.path.join('.'), issue.code);
 
           let locationString = '';
           if (issue.location?.start) {
@@ -480,48 +535,70 @@ async function validateSpec(
           }
 
           const severitySymbol =
-            severity === 'error'
-              ? chalk.red('• Error')
-              : chalk.yellow('▲ Warning');
+            severity === 'error' ? chalk.red('•') : chalk.yellow('▲');
+          const severityLabel = severity === 'error' ? 'Error' : 'Warning';
           const pathColor =
             severity === 'error' ? chalk.redBright : chalk.yellowBright;
+          const codeColor = severity === 'error' ? chalk.cyan : chalk.magenta;
 
-          // --- Build Output String ---
+          // Build Output String
           const outputLines = [];
-          // --- Append locationString to the path line ---
+
+          // Header with code and path
           outputLines.push(
-            `\n${severitySymbol} ${pathColor(pathString)}${locationString}`
+            `\n${severitySymbol} [${codeColor(enhanced.code)}] ${pathColor(pathString)}${locationString}`
           );
-          // --- <<< MODIFICATION END >>> ---
-          outputLines.push(`  Message:  ${chalk.white(displayMessage)}`);
-          if (specLink) {
-            outputLines.push(`  Spec:     ${chalk.blue.underline(specLink)}`);
+
+          // Message
+          outputLines.push(
+            `  ${severityLabel}: ${chalk.white(displayMessage)}`
+          );
+
+          // Suggestion
+          if (suggestion) {
+            outputLines.push(
+              `  ${chalk.green('💡 Suggestion:')} ${chalk.white(suggestion)}`
+            );
           }
+
+          // Spec link
+          if (specLink) {
+            outputLines.push(
+              `  ${chalk.blue('📖 Spec:')} ${chalk.blue.underline(specLink)}`
+            );
+          }
+
+          // Value context
           if (
             valueContext !== undefined ||
             displayMessage.toLowerCase().includes('invalid')
           ) {
             if (formattedValue.includes('\n')) {
-              outputLines.push(`  Value:`);
+              outputLines.push(`  ${chalk.gray('Value:')}`);
               outputLines.push(
                 formattedValue.startsWith('  ')
                   ? formattedValue
                   : `  ${formattedValue}`
               );
             } else {
-              outputLines.push(`  Value:    ${formattedValue}`);
+              outputLines.push(
+                `  ${chalk.gray('Value:')}    ${formattedValue}`
+              );
             }
           }
+
+          // Expected/Received
           if ('expected' in issue) {
             outputLines.push(
-              `  Expected: ${chalk.cyan(String(issue.expected))}`
+              `  ${chalk.gray('Expected:')} ${chalk.cyan(String(issue.expected))}`
             );
           }
           if ('received' in issue && issue.received !== undefined) {
             outputLines.push(
-              `  Received: ${chalk.magenta(String(issue.received))}`
+              `  ${chalk.gray('Received:')} ${chalk.magenta(String(issue.received))}`
             );
           }
+
           console.log(outputLines.join('\n'));
         });
       }

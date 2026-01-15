@@ -2,21 +2,163 @@
 
 ## Overview
 
-OAS-Zod-Validator provides detailed error messages to help you quickly identify and fix issues in your OpenAPI specifications.
+OAS-Zod-Validator provides detailed error messages with error codes, fix suggestions, and links to the OpenAPI specification to help you quickly identify and fix issues in your OpenAPI specifications.
 
-## Error Structure
+## Error Codes
 
-All validation errors follow this structure:
+All validation errors include an error code for programmatic handling:
+
+| Code      | Category    | Description                            |
+| --------- | ----------- | -------------------------------------- |
+| `ERR_001` | schema      | Invalid type                           |
+| `ERR_002` | schema      | Required field is missing              |
+| `ERR_003` | schema      | Unrecognized keys detected             |
+| `ERR_004` | schema      | Value does not match any expected type |
+| `ERR_005` | schema      | Custom validation failed               |
+| `ERR_101` | format      | Invalid format                         |
+| `ERR_102` | format      | Format is not valid for the type       |
+| `ERR_103` | format      | Invalid date-time format               |
+| `ERR_104` | format      | Invalid email format                   |
+| `ERR_105` | format      | Invalid URI format                     |
+| `ERR_106` | format      | Invalid UUID format                    |
+| `ERR_107` | format      | Invalid hostname format                |
+| `ERR_108` | format      | Invalid IPv4 address format            |
+| `ERR_109` | format      | Invalid IPv6 address format            |
+| `ERR_201` | reference   | Invalid reference format               |
+| `ERR_202` | reference   | Reference not found                    |
+| `ERR_203` | reference   | Circular reference detected            |
+| `ERR_204` | reference   | Invalid JSON pointer in reference      |
+| `ERR_301` | pattern     | Invalid regular expression             |
+| `ERR_302` | pattern     | Failed to compile regular expression   |
+| `ERR_303` | pattern     | Pattern validation failed              |
+| `ERR_401` | numeric     | Value is below minimum                 |
+| `ERR_402` | numeric     | Value exceeds maximum                  |
+| `ERR_403` | numeric     | String is too short                    |
+| `ERR_404` | numeric     | String is too long                     |
+| `ERR_405` | numeric     | Value must be greater than minimum     |
+| `ERR_406` | numeric     | Value must be less than maximum        |
+| `ERR_407` | numeric     | Value is not a multiple                |
+| `ERR_501` | strict      | Duplicate operationId                  |
+| `ERR_502` | strict      | Ambiguous path template                |
+| `ERR_503` | strict      | Duplicate tag name                     |
+| `ERR_504` | strict      | Rate limit headers are required        |
+| `ERR_505` | strict      | Duplicate parameter                    |
+| `ERR_601` | api_pattern | Invalid bulk request schema            |
+| `ERR_602` | api_pattern | Invalid pagination configuration       |
+| `ERR_701` | version     | Unsupported OpenAPI version            |
+| `ERR_702` | version     | Invalid version format                 |
+
+## Enhanced Error Structure
+
+### Standard Validation Result
 
 ```typescript
-interface ValidationError {
-  issues: Array<{
-    code: z.ZodIssueCode;
-    path: (string | number)[];
-    message: string;
-    expected?: string;
-    received?: string;
-  }>;
+interface ValidationResult {
+  valid: boolean;
+  errors?: z.ZodError;
+  resolvedRefs: string[];
+}
+```
+
+### Enhanced Validation Result (New)
+
+For more detailed error information, use `validateOpenAPIEnhanced`:
+
+```typescript
+interface EnhancedValidationResult {
+  valid: boolean;
+  summary?: {
+    errors: number;
+    warnings: number;
+    byCategory: Record<string, number>;
+    byCode: Record<string, number>;
+  };
+  errors?: {
+    issues: Array<{
+      code: string; // ERR_XXX code
+      category: string; // 'schema', 'format', 'reference', etc.
+      severity: 'error' | 'warning';
+      message: string; // Enhanced message
+      suggestion?: string; // Fix suggestion
+      specLink?: string; // Link to OAS spec
+      path: (string | number)[];
+      expected?: unknown;
+      received?: unknown;
+    }>;
+  };
+  resolvedRefs: string[];
+}
+```
+
+## Using Enhanced Validation
+
+```typescript
+import { validateOpenAPIEnhanced } from '@appear.sh/oas-zod-validator';
+
+const result = validateOpenAPIEnhanced(spec);
+
+if (!result.valid) {
+  console.log(`Found ${result.summary?.errors} errors`);
+  console.log(`Found ${result.summary?.warnings} warnings`);
+
+  result.errors?.issues.forEach((issue) => {
+    console.log(`[${issue.code}] ${issue.message}`);
+    if (issue.suggestion) {
+      console.log(`Suggestion: ${issue.suggestion}`);
+    }
+    if (issue.specLink) {
+      console.log(`Spec: ${issue.specLink}`);
+    }
+  });
+}
+```
+
+## CLI Output
+
+The CLI now includes error codes and suggestions:
+
+```
+✗ Validation found 2 error(s) and 1 warning(s):
+
+• [ERR_002] info.contact L3
+  Error: Required field is missing
+  💡 Suggestion: Add contact information for API consumers
+  📖 Spec: https://spec.openapis.org/oas/v3.1.0#info-object
+
+▲ [DOC001] paths./users.get.description L15
+  Warning: Operation description is recommended
+  💡 Add a description for better API documentation
+```
+
+## JSON Output
+
+```json
+{
+  "valid": false,
+  "summary": {
+    "errors": 2,
+    "warnings": 1,
+    "byCategory": {
+      "schema": 1,
+      "documentation": 1
+    },
+    "byCode": {
+      "ERR_002": 1
+    }
+  },
+  "errors": {
+    "issues": [
+      {
+        "code": "ERR_002",
+        "category": "schema",
+        "severity": "error",
+        "message": "Required field is missing",
+        "suggestion": "Add contact information for API consumers",
+        "specLink": "https://spec.openapis.org/oas/v3.1.0#info-object",
+        "path": ["info", "contact"]
+      }
+    ]
+  }
 }
 ```
 
@@ -28,11 +170,13 @@ interface ValidationError {
 {
   "issues": [
     {
-      "code": "invalid_type",
+      "code": "ERR_001",
+      "category": "schema",
+      "message": "Invalid type",
       "expected": "string",
       "received": "number",
       "path": ["info", "title"],
-      "message": "Expected string, received number"
+      "suggestion": "Expected string, received number. Check the field type."
     }
   ]
 }
@@ -44,11 +188,11 @@ interface ValidationError {
 {
   "issues": [
     {
-      "code": "invalid_type",
-      "expected": "string",
-      "received": "undefined",
-      "path": ["openapi"],
-      "message": "Required"
+      "code": "ERR_002",
+      "category": "schema",
+      "message": "Required field is missing",
+      "path": ["info", "contact"],
+      "suggestion": "Add contact information for API consumers"
     }
   ]
 }
@@ -60,20 +204,11 @@ interface ValidationError {
 {
   "issues": [
     {
-      "code": "invalid_string",
-      "validation": "email",
-      "path": [
-        "paths",
-        "/users",
-        "post",
-        "requestBody",
-        "content",
-        "application/json",
-        "schema",
-        "properties",
-        "email"
-      ],
-      "message": "Invalid email format"
+      "code": "ERR_104",
+      "category": "format",
+      "message": "Invalid email format",
+      "path": ["components", "schemas", "User", "properties", "email"],
+      "suggestion": "Use a valid email address format like \"user@example.com\""
     }
   ]
 }
@@ -85,9 +220,11 @@ interface ValidationError {
 {
   "issues": [
     {
-      "code": "custom",
+      "code": "ERR_202",
+      "category": "reference",
+      "message": "Reference not found",
       "path": ["components", "schemas", "User", "properties", "role"],
-      "message": "Invalid reference: #/components/schemas/Role does not exist"
+      "suggestion": "Ensure the referenced component exists in your OpenAPI document"
     }
   ]
 }
@@ -97,191 +234,67 @@ interface ValidationError {
 
 ### 1. Schema Validation Errors
 
-- Type mismatches
-- Missing required fields
-- Invalid formats
-- Pattern validation failures
-- Range validation failures
+- Type mismatches (`ERR_001`)
+- Missing required fields (`ERR_002`)
+- Invalid unions (`ERR_004`)
 
 ### 2. Reference Errors
 
-- Invalid references
-- Circular references
-- Missing references
-- Reference resolution failures
+- Invalid references (`ERR_201`)
+- Missing references (`ERR_202`)
+- Circular references (`ERR_203`)
 
 ### 3. Format Validation Errors
 
-- Invalid date-time formats
-- Invalid email formats
-- Invalid URI formats
-- Invalid numeric formats
+- Invalid date-time formats (`ERR_103`)
+- Invalid email formats (`ERR_104`)
+- Invalid URI formats (`ERR_105`)
 
 ### 4. Strict Mode Errors
 
-- Missing rate limit headers
-- Invalid pattern usage
-- Undocumented responses
-- Security requirement issues
-
-## Error Resolution Guide
-
-### Type Errors
-
-```yaml
-# ❌ Error
-info:
-  title: 123  # Type error: number instead of string
-
-# ✅ Fix
-info:
-  title: "My API"  # Correct: string value
-```
-
-### Required Fields
-
-```yaml
-# ❌ Error
-paths:
-  /users:
-    get:
-      # Missing required 'responses' field
-
-# ✅ Fix
-paths:
-  /users:
-    get:
-      responses:
-        '200':
-          description: "Success"
-```
-
-### Format Validation
-
-```yaml
-# ❌ Error
-components:
-  schemas:
-    User:
-      properties:
-        email:
-          type: string
-          format: email
-          example: "not-an-email"  # Invalid email format
-
-# ✅ Fix
-components:
-  schemas:
-    User:
-      properties:
-        email:
-          type: string
-          format: email
-          example: "user@example.com"  # Valid email format
-```
+- Duplicate operationIds (`ERR_501`)
+- Ambiguous paths (`ERR_502`)
+- Missing rate limit headers (`ERR_504`)
 
 ## Best Practices
 
-1. **Error Prevention**
+### 1. Error Prevention
 
-   - Use TypeScript for static type checking
-   - Follow OpenAPI best practices
-   - Use schema validation during development
+- Use TypeScript for static type checking
+- Follow OpenAPI best practices
+- Use schema validation during development
 
-2. **Error Handling**
+### 2. Error Handling
 
-   - Log validation errors with context
-   - Provide clear error messages to users
-   - Include resolution steps in error messages
+- Use `validateOpenAPIEnhanced` for detailed error information
+- Log validation errors with full context
+- Provide clear error messages to users
 
-3. **Debugging**
-   - Check the error path carefully
-   - Validate against the OpenAPI spec
-   - Use the CLI's verbose mode for details
+### 3. Debugging
 
-## CLI Error Output
-
-The CLI provides formatted error output:
-
-```bash
-❌ Validation failed:
-
-• info.title
-  Expected string, received number
-
-• paths./users.get.responses
-  Required
-
-• components.schemas.User.properties.email
-  Invalid email format
-```
-
-## Error Reporting
-
-Enable detailed error reporting:
-
-```typescript
-const result = validateOpenAPI(spec, {
-  errorReporting: {
-    detailed: true,
-    includeData: true,
-  },
-});
-```
-
-## Common Solutions
-
-### 1. Schema Issues
-
-```yaml
-# Problem: Invalid type
-type: string
-minimum: 0  # Error: numeric validation on string
-
-# Solution: Correct type
-type: number
-minimum: 0
-```
-
-### 2. Reference Issues
-
-```yaml
-# Problem: Invalid reference
-$ref: "#/components/schema/User"  # Wrong path
-
-# Solution: Correct path
-$ref: "#/components/schemas/User"  # Note: schemas (plural)
-```
-
-### 3. Format Issues
-
-```yaml
-# Problem: Wrong format
-type: string
-format: datetime  # Wrong format name
-
-# Solution: Correct format
-type: string
-format: date-time  # Correct format name
-```
+- Check the error path carefully
+- Follow the spec link for specification details
+- Use the suggestion to fix common issues
 
 ## Integration with Error Tracking
 
-Example with error tracking service:
-
 ```typescript
+import { validateOpenAPIEnhanced } from '@appear.sh/oas-zod-validator';
 import * as Sentry from '@sentry/node';
 
-try {
-  const result = validateOpenAPI(spec);
-  if (!result.valid) {
-    Sentry.captureException(new Error('OpenAPI Validation Failed'), {
+const result = validateOpenAPIEnhanced(spec);
+if (!result.valid) {
+  result.errors?.issues.forEach((issue) => {
+    Sentry.captureEvent({
+      message: issue.message,
       extra: {
-        errors: result.errors,
+        code: issue.code,
+        category: issue.category,
+        path: issue.path,
+        suggestion: issue.suggestion,
+        specLink: issue.specLink,
       },
     });
-  }
-} catch (error) {
-  Sentry.captureException(error);
+  });
 }
 ```
