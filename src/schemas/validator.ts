@@ -89,13 +89,58 @@ export interface ValidationOptions {
 }
 
 /**
- * Result of OpenAPI validation
+ * Enhanced properties added to each ZodIssue during validation.
+ * Access these via issue.errorCode, issue.suggestion, etc.
+ */
+export interface EnhancedIssueProperties {
+  /** Standardized error code (e.g., "ERR_006") */
+  errorCode: string;
+  /** Actionable suggestion for fixing the error */
+  suggestion?: string;
+  /** Link to relevant OpenAPI specification section */
+  specLink?: string;
+  /** Error category (e.g., "schema", "format", "reference") */
+  category: string;
+  /** Severity level */
+  severity: 'error' | 'warning';
+}
+
+/**
+ * A ZodIssue with enhanced properties added in-place.
+ * This is what you get from result.errors.issues after validation.
+ */
+export type EnhancedZodIssue = z.ZodIssue & EnhancedIssueProperties;
+
+/**
+ * Result of OpenAPI validation.
+ *
+ * When validation fails, each issue in errors.issues includes enhanced
+ * properties: errorCode, suggestion, specLink, category, and severity.
+ *
+ * @example
+ * ```typescript
+ * const result = validateOpenAPI(spec);
+ * if (!result.valid && result.errors) {
+ *   result.errors.issues.forEach(issue => {
+ *     // Cast to access enhanced properties
+ *     const enhanced = issue as EnhancedZodIssue;
+ *     console.log(enhanced.errorCode);   // "ERR_006"
+ *     console.log(enhanced.suggestion);  // "Add properties..."
+ *     console.log(enhanced.specLink);    // "https://..."
+ *   });
+ * }
+ * ```
  */
 export interface ValidationResult {
   /** Whether the validation passed */
   valid: boolean;
 
-  /** Validation errors, if any */
+  /**
+   * Validation errors, if any.
+   * Each issue has enhanced properties added at runtime:
+   * errorCode, suggestion, specLink, category, severity.
+   * Cast to EnhancedZodIssue to access them with type safety.
+   */
   errors?: z.ZodError;
 
   /** References that were resolved successfully */
@@ -795,6 +840,51 @@ export function validateOpenAPI(
         ]),
         resolvedRefs,
       };
+    }
+
+    // Enhance issues in-place with error codes, suggestions, and spec links
+    if (result.errors) {
+      const docAsObj = document as Record<string, unknown> | null | undefined;
+      const specVersion =
+        docAsObj && typeof docAsObj.openapi === 'string'
+          ? docAsObj.openapi
+          : '3.1.0';
+
+      result.errors.issues.forEach((issue) => {
+        const enhanced = enhanceZodIssue(
+          {
+            code: issue.code,
+            path: issue.path as (string | number)[],
+            message: issue.message,
+            expected: (issue as any).expected,
+            received: (issue as any).received,
+            validation: (issue as any).validation,
+            origin: (issue as any).origin,
+          },
+          specVersion
+        );
+
+        const specLink = getOASSpecLink(issue, specVersion);
+        const severity = getIssueSeverity(issue);
+        const warningCategory = getWarningCategory(
+          issue.path.join('.'),
+          issue.code
+        );
+
+        // Add enhanced properties in-place
+        Object.assign(issue, {
+          errorCode: enhanced.code,
+          suggestion:
+            enhanced.suggestion ||
+            getWarningSuggestion(issue.path.join('.'), issue.code),
+          specLink: specLink || enhanced.specLink,
+          category:
+            severity === 'warning' && warningCategory
+              ? warningCategory
+              : enhanced.category || 'general',
+          severity,
+        });
+      });
     }
 
     // Don't store in cache if in test mode to avoid test interference

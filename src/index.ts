@@ -4,6 +4,8 @@ import {
   ValidationOptions,
   ValidationResult,
   EnhancedValidationResult,
+  EnhancedIssueProperties,
+  EnhancedZodIssue,
   validateOpenAPIDocument,
   LocatedValidationResult,
 } from './schemas/validator.js';
@@ -37,6 +39,8 @@ export type {
   ValidationOptions,
   ValidationResult,
   EnhancedValidationResult,
+  EnhancedIssueProperties,
+  EnhancedZodIssue,
   CacheOptions,
   LocatedValidationResult,
   LocatedZodIssue,

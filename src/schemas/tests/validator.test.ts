@@ -1,4 +1,8 @@
-import { validateOpenAPI, ValidationOptions } from '../validator.js';
+import {
+  validateOpenAPI,
+  ValidationOptions,
+  EnhancedZodIssue,
+} from '../validator.js';
 import { describe, test, expect } from 'vitest';
 import * as z from 'zod';
 import { validateOpenAPIDocument } from '../validator.js';
@@ -43,6 +47,68 @@ describe('OpenAPI Validator', () => {
     const result = validateOpenAPI(invalidSpec);
     expect(result.valid).toBe(false);
     expect(result.errors).toBeDefined();
+  });
+
+  test('includes enhanced properties on each issue', () => {
+    const specWithMissingObjectSchema = {
+      openapi: '3.0.2',
+      info: { title: 'Test', version: '1.0.0' },
+      paths: {},
+      components: {
+        schemas: {
+          BadObject: {
+            type: 'object',
+            // Missing properties or additionalProperties
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(specWithMissingObjectSchema);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+
+    const issue = result.errors!.issues[0] as EnhancedZodIssue;
+
+    // Standard ZodIssue properties
+    expect(issue.code).toBe('custom');
+    expect(issue.message).toContain('properties');
+    expect(issue.path).toContain('components');
+
+    // Enhanced properties (new in v1.8.1)
+    expect(issue.errorCode).toBe('ERR_006');
+    expect(issue.suggestion).toContain('properties');
+    expect(issue.specLink).toContain('appear.sh');
+    expect(issue.specLink).toContain('schema-object');
+    expect(issue.category).toBe('schema');
+    expect(issue.severity).toBe('error');
+  });
+
+  test('enhanced properties include correct spec version in links', () => {
+    // Use missing info.version (required in both versions)
+    const spec30 = {
+      openapi: '3.0.0',
+      info: { title: 'Test' }, // Missing version
+      paths: {},
+    };
+
+    const spec31 = {
+      openapi: '3.1.0',
+      info: { title: 'Test' }, // Missing version
+      paths: {},
+    };
+
+    const result30 = validateOpenAPI(spec30);
+    const result31 = validateOpenAPI(spec31);
+
+    expect(result30.valid).toBe(false);
+    expect(result31.valid).toBe(false);
+
+    const issue30 = result30.errors!.issues[0] as EnhancedZodIssue;
+    const issue31 = result31.errors!.issues[0] as EnhancedZodIssue;
+
+    expect(issue30.specLink).toContain('openapi=3.0');
+    expect(issue31.specLink).toContain('openapi=3.1');
   });
 
   test('validates security schemes correctly', () => {
