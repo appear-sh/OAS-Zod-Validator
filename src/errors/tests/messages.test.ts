@@ -157,6 +157,71 @@ describe('messages utilities', () => {
       expect(enhanced.suggestion).toContain('string');
       expect(enhanced.suggestion).toContain('number');
     });
+
+    // Tests for new specific custom validation error codes
+    it('maps custom "Object types must define..." to MISSING_OBJECT_SCHEMA', () => {
+      const enhanced = enhanceZodIssue({
+        code: 'custom',
+        path: ['components', 'schemas', 'MySchema', 'properties'],
+        message:
+          'Object types must define either properties or additionalProperties',
+      });
+      expect(enhanced.code).toBe(ValidationErrorCode.MISSING_OBJECT_SCHEMA);
+      expect(enhanced.category).toBe('schema');
+      expect(enhanced.suggestion).toContain('properties');
+      expect(enhanced.suggestion).toContain('additionalProperties');
+    });
+
+    it('maps custom "Array types must define items" to MISSING_ARRAY_ITEMS', () => {
+      const enhanced = enhanceZodIssue({
+        code: 'custom',
+        path: ['components', 'schemas', 'MyArray', 'items'],
+        message: 'Array types must define items',
+      });
+      expect(enhanced.code).toBe(ValidationErrorCode.MISSING_ARRAY_ITEMS);
+      expect(enhanced.category).toBe('schema');
+      expect(enhanced.suggestion).toContain('items');
+    });
+
+    it('maps custom type/keyword mismatch to TYPE_KEYWORD_MISMATCH', () => {
+      const enhanced = enhanceZodIssue({
+        code: 'custom',
+        path: ['components', 'schemas', 'Test', 'minLength'],
+        message: 'minLength can only be used with string type',
+      });
+      expect(enhanced.code).toBe(ValidationErrorCode.TYPE_KEYWORD_MISMATCH);
+      expect(enhanced.category).toBe('schema');
+    });
+
+    it('maps custom example errors to INVALID_EXAMPLE_VALUE', () => {
+      const enhanced = enhanceZodIssue({
+        code: 'custom',
+        path: ['components', 'schemas', 'Test', 'example'],
+        message: 'Example value 100 does not conform to the int32 format',
+      });
+      expect(enhanced.code).toBe(ValidationErrorCode.INVALID_EXAMPLE_VALUE);
+      expect(enhanced.category).toBe('schema');
+      expect(enhanced.suggestion).toContain('example');
+    });
+
+    it('maps custom regex pattern error to INVALID_REGEX', () => {
+      const enhanced = enhanceZodIssue({
+        code: 'custom',
+        path: ['components', 'schemas', 'Test', 'pattern'],
+        message: 'Invalid regular expression pattern',
+      });
+      expect(enhanced.code).toBe(ValidationErrorCode.INVALID_REGEX);
+      expect(enhanced.category).toBe('pattern');
+    });
+
+    it('falls back to CUSTOM_VALIDATION_FAILED for unknown custom messages', () => {
+      const enhanced = enhanceZodIssue({
+        code: 'custom',
+        path: ['some', 'path'],
+        message: 'Some unknown custom validation failed',
+      });
+      expect(enhanced.code).toBe(ValidationErrorCode.CUSTOM_VALIDATION_FAILED);
+    });
   });
 
   describe('groupErrorsByCategory', () => {

@@ -694,6 +694,125 @@ describe('Core Schema Types', () => {
         }
       });
     });
+
+    describe('Composition Keywords (OAS 3.0)', () => {
+      test('accepts anyOf without type', () => {
+        const schema = {
+          anyOf: [{ type: 'string' }, { type: 'number' }],
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+
+      test('accepts oneOf without type', () => {
+        const schema = {
+          oneOf: [
+            { type: 'object', properties: { a: { type: 'string' } } },
+            { type: 'object', properties: { b: { type: 'number' } } },
+          ],
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+
+      test('accepts allOf without type', () => {
+        const schema = {
+          allOf: [
+            { type: 'object', properties: { id: { type: 'integer' } } },
+            { type: 'object', properties: { name: { type: 'string' } } },
+          ],
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+
+      test('accepts not without type', () => {
+        const schema = {
+          not: { type: 'string' },
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+
+      test('accepts anyOf with references', () => {
+        const schema = {
+          anyOf: [
+            { $ref: '#/components/schemas/TypeA' },
+            { $ref: '#/components/schemas/TypeB' },
+          ],
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+
+      test('accepts nested composition (oneOf containing anyOf)', () => {
+        const schema = {
+          oneOf: [
+            {
+              anyOf: [{ type: 'string' }, { type: 'number' }],
+            },
+            { type: 'boolean' },
+          ],
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+
+      test('accepts composition with discriminator', () => {
+        const schema = {
+          oneOf: [
+            { $ref: '#/components/schemas/Cat' },
+            { $ref: '#/components/schemas/Dog' },
+          ],
+          discriminator: {
+            propertyName: 'petType',
+          },
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+
+      test('rejects schema without type or composition', () => {
+        const schema = {
+          description: 'A schema with no type or composition',
+        };
+        expect(() => SchemaObject.parse(schema)).toThrow(
+          /Schema must define either a type or use composition keywords/
+        );
+      });
+
+      test('rejects empty composition arrays', () => {
+        // Empty arrays don't count as valid composition per OpenAPI/JSON Schema
+        expect(() => SchemaObject.parse({ oneOf: [] })).toThrow(
+          /Schema must define either a type or use composition keywords/
+        );
+        expect(() => SchemaObject.parse({ anyOf: [] })).toThrow(
+          /Schema must define either a type or use composition keywords/
+        );
+        expect(() => SchemaObject.parse({ allOf: [] })).toThrow(
+          /Schema must define either a type or use composition keywords/
+        );
+      });
+
+      test('OAS 3.0 rejects type arrays (only valid in 3.1)', () => {
+        const schema = {
+          type: ['string', 'number'],
+        };
+        expect(() => SchemaObject.parse(schema)).toThrow();
+      });
+
+      test('accepts type: object with allOf (properties in composition)', () => {
+        const schema = {
+          type: 'object',
+          allOf: [{ type: 'object', properties: { id: { type: 'string' } } }],
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+
+      test('accepts type: array with anyOf (items in composition)', () => {
+        const schema = {
+          type: 'array',
+          anyOf: [
+            { type: 'array', items: { type: 'string' } },
+            { type: 'array', items: { type: 'number' } },
+          ],
+        };
+        expect(() => SchemaObject.parse(schema)).not.toThrow();
+      });
+    });
   });
 });
 
@@ -740,6 +859,92 @@ describe('Core Schema Types - OpenAPI 3.1', () => {
         type: 'object',
       };
       expect(() => SchemaObject31.parse(schema)).not.toThrow();
+    });
+
+    // Regression tests for composition keywords (issue #24)
+    describe('Composition Keywords Regression (3.1)', () => {
+      test('anyOf with mixed types', () => {
+        const schema = {
+          anyOf: [{ type: 'string' }, { type: 'integer' }, { type: 'boolean' }],
+        };
+        expect(() => SchemaObject31.parse(schema)).not.toThrow();
+      });
+
+      test('allOf for schema inheritance', () => {
+        const schema = {
+          allOf: [
+            { $ref: '#/components/schemas/BaseModel' },
+            {
+              type: 'object',
+              properties: {
+                extraField: { type: 'string' },
+              },
+            },
+          ],
+        };
+        expect(() => SchemaObject31.parse(schema)).not.toThrow();
+      });
+
+      test('oneOf with discriminator', () => {
+        const schema = {
+          oneOf: [
+            { $ref: '#/components/schemas/Cat' },
+            { $ref: '#/components/schemas/Dog' },
+          ],
+          discriminator: {
+            propertyName: 'petType',
+            mapping: {
+              cat: '#/components/schemas/Cat',
+              dog: '#/components/schemas/Dog',
+            },
+          },
+        };
+        expect(() => SchemaObject31.parse(schema)).not.toThrow();
+      });
+
+      test('not keyword', () => {
+        const schema = {
+          not: { type: 'string' },
+        };
+        expect(() => SchemaObject31.parse(schema)).not.toThrow();
+      });
+
+      test('nested composition (anyOf inside oneOf)', () => {
+        const schema = {
+          oneOf: [
+            {
+              anyOf: [
+                { $ref: '#/components/schemas/SuccessA' },
+                { $ref: '#/components/schemas/SuccessB' },
+              ],
+            },
+            { $ref: '#/components/schemas/Error' },
+          ],
+        };
+        expect(() => SchemaObject31.parse(schema)).not.toThrow();
+      });
+
+      test('type array (nullable string)', () => {
+        // OAS 3.1 allows type arrays for nullable types
+        const schema = {
+          type: ['string', 'integer'],
+        };
+        expect(() => SchemaObject31.parse(schema)).not.toThrow();
+      });
+
+      test('AnyValue pattern (all primitive types)', () => {
+        const schema = {
+          oneOf: [
+            { type: 'string' },
+            { type: 'number' },
+            { type: 'integer' },
+            { type: 'boolean' },
+            { type: 'array', items: {} },
+            { type: 'object' },
+          ],
+        };
+        expect(() => SchemaObject31.parse(schema)).not.toThrow();
+      });
     });
   });
 });

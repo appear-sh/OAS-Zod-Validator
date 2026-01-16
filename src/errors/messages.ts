@@ -48,7 +48,8 @@ export function enhanceZodIssue(
     issue.code,
     issue.validation,
     issue.received,
-    issue.origin
+    issue.origin,
+    issue.message
   );
   const info = getErrorCodeInfo(mappedCode);
 
@@ -92,7 +93,8 @@ function mapZodCodeToErrorCode(
   zodCode: string,
   validation?: string,
   received?: unknown,
-  origin?: string
+  origin?: string,
+  message?: string
 ): string {
   // Handle invalid_string validation checks first (regex, email, etc.)
   if (zodCode === 'invalid_string') {
@@ -146,8 +148,44 @@ function mapZodCodeToErrorCode(
     return ValidationErrorCode.UNRECOGNIZED_KEYS;
   }
 
-  // Handle custom validations
+  // Handle custom validations - map specific messages to error codes
   if (zodCode === 'custom') {
+    if (message) {
+      // Schema completeness errors
+      if (
+        message.includes(
+          'Object types must define either properties or additionalProperties'
+        )
+      ) {
+        return ValidationErrorCode.MISSING_OBJECT_SCHEMA;
+      }
+      if (message.includes('Array types must define items')) {
+        return ValidationErrorCode.MISSING_ARRAY_ITEMS;
+      }
+
+      // Type/keyword mismatch errors
+      if (
+        message.includes('can only be used with') &&
+        (message.includes('type') || message.includes('types'))
+      ) {
+        return ValidationErrorCode.TYPE_KEYWORD_MISMATCH;
+      }
+
+      // Example value errors (specific patterns to avoid false positives)
+      // Matches: "Example value...", "Example string..."
+      // Excludes: "Example cannot have both..." (Example Object), "For example:..." (suggestions)
+      if (
+        message.startsWith('Example value') ||
+        message.startsWith('Example string')
+      ) {
+        return ValidationErrorCode.INVALID_EXAMPLE_VALUE;
+      }
+
+      // Invalid regex pattern
+      if (message.includes('Invalid regular expression pattern')) {
+        return ValidationErrorCode.INVALID_REGEX;
+      }
+    }
     return ValidationErrorCode.CUSTOM_VALIDATION_FAILED;
   }
 

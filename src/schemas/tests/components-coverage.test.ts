@@ -28,8 +28,8 @@ describe('Components Object Coverage Improvements', () => {
     });
 
     test('verifies correct handling of missing components in schemas', () => {
-      // Check the behavior of the component validation
-      // The implementation may reject schemas with references that can't be validated
+      // Schema structure validation allows composition keywords (allOf, oneOf, anyOf)
+      // Missing references are validated separately at the document level, not component level
       const components = {
         schemas: {
           User: {
@@ -38,15 +38,10 @@ describe('Components Object Coverage Improvements', () => {
         },
       };
 
-      // Since the actual behavior rejects this,
-      // we should adjust our test to verify this behavior
+      // The schema structure is valid (allOf is supported in OAS 3.0)
+      // Reference resolution happens at a higher level
       const result = ComponentsObject.safeParse(components);
-      expect(result.success).toBe(false);
-
-      // The component validator might give a specific error about references
-      if (!result.success) {
-        expect(result.error.issues.length).toBeGreaterThan(0);
-      }
+      expect(result.success).toBe(true);
     });
 
     test('verifies handling of complex nested schema structures', () => {

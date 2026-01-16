@@ -82,14 +82,15 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
   );
   const baseSchema = z
     .object({
-      type: z.enum([
-        'string',
-        'number',
-        'integer',
-        'boolean',
-        'array',
-        'object',
-      ]),
+      // Type is optional when using composition keywords (anyOf, oneOf, allOf)
+      type: z
+        .enum(['string', 'number', 'integer', 'boolean', 'array', 'object'])
+        .optional(),
+      // Composition keywords (OAS 3.0 supports these per JSON Schema draft-04)
+      anyOf: z.array(SchemaOrRef).optional(),
+      oneOf: z.array(SchemaOrRef).optional(),
+      allOf: z.array(SchemaOrRef).optional(),
+      not: SchemaOrRef.optional(),
       // Allow any string for format per OAS (open value), but keep type checks for known formats
       format: z
         .string()
@@ -333,6 +334,11 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
             'enum',
             'title',
             'description',
+            // Composition keywords (valid in OAS 3.0 Schema Object)
+            'anyOf',
+            'oneOf',
+            'allOf',
+            'not',
           ]);
 
           // Type-specific properties
@@ -379,27 +385,58 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           Boolean((ctx as any)?.options?.data?.skipExamples) || fastMode;
         const skipPatternChecks =
           Boolean((ctx as any)?.options?.data?.skipPatternChecks) || fastMode;
-        // Validate that array types have items
-        if (schema.type === 'array' && !schema.items) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: 'Array types must define items',
-            path: ['items'],
-          });
-        }
-        // Validate that object types have properties or additionalProperties
-        if (
-          schema.type === 'object' &&
-          !schema.properties &&
-          !schema.additionalProperties
-        ) {
+
+        // Check if this is a composition-only schema (no type, uses anyOf/oneOf/allOf/not)
+        // Empty arrays don't count as valid composition per OpenAPI/JSON Schema spec
+        const hasComposition =
+          (Array.isArray(schema.anyOf) && schema.anyOf.length > 0) ||
+          (Array.isArray(schema.oneOf) && schema.oneOf.length > 0) ||
+          (Array.isArray(schema.allOf) && schema.allOf.length > 0) ||
+          schema.not;
+
+        // Schema must have either type or composition keywords
+        if (!schema.type && !hasComposition) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message:
-              'Object types must define either properties or additionalProperties',
-            path: ['properties'],
+              'Schema must define either a type or use composition keywords (anyOf, oneOf, allOf, not)',
+            path: ['type'],
           });
         }
+
+        // Skip structural validations (items/properties) when composition keywords are present
+        // These may be defined within the composed schemas
+        // But continue with type-based validations (format, example) if type is present
+        if (!schema.type) {
+          return;
+        }
+
+        // Structural validations - skip when composition keywords present
+        if (!hasComposition) {
+          // Validate that array types have items (only when no composition)
+          if (schema.type === 'array' && !schema.items) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Array types must define items',
+              path: ['items'],
+            });
+          }
+          // Validate that object types have properties or additionalProperties (only when no composition)
+          if (
+            schema.type === 'object' &&
+            !schema.properties &&
+            !schema.additionalProperties
+          ) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message:
+                'Object types must define either properties or additionalProperties',
+              path: ['properties'],
+            });
+          }
+        }
+
+        // Type-based validations below run regardless of composition
         // Additional numeric format validation
         if (
           schema.format &&
