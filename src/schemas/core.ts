@@ -387,8 +387,12 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           Boolean((ctx as any)?.options?.data?.skipPatternChecks) || fastMode;
 
         // Check if this is a composition-only schema (no type, uses anyOf/oneOf/allOf/not)
+        // Empty arrays don't count as valid composition per OpenAPI/JSON Schema spec
         const hasComposition =
-          schema.anyOf || schema.oneOf || schema.allOf || schema.not;
+          (Array.isArray(schema.anyOf) && schema.anyOf.length > 0) ||
+          (Array.isArray(schema.oneOf) && schema.oneOf.length > 0) ||
+          (Array.isArray(schema.allOf) && schema.allOf.length > 0) ||
+          schema.not;
 
         // Schema must have either type or composition keywords
         if (!schema.type && !hasComposition) {

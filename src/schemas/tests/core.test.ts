@@ -774,6 +774,19 @@ describe('Core Schema Types', () => {
         );
       });
 
+      test('rejects empty composition arrays', () => {
+        // Empty arrays don't count as valid composition per OpenAPI/JSON Schema
+        expect(() => SchemaObject.parse({ oneOf: [] })).toThrow(
+          /Schema must define either a type or use composition keywords/
+        );
+        expect(() => SchemaObject.parse({ anyOf: [] })).toThrow(
+          /Schema must define either a type or use composition keywords/
+        );
+        expect(() => SchemaObject.parse({ allOf: [] })).toThrow(
+          /Schema must define either a type or use composition keywords/
+        );
+      });
+
       test('OAS 3.0 rejects type arrays (only valid in 3.1)', () => {
         const schema = {
           type: ['string', 'number'],
