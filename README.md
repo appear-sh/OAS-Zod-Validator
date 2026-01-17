@@ -33,7 +33,7 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 
 - Full OpenAPI 3.0.x, 3.1, and 3.2 support
 - Type-safe validation using Zod
-- Detailed error messages with path information
+- **Enhanced error reporting** with error codes, suggestions, and spec links
 - Zero external runtime dependencies
 - Enterprise-ready with strict mode validation
 - Supports both YAML and JSON formats
@@ -87,6 +87,54 @@ if (result.valid) {
   console.log('✅ Valid OpenAPI specification');
 } else {
   console.error('❌ Validation errors:', result.errors);
+}
+```
+
+## Enhanced Error Reporting
+
+Every validation error includes rich, actionable information:
+
+```typescript
+if (!result.valid && result.errors) {
+  result.errors.issues.forEach(issue => {
+    console.log(issue.errorCode);   // "ERR_006"
+    console.log(issue.message);     // "Object types must define either properties..."
+    console.log(issue.suggestion);  // "Add `properties: { ... }` to define the object fields..."
+    console.log(issue.specLink);    // "https://appear.sh/api-toolkit/specs?openapi=3.0.3#schema-object"
+    console.log(issue.category);    // "schema"
+    console.log(issue.severity);    // "error" or "warning"
+    console.log(issue.path);        // ["components", "schemas", "MySchema", "properties"]
+  });
+}
+```
+
+| Property | Description |
+|----------|-------------|
+| `errorCode` | Standardized code (e.g., `ERR_006`) for programmatic handling |
+| `message` | Human-readable error description |
+| `suggestion` | Actionable fix guidance |
+| `specLink` | Direct link to relevant OpenAPI spec section |
+| `category` | Error category: `schema`, `format`, `reference`, `pattern`, etc. |
+| `severity` | `error` or `warning` |
+| `path` | JSON path to the error location |
+
+### Summary Statistics
+
+For aggregate error reporting, use `validateOpenAPIEnhanced()`:
+
+```typescript
+import { validateOpenAPIEnhanced } from '@appear.sh/oas-zod-validator';
+
+const result = validateOpenAPIEnhanced(spec);
+
+if (!result.valid) {
+  console.log(result.summary);
+  // {
+  //   errors: 5,
+  //   warnings: 2,
+  //   byCategory: { schema: 3, format: 2, reference: 2 },
+  //   byCode: { ERR_006: 3, ERR_001: 2, ERR_010: 2 }
+  // }
 }
 ```
 
