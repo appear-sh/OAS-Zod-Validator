@@ -396,11 +396,13 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
 
         // Per OpenAPI 3.x / JSON Schema: type can be inferred from context (no ERR_005)
         const hasImplicitObject =
-          (typeof schema.properties === 'object' && schema.properties !== null) ||
+          (typeof schema.properties === 'object' &&
+            schema.properties !== null) ||
           schema.additionalProperties !== undefined ||
-          (typeof (schema as { patternProperties?: unknown }).patternProperties ===
-            'object' &&
-            (schema as { patternProperties?: object }).patternProperties !== null) ||
+          (typeof (schema as { patternProperties?: unknown })
+            .patternProperties === 'object' &&
+            (schema as { patternProperties?: object }).patternProperties !==
+              null) ||
           (Array.isArray(schema.required) && schema.required.length > 0);
         const hasImplicitArray = schema.items !== undefined;
 
