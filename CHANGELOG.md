@@ -1,5 +1,11 @@
 # @appear.sh/oas-zod-validator
 
+## 1.8.2
+
+### Patch Changes
+
+- dba86de: Stop raising ERR_005 for schemas that imply type via properties, items, required, additionalProperties, or patternProperties (OpenAPI 3.x). Reduces false positives.
+
 ## 1.8.1
 
 ### Patch Changes
