@@ -895,16 +895,6 @@ exports[`OpenAPI Specification Validation Snapshots > should produce a consisten
   },
   {
     "code": "custom",
-    "message": "Schema must define either a type or use composition keywords (anyOf, oneOf, allOf, not)",
-    "path": [
-      "components",
-      "schemas",
-      "Engine",
-      "type"
-    ]
-  },
-  {
-    "code": "custom",
     "message": "Object types must define either properties or additionalProperties",
     "path": [
       "components",
@@ -917,46 +907,6 @@ exports[`OpenAPI Specification Validation Snapshots > should produce a consisten
   },
   {
     "code": "custom",
-    "message": "Schema must define either a type or use composition keywords (anyOf, oneOf, allOf, not)",
-    "path": [
-      "components",
-      "schemas",
-      "FineTune",
-      "type"
-    ]
-  },
-  {
-    "code": "custom",
-    "message": "Schema must define either a type or use composition keywords (anyOf, oneOf, allOf, not)",
-    "path": [
-      "components",
-      "schemas",
-      "FineTuneEvent",
-      "type"
-    ]
-  },
-  {
-    "code": "custom",
-    "message": "Schema must define either a type or use composition keywords (anyOf, oneOf, allOf, not)",
-    "path": [
-      "components",
-      "schemas",
-      "ImagesResponse",
-      "type"
-    ]
-  },
-  {
-    "code": "custom",
-    "message": "Schema must define either a type or use composition keywords (anyOf, oneOf, allOf, not)",
-    "path": [
-      "components",
-      "schemas",
-      "Model",
-      "type"
-    ]
-  },
-  {
-    "code": "custom",
     "message": "Object types must define either properties or additionalProperties",
     "path": [
       "components",
@@ -965,16 +915,6 @@ exports[`OpenAPI Specification Validation Snapshots > should produce a consisten
       "properties",
       "status_details",
       "properties"
-    ]
-  },
-  {
-    "code": "custom",
-    "message": "Schema must define either a type or use composition keywords (anyOf, oneOf, allOf, not)",
-    "path": [
-      "components",
-      "schemas",
-      "OpenAIFile",
-      "type"
     ]
   }
 ]",
