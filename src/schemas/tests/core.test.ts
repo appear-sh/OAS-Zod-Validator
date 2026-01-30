@@ -774,6 +774,68 @@ describe('Core Schema Types', () => {
         );
       });
 
+      describe('implicit type inference (OAS 3.x / JSON Schema)', () => {
+        test('accepts implicit object via properties and required', () => {
+          const schema = {
+            required: ['id', 'name'],
+            properties: {
+              id: { type: 'integer' },
+              name: { type: 'string' },
+            },
+          };
+          expect(() => SchemaObject.parse(schema)).not.toThrow();
+        });
+
+        test('accepts implicit object via additionalProperties only', () => {
+          const schema = {
+            additionalProperties: { type: 'string' },
+          };
+          expect(() => SchemaObject.parse(schema)).not.toThrow();
+        });
+
+        test('accepts implicit object via additionalProperties: false', () => {
+          // additionalProperties: false is a valid object schema (closed object)
+          const schema = {
+            additionalProperties: false,
+          };
+          expect(() => SchemaObject.parse(schema)).not.toThrow();
+        });
+
+        test('accepts implicit object via empty properties', () => {
+          // Empty properties object still implies object type
+          const schema = {
+            properties: {},
+          };
+          expect(() => SchemaObject.parse(schema)).not.toThrow();
+        });
+
+        test('accepts implicit array via items', () => {
+          const schema = {
+            items: { $ref: '#/components/schemas/Pet' },
+          };
+          expect(() => SchemaObject.parse(schema)).not.toThrow();
+        });
+
+        test('rejects empty required array (not enough to infer type)', () => {
+          // Empty required array doesn't imply object type
+          const schema = {
+            required: [],
+          };
+          expect(() => SchemaObject.parse(schema)).toThrow(
+            /Schema must define either a type or use composition keywords/
+          );
+        });
+
+        test('still rejects empty schema (no type, no inference keywords, no composition)', () => {
+          const schema = {
+            description: 'This has nothing to infer type from',
+          };
+          expect(() => SchemaObject.parse(schema)).toThrow(
+            /Schema must define either a type or use composition keywords/
+          );
+        });
+      });
+
       test('rejects empty composition arrays', () => {
         // Empty arrays don't count as valid composition per OpenAPI/JSON Schema
         expect(() => SchemaObject.parse({ oneOf: [] })).toThrow(

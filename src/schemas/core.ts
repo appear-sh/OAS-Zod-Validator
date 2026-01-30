@@ -394,8 +394,25 @@ export const SchemaObject: z.ZodType = z.lazy(() => {
           (Array.isArray(schema.allOf) && schema.allOf.length > 0) ||
           schema.not;
 
-        // Schema must have either type or composition keywords
-        if (!schema.type && !hasComposition) {
+        // Per OpenAPI 3.x / JSON Schema: type can be inferred from context (no ERR_005)
+        const hasImplicitObject =
+          (typeof schema.properties === 'object' &&
+            schema.properties !== null) ||
+          schema.additionalProperties !== undefined ||
+          (typeof (schema as { patternProperties?: unknown })
+            .patternProperties === 'object' &&
+            (schema as { patternProperties?: object }).patternProperties !==
+              null) ||
+          (Array.isArray(schema.required) && schema.required.length > 0);
+        const hasImplicitArray = schema.items !== undefined;
+
+        // Schema must have either type, composition, or inferrable type from keywords
+        if (
+          !schema.type &&
+          !hasComposition &&
+          !hasImplicitObject &&
+          !hasImplicitArray
+        ) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message:
