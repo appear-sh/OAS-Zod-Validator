@@ -793,11 +793,37 @@ describe('Core Schema Types', () => {
           expect(() => SchemaObject.parse(schema)).not.toThrow();
         });
 
+        test('accepts implicit object via additionalProperties: false', () => {
+          // additionalProperties: false is a valid object schema (closed object)
+          const schema = {
+            additionalProperties: false,
+          };
+          expect(() => SchemaObject.parse(schema)).not.toThrow();
+        });
+
+        test('accepts implicit object via empty properties', () => {
+          // Empty properties object still implies object type
+          const schema = {
+            properties: {},
+          };
+          expect(() => SchemaObject.parse(schema)).not.toThrow();
+        });
+
         test('accepts implicit array via items', () => {
           const schema = {
             items: { $ref: '#/components/schemas/Pet' },
           };
           expect(() => SchemaObject.parse(schema)).not.toThrow();
+        });
+
+        test('rejects empty required array (not enough to infer type)', () => {
+          // Empty required array doesn't imply object type
+          const schema = {
+            required: [],
+          };
+          expect(() => SchemaObject.parse(schema)).toThrow(
+            /Schema must define either a type or use composition keywords/
+          );
         });
 
         test('still rejects empty schema (no type, no inference keywords, no composition)', () => {
