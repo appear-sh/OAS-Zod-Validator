@@ -15,6 +15,7 @@ import {
 import {
   RequestBodyObject,
   ResponseObject,
+  ResponseObject31,
   RequestBodyObject32,
   ResponseObject32,
 } from './requestResponse.js';
@@ -188,7 +189,7 @@ export const ComponentsObject31 = z
     responses: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([ResponseObject, ResponseReferenceObject])
+        z.union([ResponseObject31, ResponseReferenceObject])
       )
       .optional(),
 

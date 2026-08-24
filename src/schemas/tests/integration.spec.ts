@@ -26,6 +26,79 @@ describe('Integration tests for multiple OAS specs', () => {
     expect(result.errors).toBeUndefined();
   });
 
+  test('validates OAS 3.1 nullable type arrays and examples-only response schemas', () => {
+    // Regression: OAS 3.1 specs using JSON Schema 2020-12 nullable type arrays
+    // (e.g. "type": ["string", "null"]) and response component schemas that
+    // contain only `examples` (no type/properties) must validate cleanly.
+    const doc = {
+      openapi: '3.1.0',
+      info: {
+        title: 'OAS 3.1 nullable regression',
+        version: '1.0.0',
+      },
+      paths: {
+        '/widgets': {
+          patch: {
+            operationId: 'patchWidget',
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: ['string', 'null'],
+                  },
+                },
+              },
+            },
+            responses: {
+              200: {
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        details: {
+                          examples: {
+                            generic: { value: 'Something went wrong' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: {
+        responses: {
+          BadRequestError: {
+            description: 'Bad request',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    details: {
+                      examples: {
+                        generic: { value: 'Something went wrong' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(doc, { strict: false });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
   // --- Dynamic tests from files ---
   let testFilesData: { filename: string; fullPath: string }[] = [];
   try {

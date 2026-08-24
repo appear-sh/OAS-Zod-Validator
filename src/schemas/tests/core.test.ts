@@ -994,6 +994,22 @@ describe('Core Schema Types - OpenAPI 3.1', () => {
         expect(() => SchemaObject31.parse(schema)).not.toThrow();
       });
 
+      test('accepts type array containing null (JSON Schema 2020-12)', () => {
+        // OAS 3.1 / JSON Schema 2020-12 allows 'null' in type arrays
+        const schema = {
+          type: ['string', 'null'],
+        };
+        expect(() => SchemaObject31.parse(schema)).not.toThrow();
+      });
+
+      test('accepts single null type string (JSON Schema 2020-12)', () => {
+        // OAS 3.1 / JSON Schema 2020-12 allows 'null' as a standalone type
+        const schema = {
+          type: 'null',
+        };
+        expect(() => SchemaObject31.parse(schema)).not.toThrow();
+      });
+
       test('AnyValue pattern (all primitive types)', () => {
         const schema = {
           oneOf: [
