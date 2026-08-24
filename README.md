@@ -34,7 +34,7 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 - Full OpenAPI 3.0.x, 3.1, and 3.2 support
 - Type-safe validation using Zod
 - **Enhanced error reporting** with error codes, suggestions, and spec links
-- Zero external runtime dependencies
+- Bundled single-file output (deps are bundled at build time — no install-time link needed for consumers)
 - Enterprise-ready with strict mode validation
 - Supports both YAML and JSON formats
 - Interactive CLI with rich reporting
@@ -96,27 +96,27 @@ Every validation error includes rich, actionable information:
 
 ```typescript
 if (!result.valid && result.errors) {
-  result.errors.issues.forEach(issue => {
-    console.log(issue.errorCode);   // "ERR_006"
-    console.log(issue.message);     // "Object types must define either properties..."
-    console.log(issue.suggestion);  // "Add `properties: { ... }` to define the object fields..."
-    console.log(issue.specLink);    // "https://appear.sh/api-toolkit/specs?openapi=3.0.3#schema-object"
-    console.log(issue.category);    // "schema"
-    console.log(issue.severity);    // "error" or "warning"
-    console.log(issue.path);        // ["components", "schemas", "MySchema", "properties"]
+  result.errors.issues.forEach((issue) => {
+    console.log(issue.errorCode); // "ERR_006"
+    console.log(issue.message); // "Object types must define either properties..."
+    console.log(issue.suggestion); // "Add `properties: { ... }` to define the object fields..."
+    console.log(issue.specLink); // "https://appear.sh/api-toolkit/specs?openapi=3.0.3#schema-object"
+    console.log(issue.category); // "schema"
+    console.log(issue.severity); // "error" or "warning"
+    console.log(issue.path); // ["components", "schemas", "MySchema", "properties"]
   });
 }
 ```
 
-| Property | Description |
-|----------|-------------|
-| `errorCode` | Standardized code (e.g., `ERR_006`) for programmatic handling |
-| `message` | Human-readable error description |
-| `suggestion` | Actionable fix guidance |
-| `specLink` | Direct link to relevant OpenAPI spec section |
-| `category` | Error category: `schema`, `format`, `reference`, `pattern`, etc. |
-| `severity` | `error` or `warning` |
-| `path` | JSON path to the error location |
+| Property     | Description                                                      |
+| ------------ | ---------------------------------------------------------------- |
+| `errorCode`  | Standardized code (e.g., `ERR_006`) for programmatic handling    |
+| `message`    | Human-readable error description                                 |
+| `suggestion` | Actionable fix guidance                                          |
+| `specLink`   | Direct link to relevant OpenAPI spec section                     |
+| `category`   | Error category: `schema`, `format`, `reference`, `pattern`, etc. |
+| `severity`   | `error` or `warning`                                             |
+| `path`       | JSON path to the error location                                  |
 
 ### Summary Statistics
 
@@ -290,6 +290,8 @@ npm run test:watch
 npm run build
 ```
 
+> Requires Node.js 20+; Node 22+ LTS is recommended (the repo ships an `.nvmrc` pinning Node 22).
+
 This project uses TypeScript with ESM modules and Vitest for testing. It follows strict coding practices and maintains high test coverage.
 
 <!-- CONTRIBUTING -->
@@ -318,7 +320,7 @@ Maintainers will handle the versioning and release process using the changeset f
 
 ## License
 
-- MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh
+- MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh & https://ctxpipe.ai
 
 <!-- ACKNOWLEDGEMENTS -->
 

@@ -27,8 +27,7 @@ function findNestedIssue(
     }
     if (issue.code === 'invalid_union' && (issue as any).errors) {
       const branches = (issue as any).errors as
-        | { issues: ZodIssue[] }[]
-        | ZodIssue[][];
+        { issues: ZodIssue[] }[] | ZodIssue[][];
       for (const branch of branches as any[]) {
         const branchIssues: ZodIssue[] = Array.isArray(branch)
           ? (branch as ZodIssue[])
@@ -49,8 +48,7 @@ function findNestedIssue(
     if (joined.includes(targetPath)) return current;
     if ((current as any).errors) {
       const branches = (current as any).errors as
-        | { issues: ZodIssue[] }[]
-        | ZodIssue[][];
+        { issues: ZodIssue[] }[] | ZodIssue[][];
       for (const b of branches as any[]) {
         const branchIssues: ZodIssue[] = Array.isArray(b)
           ? (b as ZodIssue[])

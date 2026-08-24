@@ -1,5 +1,5 @@
 import { validateFromYaml } from '../validateFromYaml.js';
-import { verifyRefTargets } from '../verifyRefTargets.js';
+import { verifyRefTargets } from '../refResolver.js';
 import { ReferenceError } from '../../errors/validation.js';
 import {
   encodePointerToken,

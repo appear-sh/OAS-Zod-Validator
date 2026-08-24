@@ -3,24 +3,12 @@ import type { OpenAPIObject } from './openapi.js';
 import type { OpenAPIObject31 } from './openapi31.js';
 
 export type OpenAPISpec =
-  | z.infer<typeof OpenAPIObject>
-  | z.infer<typeof OpenAPIObject31>;
+  z.infer<typeof OpenAPIObject> | z.infer<typeof OpenAPIObject31>;
 
 // Minimal structural slice used by validator logic where full inference is unavailable
 export interface OpenAPISlice {
   paths?: Record<string, unknown>;
   tags?: Array<{ name?: string } | unknown>;
-}
-
-export interface ValidationOptions {
-  strict?: boolean;
-  allowFutureOASVersions?: boolean;
-}
-
-export interface ValidationResult {
-  valid: boolean;
-  errors?: z.ZodError;
-  resolvedRefs: string[];
 }
 
 export interface Operation {

@@ -73,7 +73,7 @@ export default tseslint.config(
 
   // 6. Config file specific configuration (JS/TS, non-type-aware) (Added section)
   {
-    files: ['*.config.{js,ts}', 'eslint.config.js', 'update-tests.js'], // Target config files, scripts etc
+    files: ['*.config.{js,ts}', 'eslint.config.js'], // Target config files, scripts etc
     // No 'extends' for type-aware rules here
     plugins: {
       // Add the typescript-eslint plugin definition here

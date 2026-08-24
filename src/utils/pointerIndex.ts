@@ -10,8 +10,7 @@ export function buildPointerIndex(
 ): Map<JSONPointer, unknown> {
   const index = new Map<JSONPointer, unknown>();
   const components = (doc as any)?.components as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   if (!components || typeof components !== 'object') return index;
 
   const sections = [
