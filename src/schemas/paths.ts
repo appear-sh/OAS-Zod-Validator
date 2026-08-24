@@ -216,81 +216,26 @@ export const PathItemObject = z
     }
   );
 
-// Enhanced Paths Object with path validation
+// Enhanced Paths Object with path validation.
+// Note: the "all path parameters in the URL must be defined" check is not
+// performed here (as a Zod refine) because resolving $ref parameters requires
+// access to the full document (components.parameters), which is not available
+// inside a refine. It is enforced by validatePathParams in validator.ts.
 export const PathsObject: z.ZodType<
   Record<string, z.infer<typeof PathItemObject>>
-> = z
-  .record(
-    z
-      .string()
-      .regex(/^\//, { message: 'Path must start with forward slash' })
-      .regex(/^\/[^?#]*$/, {
-        message: 'Path must not include query parameters or fragments',
-      })
-      .regex(/^(?:\/[^/{}]+|\/\{[^/{}]+\})*\/?$/, {
-        message:
-          'Path must follow pattern of /segment or /{param} with no empty segments',
-      }),
-    PathItemObject
-  )
-  .refine(
-    (paths) => {
-      // Check for path parameter definitions
-      for (const [path, pathItem] of Object.entries(paths)) {
-        const pathParamMatches = path.match(/\{([^}]+)\}/g) || [];
-        if (pathParamMatches.length === 0) continue; // No path parameters to check
-
-        // Collect all defined parameters from the path item
-        const definedParams = new Set<string>();
-
-        // Path-level parameters
-        const pathParams = pathItem.parameters || [];
-        for (const param of pathParams) {
-          if ('$ref' in param) continue; // Skip reference objects
-          if (param.in === 'path') {
-            definedParams.add(`{${param.name}}`);
-          }
-        }
-
-        // Check operation-level parameters
-        const operations = [
-          'get',
-          'put',
-          'post',
-          'delete',
-          'options',
-          'head',
-          'patch',
-          'trace',
-        ] as const;
-        for (const op of operations) {
-          const operation = pathItem[op];
-          if (!operation) continue;
-
-          const operationParams = operation.parameters || [];
-          for (const param of operationParams) {
-            if ('$ref' in param) continue; // Skip reference objects
-            if (param.in === 'path') {
-              definedParams.add(`{${param.name}}`);
-            }
-          }
-        }
-
-        // Ensure all path parameters in the URL are defined in parameters
-        for (const pathParam of pathParamMatches) {
-          if (!definedParams.has(pathParam)) {
-            return false;
-          }
-        }
-      }
-
-      return true;
-    },
-    {
+> = z.record(
+  z
+    .string()
+    .regex(/^\//, { message: 'Path must start with forward slash' })
+    .regex(/^\/[^?#]*$/, {
+      message: 'Path must not include query parameters or fragments',
+    })
+    .regex(/^(?:\/[^/{}]+|\/\{[^/{}]+\})*\/?$/, {
       message:
-        'All path parameters in the URL must be defined in the parameters section',
-    }
-  );
+        'Path must follow pattern of /segment or /{param} with no empty segments',
+    }),
+  PathItemObject
+);
 
 // ============================================================================
 // OpenAPI 3.1 Paths (uses SchemaObject31 which allows type to be omitted)
@@ -451,71 +396,22 @@ export const PathItemObject31 = z
     { message: 'Path item must define at least one operation' }
   );
 
-// Paths Object for OAS 3.1
+// Paths Object for OAS 3.1.
+// As with PathsObject, the path-parameter completeness check lives in
+// validator.ts (validatePathParams) so that $ref parameters can be resolved
+// against the full document.
 export const PathsObject31: z.ZodType<
   Record<string, z.infer<typeof PathItemObject31>>
-> = z
-  .record(
-    z
-      .string()
-      .regex(/^\//, { message: 'Path must start with forward slash' })
-      .regex(/^\/[^?#]*$/, {
-        message: 'Path must not include query parameters or fragments',
-      })
-      .regex(/^(?:\/[^/{}]+|\/\{[^/{}]+\})*\/?$/, {
-        message:
-          'Path must follow pattern of /segment or /{param} with no empty segments',
-      }),
-    PathItemObject31
-  )
-  .refine(
-    (paths) => {
-      // Validate that all path parameters in the URL are defined
-      for (const [pathKey, pathItem] of Object.entries(paths)) {
-        const pathParamMatches = pathKey.match(/\{[^}]+\}/g) || [];
-        if (pathParamMatches.length === 0) continue;
-
-        const definedParams = new Set<string>();
-        const pathParams = pathItem.parameters || [];
-        for (const param of pathParams) {
-          if ('$ref' in param) continue;
-          if (param.in === 'path') {
-            definedParams.add(`{${param.name}}`);
-          }
-        }
-
-        const operations = [
-          'get',
-          'put',
-          'post',
-          'delete',
-          'options',
-          'head',
-          'patch',
-          'trace',
-        ] as const;
-        for (const op of operations) {
-          const operation = pathItem[op];
-          if (!operation) continue;
-          const operationParams = operation.parameters || [];
-          for (const param of operationParams) {
-            if ('$ref' in param) continue;
-            if (param.in === 'path') {
-              definedParams.add(`{${param.name}}`);
-            }
-          }
-        }
-
-        for (const pathParam of pathParamMatches) {
-          if (!definedParams.has(pathParam)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    },
-    {
+> = z.record(
+  z
+    .string()
+    .regex(/^\//, { message: 'Path must start with forward slash' })
+    .regex(/^\/[^?#]*$/, {
+      message: 'Path must not include query parameters or fragments',
+    })
+    .regex(/^(?:\/[^/{}]+|\/\{[^/{}]+\})*\/?$/, {
       message:
-        'All path parameters in the URL must be defined in the parameters section',
-    }
-  );
+        'Path must follow pattern of /segment or /{param} with no empty segments',
+    }),
+  PathItemObject31
+);

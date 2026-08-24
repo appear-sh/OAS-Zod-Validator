@@ -586,6 +586,31 @@ export function validateOpenAPI(
         }
       }
 
+      // Path parameter completeness check (runs in strict and non-strict)
+      checkAbort();
+      const pathParamIssues = validatePathParams(parsed, options);
+      if (pathParamIssues.length > 0) {
+        allStrictIssues.push(...pathParamIssues);
+        if (options.failFast) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
+        if (
+          typeof options.maxErrors === 'number' &&
+          options.maxErrors > 0 &&
+          allStrictIssues.length >= options.maxErrors
+        ) {
+          throw new SchemaValidationError(
+            'Strict OpenAPI validation failed.',
+            new z.ZodError(allStrictIssues),
+            { context: { strict: true } }
+          );
+        }
+      }
+
       // Iterate through paths and operations for parameter validation
       const parsedDoc = parsed as unknown as OpenAPISlice;
       if (parsedDoc.paths) {
@@ -679,8 +704,7 @@ export function validateOpenAPI(
                 methodKey,
                 pathItem.parameters as ParameterOrReference[] | undefined,
                 (operation as any).parameters as
-                  | ParameterOrReference[]
-                  | undefined,
+                  ParameterOrReference[] | undefined,
                 parsed,
                 options
               );
@@ -745,6 +769,21 @@ export function validateOpenAPI(
           { context: { strict: true } }
         );
       }
+    }
+
+    // Path parameter completeness check for the non-strict path. In strict
+    // mode this check already ran above (and would have thrown if issues were
+    // found), so this is a no-op there. Throwing a SchemaValidationError
+    // re-enters the catch block so issues get normalised and enhanced
+    // (errorCode, suggestion, specLink, severity) like any other failure.
+    checkAbort();
+    const pathParamIssues = validatePathParams(parsed, options);
+    if (pathParamIssues.length > 0) {
+      throw new SchemaValidationError(
+        'OpenAPI validation failed.',
+        new z.ZodError(pathParamIssues),
+        { context: { strict: options.strict === true } }
+      );
     }
 
     const result = { valid: true, resolvedRefs };
@@ -899,8 +938,10 @@ export function validateOpenAPI(
 /**
  * Result of OpenAPI validation with potentially located issues.
  */
-export interface LocatedValidationResult
-  extends Omit<ValidationResult, 'errors'> {
+export interface LocatedValidationResult extends Omit<
+  ValidationResult,
+  'errors'
+> {
   errors?: z.ZodError;
 }
 
@@ -1192,6 +1233,208 @@ type ResolvedParameter = {
 type ParameterOrReference = { $ref: string } | ResolvedParameter;
 
 /**
+ * Resolves a parameter entry (either an inline parameter object or a $ref to
+ * components.parameters) to its resolved form, using the full document.
+ *
+ * Returns null when the entry is not a usable parameter object (missing
+ * name/in) or when a $ref cannot be resolved. Unresolvable refs are reported
+ * elsewhere (verifyRefTargets / schema validation).
+ */
+function resolveParameterRef(
+  paramOrRef: ParameterOrReference,
+  doc: OpenAPISpec
+): ResolvedParameter | null {
+  if (!('$ref' in paramOrRef)) {
+    // Guard minimal fields
+    const p = paramOrRef as any;
+    if (
+      p &&
+      typeof p === 'object' &&
+      typeof p.name === 'string' &&
+      typeof p.in === 'string'
+    ) {
+      return p as ResolvedParameter;
+    }
+    return null;
+  }
+
+  const refString: string = (paramOrRef as { $ref: string }).$ref;
+  let jsonPointer: JSONPointer;
+  try {
+    jsonPointer = createJSONPointer(refString);
+  } catch {
+    // Invalid reference format, issue should be caught by verifyRefTargets or schema validation
+    return null;
+  }
+
+  const cache = getValidationCache();
+
+  // Check cache first
+  const cachedTarget = cache.getRefTarget(
+    jsonPointer,
+    doc as Record<string, unknown>
+  );
+  if (cachedTarget !== undefined) {
+    const ct: any = cachedTarget;
+    if (
+      ct &&
+      typeof ct === 'object' &&
+      typeof ct.name === 'string' &&
+      typeof ct.in === 'string'
+    ) {
+      return ct as ResolvedParameter;
+    }
+    return null;
+  }
+
+  // If not in cache, resolve using the JSON pointer
+  const target = getByPointer(
+    doc as unknown as Record<string, unknown>,
+    jsonPointer
+  );
+
+  if (!target) {
+    // Reference not found, issue should be caught by verifyRefTargets
+    return null;
+  }
+
+  const t: any = target;
+  if (
+    t &&
+    typeof t === 'object' &&
+    typeof t.name === 'string' &&
+    typeof t.in === 'string'
+  ) {
+    cache.setRefTarget(
+      jsonPointer,
+      doc as Record<string, unknown>,
+      t as Record<string, unknown>
+    );
+    return t as ResolvedParameter;
+  }
+  return null;
+}
+
+/**
+ * Validates that every path parameter placeholder in each path template is
+ * satisfied by a declared path parameter (inline or via $ref) at the path
+ * item or operation level.
+ *
+ * This check lives here (rather than in the PathsObject Zod refines) because
+ * $ref parameters must be resolved against the full document's
+ * components.parameters, which is not reachable from inside a Zod refine.
+ *
+ * A parameter satisfies placeholder `{x}` only if its resolved `name === x`
+ * and `in === 'path'`.
+ *
+ * @param doc - The parsed OpenAPI document
+ * @param options - Validation options (maxErrors is respected)
+ * @returns An array of ZodIssue objects, at most one per path that has any
+ * unsatisfied placeholder
+ */
+function validatePathParams(
+  doc: OpenAPISpec,
+  options?: ValidationOptions
+): z.ZodIssue[] {
+  const issues: z.ZodIssue[] = [];
+  const paths = (doc as Record<string, unknown>).paths;
+  if (!paths || typeof paths !== 'object') {
+    return issues;
+  }
+
+  const methods = [
+    'get',
+    'put',
+    'post',
+    'delete',
+    'options',
+    'head',
+    'patch',
+    'trace',
+    // 3.2 additions
+    'query',
+  ] as const;
+
+  for (const [pathKey, pathItemValue] of Object.entries(
+    paths as Record<string, unknown>
+  )) {
+    const placeholders = pathKey.match(/\{[^}]+\}/g) || [];
+    if (placeholders.length === 0) continue; // No path parameters to check
+
+    if (!pathItemValue || typeof pathItemValue !== 'object') continue;
+    const pathItem = pathItemValue as {
+      parameters?: ParameterOrReference[];
+      get?: Operation;
+      put?: Operation;
+      post?: Operation;
+      delete?: Operation;
+      options?: Operation;
+      head?: Operation;
+      patch?: Operation;
+      trace?: Operation;
+      query?: Operation;
+      additionalOperations?: Record<string, Operation>;
+      [key: string]: any;
+    };
+
+    // Collect the names of all declared path parameters (resolving $refs)
+    const definedNames = new Set<string>();
+    const collect = (params?: ParameterOrReference[]) => {
+      if (!params) return;
+      for (const param of params) {
+        const resolved = resolveParameterRef(param, doc);
+        if (resolved && resolved.in === 'path') {
+          definedNames.add(resolved.name);
+        }
+      }
+    };
+
+    collect(pathItem.parameters);
+    for (const method of methods) {
+      const operation = pathItem[method];
+      if (operation && typeof operation === 'object') {
+        collect(operation.parameters as ParameterOrReference[] | undefined);
+      }
+    }
+    // 3.2 additionalOperations
+    if (pathItem.additionalOperations) {
+      for (const operation of Object.values(pathItem.additionalOperations)) {
+        if (operation && typeof operation === 'object') {
+          collect(
+            (operation as Operation).parameters as
+              ParameterOrReference[] | undefined
+          );
+        }
+      }
+    }
+
+    // At most one issue per path: report the path if ANY placeholder is
+    // unsatisfied, rather than one issue per unsatisfied placeholder.
+    const allSatisfied = placeholders.every((placeholder) =>
+      definedNames.has(placeholder.slice(1, -1))
+    );
+    if (!allSatisfied) {
+      issues.push({
+        code: z.ZodIssueCode.custom,
+        path: ['paths', pathKey],
+        message:
+          'All path parameters in the URL must be defined in the parameters section',
+      });
+      if (
+        options &&
+        typeof options.maxErrors === 'number' &&
+        options.maxErrors > 0 &&
+        issues.length >= options.maxErrors
+      ) {
+        return issues;
+      }
+    }
+  }
+
+  return issues;
+}
+
+/**
  * Checks a list of RESOLVED parameters for uniqueness based on 'name' and 'in'.
  * @param resolvedParameters - Array of fully resolved parameter objects.
  * @param baseErrorPath - The base path for constructing ZodIssue paths (e.g., ['paths', pathKey, 'parameters'] or ['paths', pathKey, method, 'parameters']).
@@ -1262,80 +1505,12 @@ function collectAndValidateOperationParameters(
   options?: ValidationOptions
 ): z.ZodIssue[] {
   let allIssues: z.ZodIssue[] = [];
-  const cache = getValidationCache();
 
+  // Delegate to the shared module-level resolver (same behaviour as before)
   const resolveParameter = (
     paramOrRef: ParameterOrReference,
     doc: OpenAPISpec
-  ): ResolvedParameter | null => {
-    if (!('$ref' in paramOrRef)) {
-      // Guard minimal fields
-      const p = paramOrRef as any;
-      if (
-        p &&
-        typeof p === 'object' &&
-        typeof p.name === 'string' &&
-        typeof p.in === 'string'
-      ) {
-        return p as ResolvedParameter;
-      }
-      return null;
-    }
-
-    const refString: string = (paramOrRef as { $ref: string }).$ref;
-    let jsonPointer: JSONPointer;
-    try {
-      jsonPointer = createJSONPointer(refString);
-    } catch {
-      // Invalid reference format, issue should be caught by verifyRefTargets or schema validation
-      return null;
-    }
-
-    // Check cache first
-    const cachedTarget = cache.getRefTarget(
-      jsonPointer,
-      doc as Record<string, unknown>
-    );
-    if (cachedTarget !== undefined) {
-      const ct: any = cachedTarget;
-      if (
-        ct &&
-        typeof ct === 'object' &&
-        typeof ct.name === 'string' &&
-        typeof ct.in === 'string'
-      ) {
-        return ct as ResolvedParameter;
-      }
-      return null;
-    }
-
-    // If not in cache, resolve using lodash.get
-    const target = getByPointer(
-      doc as unknown as Record<string, unknown>,
-      jsonPointer
-    );
-
-    if (!target) {
-      // Reference not found, issue should be caught by verifyRefTargets
-      return null;
-    }
-
-    const t: any = target;
-    if (
-      t &&
-      typeof t === 'object' &&
-      typeof t.name === 'string' &&
-      typeof t.in === 'string'
-    ) {
-      cache.setRefTarget(
-        jsonPointer,
-        doc as Record<string, unknown>,
-        t as Record<string, unknown>
-      );
-      return t as ResolvedParameter;
-    }
-    return null;
-  };
+  ): ResolvedParameter | null => resolveParameterRef(paramOrRef, doc);
 
   const resolvedPathItemParams: ResolvedParameter[] = [];
   if (rawPathItemParams) {

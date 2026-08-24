@@ -4463,3 +4463,347 @@ describe('Abort and failFast behaviour', () => {
     expect(issues.length).toBeGreaterThan(0);
   });
 });
+
+describe('Path Parameter Completeness (validatePathParams)', () => {
+  const PATH_PARAM_MESSAGE =
+    'All path parameters in the URL must be defined in the parameters section';
+
+  const baseInfo = { title: 'Path Param Completeness API', version: '1.0.0' };
+
+  const hasPathParamIssue = (result: { valid: boolean; errors?: z.ZodError }) =>
+    (result.errors?.issues ?? []).some(
+      (issue) => issue.message === PATH_PARAM_MESSAGE
+    );
+
+  test('3.1: path params declared via $ref to components.parameters validate cleanly', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      components: {
+        parameters: {
+          versionId: {
+            name: 'versionId',
+            in: 'path',
+            required: true,
+            description: 'Catalog version identifier',
+            schema: { type: 'string' },
+          },
+        },
+      },
+      paths: {
+        '/{versionId}/services': {
+          get: {
+            parameters: [{ $ref: '#/components/parameters/versionId' }],
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+    expect(hasPathParamIssue(result)).toBe(false);
+  });
+
+  test('3.1: $ref at path-item level also satisfies the placeholder', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      components: {
+        parameters: {
+          versionId: {
+            name: 'versionId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        },
+      },
+      paths: {
+        '/{versionId}/services': {
+          parameters: [{ $ref: '#/components/parameters/versionId' }],
+          get: {
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('3.0: path params declared via $ref to components.parameters validate cleanly', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: baseInfo,
+      components: {
+        parameters: {
+          versionId: {
+            name: 'versionId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        },
+      },
+      paths: {
+        '/{versionId}/services': {
+          get: {
+            parameters: [{ $ref: '#/components/parameters/versionId' }],
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+    expect(hasPathParamIssue(result)).toBe(false);
+  });
+
+  test('3.0: check also runs in strict mode and passes for $ref params', () => {
+    const spec = {
+      openapi: '3.0.0',
+      info: baseInfo,
+      components: {
+        parameters: {
+          versionId: {
+            name: 'versionId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        },
+      },
+      paths: {
+        '/{versionId}/services': {
+          get: {
+            parameters: [{ $ref: '#/components/parameters/versionId' }],
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('genuinely missing path param is still reported (non-strict)', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      paths: {
+        '/users/{id}': {
+          get: {
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(hasPathParamIssue(result)).toBe(true);
+
+    const issue = result.errors!.issues.find(
+      (i) => i.message === PATH_PARAM_MESSAGE
+    )!;
+    // Per-path issue location (more useful than a document-wide ['paths'])
+    expect(issue.path).toEqual(['paths', '/users/{id}']);
+    // Issue goes through the standard enhancement pipeline
+    const enhanced = issue as EnhancedZodIssue;
+    expect(enhanced.errorCode).toBe('ERR_005');
+    expect(enhanced.severity).toBe('error');
+  });
+
+  test('genuinely missing path param is still reported (strict)', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      paths: {
+        '/users/{id}': {
+          get: {
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: true });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+    expect(hasPathParamIssue(result)).toBe(true);
+  });
+
+  test('multiple missing placeholders produce one issue per path', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      paths: {
+        '/users/{id}/posts/{postId}': {
+          get: {
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(false);
+    const matching = (result.errors?.issues ?? []).filter(
+      (i) => i.message === PATH_PARAM_MESSAGE
+    );
+    // One issue per affected path (both placeholders share the path)
+    expect(matching.length).toBe(1);
+    expect(matching[0].path).toEqual(['paths', '/users/{id}/posts/{postId}']);
+  });
+
+  test('$ref resolving to in !== "path" does not satisfy the placeholder', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      components: {
+        parameters: {
+          // Same name as the placeholder, but a query parameter
+          id: {
+            name: 'id',
+            in: 'query',
+            schema: { type: 'string' },
+          },
+        },
+      },
+      paths: {
+        '/users/{id}': {
+          get: {
+            parameters: [{ $ref: '#/components/parameters/id' }],
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(false);
+    expect(hasPathParamIssue(result)).toBe(true);
+  });
+
+  test('$ref resolving to a mismatched name does not satisfy the placeholder', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      components: {
+        parameters: {
+          // A path parameter, but with a different name than the placeholder
+          userId: {
+            name: 'userId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+          },
+        },
+      },
+      paths: {
+        '/users/{id}': {
+          get: {
+            parameters: [{ $ref: '#/components/parameters/userId' }],
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(false);
+    expect(hasPathParamIssue(result)).toBe(true);
+  });
+
+  test('unresolvable $ref does not satisfy the placeholder', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      paths: {
+        '/users/{id}': {
+          get: {
+            parameters: [{ $ref: '#/components/parameters/doesNotExist' }],
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(false);
+    expect(hasPathParamIssue(result)).toBe(true);
+  });
+
+  test('inline path param at operation level satisfies the placeholder', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      paths: {
+        '/users/{id}': {
+          get: {
+            parameters: [
+              {
+                name: 'id',
+                in: 'path',
+                required: true,
+                schema: { type: 'string' },
+              },
+            ],
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('respects maxErrors', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      paths: {
+        '/a/{x}': {
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+        '/b/{y}': {
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false, maxErrors: 1 });
+    expect(result.valid).toBe(false);
+    const matching = (result.errors?.issues ?? []).filter(
+      (i) => i.message === PATH_PARAM_MESSAGE
+    );
+    expect(matching.length).toBe(1);
+  });
+
+  test('paths without placeholders are unaffected', () => {
+    const spec = {
+      openapi: '3.1.0',
+      info: baseInfo,
+      paths: {
+        '/users': {
+          get: { responses: { '200': { description: 'OK' } } },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(spec, { strict: false });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+});

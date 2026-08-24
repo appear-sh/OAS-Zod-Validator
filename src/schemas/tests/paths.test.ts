@@ -4,6 +4,7 @@ import {
   OperationObject,
   ParameterObject,
 } from '../paths.js';
+import { validateOpenAPI } from '../validator.js';
 import { describe, test, expect } from 'vitest';
 
 describe('Paths Schema Validation', () => {
@@ -267,11 +268,12 @@ describe('Paths Schema Validation', () => {
       expect(() => PathsObject.parse(invalidPaths)).toThrow();
     });
 
-    test('rejects paths with duplicate path parameters', () => {
-      // This test specifically targets the branch in line 129 (this comment is now outdated as the refine was removed)
-      // UPDATE: This test now effectively checks if path parameters used in URLs are defined,
-      // as the original refine for global placeholder uniqueness was removed.
-      const pathsWithDuplicateParams = {
+    test('rejects paths with undefined path parameters (validator level)', () => {
+      // The "all path parameters in the URL must be defined" check was moved
+      // out of the PathsObject Zod refine into validateOpenAPI (validator.ts)
+      // so that $ref parameters can be resolved against components.parameters.
+      // PathsObject.parse therefore no longer enforces it; the validator does.
+      const pathsWithUndefinedParams = {
         '/users/{id}/posts': {
           get: {
             responses: {
@@ -280,8 +282,6 @@ describe('Paths Schema Validation', () => {
           },
         },
         '/posts/{id}': {
-          // Duplicate {id} parameter across paths (this was the intent for the removed refine)
-          // Now, this structure will fail because {id} is used but not defined in parameters array for these PathItemObjects.
           get: {
             responses: {
               '200': { description: 'Get post' },
@@ -290,10 +290,25 @@ describe('Paths Schema Validation', () => {
         },
       };
 
-      expect(() => PathsObject.parse(pathsWithDuplicateParams)).toThrow();
-      expect(() => PathsObject.parse(pathsWithDuplicateParams)).toThrow(
-        /All path parameters in the URL must be defined in the parameters section/ // Updated expected message
-      );
+      // The schema itself no longer rejects this (it cannot resolve $refs)
+      expect(() => PathsObject.parse(pathsWithUndefinedParams)).not.toThrow();
+
+      // But the full validator reports the missing path parameters
+      const doc = {
+        openapi: '3.0.0',
+        info: { title: 'Test API', version: '1.0.0' },
+        paths: pathsWithUndefinedParams,
+      };
+      const result = validateOpenAPI(doc, { strict: false });
+      expect(result.valid).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(
+        result.errors!.issues.some((issue) =>
+          /All path parameters in the URL must be defined in the parameters section/.test(
+            issue.message
+          )
+        )
+      ).toBe(true);
     });
 
     test('validates paths with non-duplicate parameters', () => {
