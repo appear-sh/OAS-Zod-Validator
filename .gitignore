@@ -37,3 +37,6 @@ debug.log
 # Cursor rules
 .cursor-rules/
 .cursor-rules/rules/*
+
+# Cursor skills
+.cursor/skills/

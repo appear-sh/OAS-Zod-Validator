@@ -27,6 +27,10 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 [![npm version](https://badge.fury.io/js/%40appear.sh%2Foas-zod-validator.svg)](https://www.npmjs.com/package/@appear.sh/oas-zod-validator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Project status
+
+Maintainers are focused on [ctxpipe](https://github.com/ctxpipe-ai/ctxpipe) ([ctxpipe.ai](https://ctxpipe.ai)). This repository stays open and the published package remains usable. Support from here on is light: issues and PRs are welcome, but responses will be slower and new feature work is unlikely unless it is a clear correctness fix.
+
 <!-- ABOUT THE PROJECT -->
 
 ## Features
@@ -314,7 +318,7 @@ Contributions are welcome! Please follow these steps:
 5.  **Commit:** Commit your code changes _and_ the generated markdown file located in the `.changeset/` directory (e.g., `.changeset/sweet-donkeys-cry.md`).
 6.  **Push & PR:** Push your branch and open a Pull Request against the `main` branch.
 
-Maintainers will handle the versioning and release process using the changeset files provided in merged Pull Requests.
+Maintainers will handle versioning and releases from changeset files on merged PRs. Review and release cadence is light while work is concentrated on ctxpipe.
 
 <!-- LICENSE -->
 
@@ -326,8 +330,9 @@ Maintainers will handle the versioning and release process using the changeset f
 
 ## Core maintainers
 
+Active work is on [ctxpipe-ai/ctxpipe](https://github.com/ctxpipe-ai/ctxpipe).
+
 - X: https://x.com/tom_mkv
 - X: https://x.com/jakubriedl
-- X: https://x.com/appearapi
 
-For bug reports, feature requests, or contributions, please visit the [GitHub repository](https://github.com/appear-sh/OAS-Zod-Validator).
+For bug reports, feature requests, or contributions, use this repository's [issues](https://github.com/appear-sh/OAS-Zod-Validator/issues). Expect light support.
