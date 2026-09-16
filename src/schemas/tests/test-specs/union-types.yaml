@@ -18,12 +18,12 @@ components:
     # @see https://www.openapis.org/blog/2021/02/16/migrating-from-openapi-3-0-to-3-1-0#:~:text=Swap%20nullable%20for%20type%20arrays
     Attempt1b:
       type:
-        - "array"
-        - "string"
-        - "integer"
-        - "number"
-        - "boolean"
-        - "object"
+        - 'array'
+        - 'string'
+        - 'integer'
+        - 'number'
+        - 'boolean'
+        - 'object'
     # Invalid per these docs, so use `oneOf` instead
     # @see https://swagger.io/docs/specification/v3_0/data-models/data-types/#mixed-types
     Attempt2:

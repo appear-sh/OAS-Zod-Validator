@@ -15,9 +15,12 @@ import {
 import {
   RequestBodyObject,
   ResponseObject,
+  ResponseObject31,
+  RequestBodyObject31,
   RequestBodyObject32,
   ResponseObject32,
 } from './requestResponse.js';
+import { ParameterObject31 } from './paths.js';
 import { SecuritySchemeObject } from './security.js';
 
 // Parameter Object (reused from paths.ts to avoid circular dependency)
@@ -36,6 +39,14 @@ export const HeaderObject = z.object({
   required: z.boolean().optional(),
   deprecated: z.boolean().optional(),
   schema: z.union([SchemaObject, ReferenceObject]),
+});
+
+// Header Object (OAS 3.1) - uses SchemaObject31 so nullable/JSON Schema 2020-12 types are allowed
+const HeaderObject31 = z.object({
+  description: z.string().optional(),
+  required: z.boolean().optional(),
+  deprecated: z.boolean().optional(),
+  schema: z.union([SchemaObject31, SchemaReferenceObject]).optional(),
 });
 
 // Example Object
@@ -188,14 +199,14 @@ export const ComponentsObject31 = z
     responses: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([ResponseObject, ResponseReferenceObject])
+        z.union([ResponseObject31, ResponseReferenceObject])
       )
       .optional(),
 
     parameters: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([ParameterObject, ParameterReferenceObject])
+        z.union([ParameterObject31, ParameterReferenceObject])
       )
       .optional(),
 
@@ -209,14 +220,14 @@ export const ComponentsObject31 = z
     requestBodies: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([RequestBodyObject, RequestBodyReferenceObject])
+        z.union([RequestBodyObject31, RequestBodyReferenceObject])
       )
       .optional(),
 
     headers: z
       .record(
         z.string().regex(/^[a-zA-Z0-9._-]+$/),
-        z.union([HeaderObject, HeaderReferenceObject])
+        z.union([HeaderObject31, HeaderReferenceObject])
       )
       .optional(),
 

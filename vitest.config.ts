@@ -23,10 +23,13 @@ export default defineConfig({
         '**/tests/*-benchmark.ts',
       ],
       thresholds: {
-        // Set thresholds ~3% below current coverage to catch significant regressions
-        // while allowing minor fluctuations. Current: ~81% stmts, 82% branches, 92% funcs
+        // Thresholds recalibrated after moving to @vitest/coverage-v8 v4, whose
+        // instrumentation now counts branches inside arrow-function callbacks
+        // (e.g. Zod .refine() bodies) that v1 did not. Measured with v4:
+        // ~80% stmts, ~70.85% branches, ~91% funcs, ~82% lines. Thresholds sit
+        // just below measured values so genuine regressions still fail the gate.
         statements: 78,
-        branches: 78,
+        branches: 70,
         functions: 88,
         lines: 78,
       },

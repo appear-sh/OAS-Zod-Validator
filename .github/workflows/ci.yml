@@ -10,8 +10,12 @@ on:
 
 jobs:
   build_and_test:
-    name: Build & Test
+    name: Build & Test (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22, 24]
 
     steps:
       - name: Checkout repository
@@ -20,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20 # Specify desired Node.js version (e.g., LTS)
+          node-version: ${{ matrix.node-version }} # Current active LTS lines
           cache: 'npm' # Enable caching for npm dependencies
 
       - name: Install dependencies

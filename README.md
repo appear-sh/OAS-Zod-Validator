@@ -27,6 +27,10 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 [![npm version](https://badge.fury.io/js/%40appear.sh%2Foas-zod-validator.svg)](https://www.npmjs.com/package/@appear.sh/oas-zod-validator)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Project status
+
+Maintainers are focused on [ctxpipe](https://github.com/ctxpipe-ai/ctxpipe) ([ctxpipe.ai](https://ctxpipe.ai)). This repository stays open and the published package remains usable. Support from here on is light: issues and PRs are welcome, but responses will be slower and new feature work is unlikely unless it is a clear correctness fix.
+
 <!-- ABOUT THE PROJECT -->
 
 ## Features
@@ -34,7 +38,7 @@ A robust OpenAPI Specification (OAS) validator built with Zod, providing type-sa
 - Full OpenAPI 3.0.x, 3.1, and 3.2 support
 - Type-safe validation using Zod
 - **Enhanced error reporting** with error codes, suggestions, and spec links
-- Zero external runtime dependencies
+- Bundled single-file output (deps are bundled at build time — no install-time link needed for consumers)
 - Enterprise-ready with strict mode validation
 - Supports both YAML and JSON formats
 - Interactive CLI with rich reporting
@@ -96,27 +100,27 @@ Every validation error includes rich, actionable information:
 
 ```typescript
 if (!result.valid && result.errors) {
-  result.errors.issues.forEach(issue => {
-    console.log(issue.errorCode);   // "ERR_006"
-    console.log(issue.message);     // "Object types must define either properties..."
-    console.log(issue.suggestion);  // "Add `properties: { ... }` to define the object fields..."
-    console.log(issue.specLink);    // "https://appear.sh/api-toolkit/specs?openapi=3.0.3#schema-object"
-    console.log(issue.category);    // "schema"
-    console.log(issue.severity);    // "error" or "warning"
-    console.log(issue.path);        // ["components", "schemas", "MySchema", "properties"]
+  result.errors.issues.forEach((issue) => {
+    console.log(issue.errorCode); // "ERR_006"
+    console.log(issue.message); // "Object types must define either properties..."
+    console.log(issue.suggestion); // "Add `properties: { ... }` to define the object fields..."
+    console.log(issue.specLink); // "https://appear.sh/api-toolkit/specs?openapi=3.0.3#schema-object"
+    console.log(issue.category); // "schema"
+    console.log(issue.severity); // "error" or "warning"
+    console.log(issue.path); // ["components", "schemas", "MySchema", "properties"]
   });
 }
 ```
 
-| Property | Description |
-|----------|-------------|
-| `errorCode` | Standardized code (e.g., `ERR_006`) for programmatic handling |
-| `message` | Human-readable error description |
-| `suggestion` | Actionable fix guidance |
-| `specLink` | Direct link to relevant OpenAPI spec section |
-| `category` | Error category: `schema`, `format`, `reference`, `pattern`, etc. |
-| `severity` | `error` or `warning` |
-| `path` | JSON path to the error location |
+| Property     | Description                                                      |
+| ------------ | ---------------------------------------------------------------- |
+| `errorCode`  | Standardized code (e.g., `ERR_006`) for programmatic handling    |
+| `message`    | Human-readable error description                                 |
+| `suggestion` | Actionable fix guidance                                          |
+| `specLink`   | Direct link to relevant OpenAPI spec section                     |
+| `category`   | Error category: `schema`, `format`, `reference`, `pattern`, etc. |
+| `severity`   | `error` or `warning`                                             |
+| `path`       | JSON path to the error location                                  |
 
 ### Summary Statistics
 
@@ -290,6 +294,8 @@ npm run test:watch
 npm run build
 ```
 
+> Requires Node.js 20+; Node 22+ LTS is recommended (the repo ships an `.nvmrc` pinning Node 22).
+
 This project uses TypeScript with ESM modules and Vitest for testing. It follows strict coding practices and maintains high test coverage.
 
 <!-- CONTRIBUTING -->
@@ -312,20 +318,21 @@ Contributions are welcome! Please follow these steps:
 5.  **Commit:** Commit your code changes _and_ the generated markdown file located in the `.changeset/` directory (e.g., `.changeset/sweet-donkeys-cry.md`).
 6.  **Push & PR:** Push your branch and open a Pull Request against the `main` branch.
 
-Maintainers will handle the versioning and release process using the changeset files provided in merged Pull Requests.
+Maintainers will handle versioning and releases from changeset files on merged PRs. Review and release cadence is light while work is concentrated on ctxpipe.
 
 <!-- LICENSE -->
 
 ## License
 
-- MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh
+- MIT © Thomas Peterson + Jakub Riedl @ https://www.appear.sh & https://ctxpipe.ai
 
 <!-- ACKNOWLEDGEMENTS -->
 
 ## Core maintainers
 
+Active work is on [ctxpipe-ai/ctxpipe](https://github.com/ctxpipe-ai/ctxpipe).
+
 - X: https://x.com/tom_mkv
 - X: https://x.com/jakubriedl
-- X: https://x.com/appearapi
 
-For bug reports, feature requests, or contributions, please visit the [GitHub repository](https://github.com/appear-sh/OAS-Zod-Validator).
+For bug reports, feature requests, or contributions, use this repository's [issues](https://github.com/appear-sh/OAS-Zod-Validator/issues). Expect light support.

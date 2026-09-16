@@ -26,6 +26,216 @@ describe('Integration tests for multiple OAS specs', () => {
     expect(result.errors).toBeUndefined();
   });
 
+  test('validates OAS 3.1 nullable type arrays and examples-only response schemas', () => {
+    // Regression: OAS 3.1 specs using JSON Schema 2020-12 nullable type arrays
+    // (e.g. "type": ["string", "null"]) and response component schemas that
+    // contain only `examples` (no type/properties) must validate cleanly.
+    const doc = {
+      openapi: '3.1.0',
+      info: {
+        title: 'OAS 3.1 nullable regression',
+        version: '1.0.0',
+      },
+      paths: {
+        '/widgets': {
+          patch: {
+            operationId: 'patchWidget',
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    type: ['string', 'null'],
+                  },
+                },
+              },
+            },
+            responses: {
+              200: {
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        details: {
+                          examples: {
+                            generic: { value: 'Something went wrong' },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: {
+        responses: {
+          BadRequestError: {
+            description: 'Bad request',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    details: {
+                      examples: {
+                        generic: { value: 'Something went wrong' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(doc, { strict: false });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('validates OAS 3.1 reusable components (parameters/requestBodies/headers) with nullable type arrays', () => {
+    // Regression: ComponentsObject31 previously wired parameters, requestBodies,
+    // and headers to the 3.0 schemas, whose strict SchemaObject rejected
+    // JSON Schema 2020-12 nullable type arrays (e.g. "type": ["string", "null"]).
+    const doc = {
+      openapi: '3.1.0',
+      info: {
+        title: 'OAS 3.1 component nullable regression',
+        version: '1.0.0',
+      },
+      paths: {
+        '/widgets/{id}': {
+          get: {
+            operationId: 'getWidget',
+            parameters: [{ $ref: '#/components/parameters/idParam' }],
+            responses: {
+              '200': {
+                description: 'OK',
+                headers: {
+                  'X-Nullable-Count': {
+                    $ref: '#/components/headers/X-Nullable-Count',
+                  },
+                },
+              },
+            },
+          },
+          post: {
+            operationId: 'createWidget',
+            requestBody: { $ref: '#/components/requestBodies/WidgetBody' },
+            responses: {
+              '200': {
+                description: 'OK',
+              },
+            },
+          },
+        },
+      },
+      components: {
+        parameters: {
+          idParam: {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: ['string', 'null'],
+            },
+          },
+        },
+        requestBodies: {
+          WidgetBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: ['string', 'null'],
+                },
+              },
+            },
+          },
+        },
+        headers: {
+          'X-Nullable-Count': {
+            description: 'Nullable count header',
+            schema: {
+              type: ['integer', 'null'],
+            },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(doc, { strict: false });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  test('OAS 3.0 still rejects nullable type arrays in reusable components', () => {
+    // Guard against over-relaxing 3.0: the same structures as the 3.1 regression
+    // above must remain invalid in 3.0, where type arrays are not allowed.
+    const doc = {
+      openapi: '3.0.0',
+      info: {
+        title: 'OAS 3.0 component nullable guard',
+        version: '1.0.0',
+      },
+      paths: {
+        '/widgets/{id}': {
+          get: {
+            operationId: 'getWidget',
+            parameters: [{ $ref: '#/components/parameters/idParam' }],
+            responses: {
+              '200': {
+                description: 'OK',
+              },
+            },
+          },
+        },
+      },
+      components: {
+        parameters: {
+          idParam: {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: {
+              type: ['string', 'null'],
+            },
+          },
+        },
+        requestBodies: {
+          WidgetBody: {
+            required: true,
+            content: {
+              'application/json': {
+                schema: {
+                  type: ['string', 'null'],
+                },
+              },
+            },
+          },
+        },
+        headers: {
+          'X-Nullable-Count': {
+            description: 'Nullable count header',
+            schema: {
+              type: ['integer', 'null'],
+            },
+          },
+        },
+      },
+    };
+
+    const result = validateOpenAPI(doc, { strict: false });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toBeDefined();
+  });
+
   // --- Dynamic tests from files ---
   let testFilesData: { filename: string; fullPath: string }[] = [];
   try {

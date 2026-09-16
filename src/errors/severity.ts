@@ -9,10 +9,7 @@ export type Severity = 'error' | 'warning';
  * Warning category types
  */
 export type WarningCategory =
-  | 'documentation'
-  | 'security'
-  | 'best_practice'
-  | 'organization';
+  'documentation' | 'security' | 'best_practice' | 'organization';
 
 /**
  * Interface for defining patterns that identify warnings.

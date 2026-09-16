@@ -717,6 +717,7 @@ export const SchemaObject31: z.ZodType = z.lazy(() => {
     'boolean',
     'array',
     'object',
+    'null',
   ]);
 
   // ReferenceObject from this module already validates generic component/path refs

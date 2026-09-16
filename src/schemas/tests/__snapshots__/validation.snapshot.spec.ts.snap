@@ -7,6 +7,13 @@ exports[`OpenAPI Specification Validation Snapshots > should produce a consisten
 }
 `;
 
+exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for appear.json 1`] = `
+{
+  "resolvedRefs": [],
+  "valid": true,
+}
+`;
+
 exports[`OpenAPI Specification Validation Snapshots > should produce a consistent validation result for dflight-uav-api.json 1`] = `
 {
   "errors": ZodError {
